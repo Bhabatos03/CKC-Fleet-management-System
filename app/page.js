@@ -911,25 +911,77 @@ function Reports() {
       const title = titleMap[preset] || 'Custom Report'
       const rangeStr = fromDate === toDate ? new Date(fromDate).toLocaleDateString('en-IN') : `${new Date(fromDate).toLocaleDateString('en-IN')} — ${new Date(toDate).toLocaleDateString('en-IN')}`
 
-      // Header
-      doc.setFillColor(139, 20, 20)
-      doc.rect(0, 0, pageW, 100, 'F')
-      doc.setFillColor(255, 255, 255)
-      doc.roundedRect(30, 22, 56, 56, 6, 6, 'F')
-      doc.setTextColor(139, 20, 20)
-      doc.setFontSize(22); doc.setFont('helvetica', 'bold')
-      doc.text('C', 58, 62, { align: 'center' })
+      // Fetch logo as base64 for embedding
+      let logoDataUrl = null
+      try {
+        const res = await fetch('/ckc-logo.png')
+        const blob = await res.blob()
+        logoDataUrl = await new Promise((resolve) => {
+          const fr = new FileReader()
+          fr.onload = () => resolve(fr.result)
+          fr.readAsDataURL(blob)
+        })
+      } catch (err) { console.warn('Logo not loaded', err) }
 
+      // === Header: dark burgundy background matching login page ===
+      doc.setFillColor(58, 6, 6) // #3a0606
+      doc.rect(0, 0, pageW, 110, 'F')
+
+      // Subtle gold accent line at bottom of header
+      doc.setDrawColor(217, 119, 6)
+      doc.setLineWidth(1.5)
+      doc.line(0, 108, pageW, 108)
+
+      // Logo (embedded PNG)
+      if (logoDataUrl) {
+        doc.addImage(logoDataUrl, 'PNG', 30, 25, 60, 60)
+      }
+
+      // Brand wordmark — match login page "C. Krishniah Chetty™"
       doc.setTextColor(255, 255, 255)
-      doc.setFontSize(18); doc.setFont('helvetica', 'bold')
-      doc.text('C. Krishniah Chetty Jewellers Pvt. Ltd.', 100, 46)
-      doc.setFontSize(11); doc.setFont('helvetica', 'normal')
-      doc.text('Fleet Management — ' + title, 100, 65)
-      doc.setFontSize(9)
-      doc.text(`Period: ${rangeStr}   |   Generated: ${now.toLocaleString('en-IN')}`, 100, 82)
+      doc.setFont('times', 'bold')
+      doc.setFontSize(24)
+      doc.text('C. K', 105, 55)
+      doc.setFontSize(18)
+      doc.text('RISHNIAH', 143, 55)
+      doc.setFontSize(24)
+      doc.text('C', 226, 55)
+      // Italic Chetty in gold
+      doc.setTextColor(252, 211, 77)
+      doc.setFont('times', 'bolditalic')
+      doc.setFontSize(24)
+      doc.text('hetty', 240, 55)
+      // TM
+      doc.setFont('helvetica', 'normal')
+      doc.setFontSize(8)
+      doc.setTextColor(252, 211, 77)
+      doc.text('TM', 293, 43)
 
+      // Sub-line "GROUP OF JEWELLERS"
+      doc.setTextColor(252, 211, 77)
+      doc.setFont('helvetica', 'normal')
+      doc.setFontSize(8)
+      doc.text('G R O U P   O F   J E W E L L E R S', 105, 70)
+
+      // Report title
+      doc.setTextColor(255, 255, 255)
+      doc.setFont('helvetica', 'bold')
+      doc.setFontSize(11)
+      doc.text('Fleet Management System — ' + title, 105, 90)
+
+      // Meta on right
+      doc.setFont('helvetica', 'normal')
+      doc.setFontSize(8)
+      doc.setTextColor(252, 211, 77)
+      doc.text(`Period: ${rangeStr}`, pageW - 30, 40, { align: 'right' })
+      doc.text(`Generated: ${now.toLocaleString('en-IN')}`, pageW - 30, 54, { align: 'right' })
+      doc.setTextColor(255, 255, 255, 0.7)
+      doc.setFontSize(7)
+      doc.text('EST. 1869  ·  HERITAGE JEWELLERS', pageW - 30, 90, { align: 'right' })
+
+      // Reset text
       doc.setTextColor(15, 23, 42)
-      let y = 125
+      let y = 140
 
       // Summary
       doc.setFontSize(13); doc.setFont('helvetica', 'bold')
@@ -944,7 +996,7 @@ function Reports() {
           ['Total Trips', filteredTrips.length],
           ['KM Travelled', kmTotal.toLocaleString('en-IN') + ' km'],
           ['Fuel Consumed', litTotal.toFixed(2) + ' L'],
-          ['Fuel Cost', '₹' + costTotal.toLocaleString('en-IN')],
+          ['Fuel Cost', 'Rs. ' + costTotal.toLocaleString('en-IN')],
           ['Avg Mileage', avgMileage + ' km/L'],
         ],
         theme: 'grid',
@@ -985,8 +1037,8 @@ function Reports() {
           body: filteredFuel.slice(0, 200).map(f => [
             new Date(f.date).toLocaleDateString('en-IN'),
             f.vehicleNumber, f.odometer?.toLocaleString() || '-',
-            f.quantity, '₹' + f.rate,
-            '₹' + f.amount.toLocaleString('en-IN'),
+            f.quantity, 'Rs. ' + f.rate,
+            'Rs. ' + f.amount.toLocaleString('en-IN'),
             f.station || '-',
           ]),
           theme: 'striped', headStyles: { fillColor: [217, 119, 6] },
@@ -1015,12 +1067,18 @@ function Reports() {
         })
       }
 
+      // Footer on all pages with brand
       const pageCount = doc.internal.getNumberOfPages()
       for (let i = 1; i <= pageCount; i++) {
         doc.setPage(i)
+        const pageH = doc.internal.pageSize.getHeight()
+        // Gold divider
+        doc.setDrawColor(217, 119, 6); doc.setLineWidth(0.5)
+        doc.line(30, pageH - 32, pageW - 30, pageH - 32)
         doc.setFontSize(8); doc.setTextColor(120)
-        doc.text('CKC Fleet Management System · Confidential', 30, doc.internal.pageSize.getHeight() - 20)
-        doc.text(`Page ${i} of ${pageCount}`, pageW - 30, doc.internal.pageSize.getHeight() - 20, { align: 'right' })
+        doc.setFont('helvetica', 'normal')
+        doc.text('C. Krishniah Chetty (TM) Group of Jewellers  ·  Fleet Management System  ·  Confidential', 30, pageH - 20)
+        doc.text(`Page ${i} of ${pageCount}`, pageW - 30, pageH - 20, { align: 'right' })
       }
 
       doc.save(`CKC-${title.replace(/\s+/g, '-')}-${fromDate}_to_${toDate}.pdf`)
