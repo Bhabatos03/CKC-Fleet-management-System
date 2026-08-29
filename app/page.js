@@ -236,11 +236,11 @@ function Login({ onLogin }) {
                     {loading ? (
                       <span className="flex items-center gap-2">
                         <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
-                        AUTHENTICATING...
+                        SIGNING IN...
                       </span>
                     ) : (
                       <span className="flex items-center justify-center gap-2">
-                        ENTER FLEET CONSOLE
+                        LOG IN
                         <ArrowRightCircle className="w-4 h-4 transition-transform group-hover:translate-x-1" />
                       </span>
                     )}
