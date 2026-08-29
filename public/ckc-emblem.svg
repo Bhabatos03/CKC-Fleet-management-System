@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <defs>
+    <linearGradient id="redBg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#8b1010"/>
+      <stop offset="1" stop-color="#5a0808"/>
+    </linearGradient>
+  </defs>
+  <!-- Red rounded square -->
+  <rect x="0" y="0" width="200" height="200" rx="24" fill="url(#redBg)"/>
+  <!-- Outer thin gold ring -->
+  <circle cx="100" cy="100" r="82" fill="none" stroke="#e8c47a" stroke-width="1.2" opacity="0.7"/>
+  <!-- White medallion -->
+  <circle cx="100" cy="100" r="70" fill="#fff8ee"/>
+  <!-- Sunburst rays (16 pointed) -->
+  <g fill="#8b1010">
+    <g transform="translate(100,100)">
+      <!-- 16 triangular rays around the circle -->
+      <g id="ray"><polygon points="0,-68 -4,-52 4,-52"/></g>
+      <use href="#ray" transform="rotate(22.5)"/>
+      <use href="#ray" transform="rotate(45)"/>
+      <use href="#ray" transform="rotate(67.5)"/>
+      <use href="#ray" transform="rotate(90)"/>
+      <use href="#ray" transform="rotate(112.5)"/>
+      <use href="#ray" transform="rotate(135)"/>
+      <use href="#ray" transform="rotate(157.5)"/>
+      <use href="#ray" transform="rotate(180)"/>
+      <use href="#ray" transform="rotate(202.5)"/>
+      <use href="#ray" transform="rotate(225)"/>
+      <use href="#ray" transform="rotate(247.5)"/>
+      <use href="#ray" transform="rotate(270)"/>
+      <use href="#ray" transform="rotate(292.5)"/>
+      <use href="#ray" transform="rotate(315)"/>
+      <use href="#ray" transform="rotate(337.5)"/>
+    </g>
+  </g>
+  <!-- Inner circle -->
+  <circle cx="100" cy="100" r="46" fill="#fff8ee" stroke="#8b1010" stroke-width="2"/>
+  <!-- Letter C -->
+  <text x="100" y="122" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-weight="bold" font-size="70" fill="#8b1010" font-style="italic">C</text>
+  <!-- TM -->
+  <text x="150" y="80" text-anchor="middle" font-family="Georgia, serif" font-weight="bold" font-size="12" fill="#8b1010">TM</text>
+</svg>

@@ -49,30 +49,145 @@ function Login({ onLogin }) {
     } catch (e) { toast.error(e.message) } finally { setLoading(false) }
   }
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-4">
-      <Card className="w-full max-w-md shadow-2xl border-0">
-        <CardHeader className="text-center space-y-2 pt-8">
-          <div className="mx-auto w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-lg">
-            <Building2 className="w-8 h-8 text-white" />
-          </div>
-          <CardTitle className="text-2xl font-bold text-slate-900">CKC Fleet Management</CardTitle>
-          <CardDescription className="text-slate-500">
-            C Krishniah Chetty Jewellers Pvt. Ltd.<br />
-            <span className="text-xs">Security Department Portal</span>
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={submit} className="space-y-4">
-            <div className="space-y-2"><Label>Username</Label><Input value={username} onChange={e => setUsername(e.target.value)} required /></div>
-            <div className="space-y-2"><Label>Password</Label><Input type="password" value={password} onChange={e => setPassword(e.target.value)} required /></div>
-            <Button type="submit" className="w-full bg-slate-900 hover:bg-slate-800" disabled={loading}>{loading ? 'Signing in...' : 'Sign In'}</Button>
-            <div className="text-xs text-slate-500 bg-slate-50 p-3 rounded-md space-y-1">
-              <div><b>Admin:</b> admin / admin123</div>
-              <div><b>Security:</b> security / security123</div>
+    <div className="min-h-screen flex flex-col lg:flex-row bg-[#3d0808] relative overflow-hidden">
+      {/* Ambient glow blobs */}
+      <div className="absolute -top-40 -left-40 w-[500px] h-[500px] rounded-full bg-red-600/30 blur-3xl pointer-events-none" />
+      <div className="absolute -bottom-40 -right-40 w-[600px] h-[600px] rounded-full bg-amber-500/10 blur-3xl pointer-events-none" />
+      <div className="absolute top-1/2 left-1/3 w-[300px] h-[300px] rounded-full bg-red-900/40 blur-3xl pointer-events-none" />
+
+      {/* LEFT: Brand Panel */}
+      <div className="relative flex-1 flex flex-col justify-between p-8 lg:p-16 text-white z-10">
+        {/* Top: Logo mark */}
+        <div className="space-y-6">
+          <div className="flex items-center gap-4">
+            <div className="relative">
+              <img src="/ckc-emblem.svg" alt="CKC" className="w-20 h-20 rounded-2xl shadow-2xl ring-1 ring-amber-300/30" />
+              <div className="absolute -inset-1 rounded-2xl border border-amber-300/20 animate-pulse pointer-events-none" />
             </div>
-          </form>
-        </CardContent>
-      </Card>
+            <div>
+              <div className="text-[10px] tracking-[0.3em] text-amber-200/80 font-semibold">SINCE 1869</div>
+              <div className="text-xs tracking-[0.2em] text-amber-100/60">TRUSTED JEWELLERS</div>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-400/30 text-amber-200 text-[10px] tracking-[0.25em] font-semibold uppercase">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" /> Enterprise Fleet Portal
+            </div>
+            <h1 className="text-3xl lg:text-5xl font-bold leading-tight tracking-wide" style={{fontFamily: '"Times New Roman", Georgia, serif', fontVariant: 'small-caps'}}>
+              C. Krishniah <br />
+              <span className="text-amber-300">Chetty</span>
+              <span className="text-xl lg:text-2xl text-amber-200/70 align-super ml-1" style={{fontVariant: 'normal'}}>™</span>
+            </h1>
+            <div className="text-xs lg:text-sm tracking-[0.35em] text-amber-100/70 font-medium">GROUP&nbsp;OF&nbsp;JEWELLERS</div>
+          </div>
+        </div>
+
+        {/* Middle: Tagline */}
+        <div className="hidden lg:block space-y-6 my-12">
+          <div>
+            <div className="w-16 h-[2px] bg-gradient-to-r from-amber-400 to-transparent mb-4" />
+            <blockquote className="text-3xl xl:text-4xl font-light italic leading-snug text-white/95" style={{fontFamily: 'Georgia, serif'}}>
+              "Where Security Meets<br />
+              <span className="text-amber-300 font-normal">Accountability.</span>"
+            </blockquote>
+          </div>
+          <p className="text-lg text-white/70 leading-relaxed max-w-md font-light">
+            Managing every movement with <span className="text-amber-200">precision</span> and confidence.
+          </p>
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-white/60 max-w-lg">
+            <div className="flex items-center gap-2"><span className="w-1 h-1 rounded-full bg-amber-400" /> Real-time tracking</div>
+            <div className="flex items-center gap-2"><span className="w-1 h-1 rounded-full bg-amber-400" /> QR-verified handoff</div>
+            <div className="flex items-center gap-2"><span className="w-1 h-1 rounded-full bg-amber-400" /> Auditable trail</div>
+          </div>
+        </div>
+
+        {/* Bottom: Footer */}
+        <div className="hidden lg:flex items-center justify-between text-xs text-amber-100/40 font-medium tracking-wider">
+          <div>© 2026 C KRISHNIAH CHETTY JEWELLERS PVT. LTD.</div>
+          <div>SECURITY DEPT · v1.0</div>
+        </div>
+      </div>
+
+      {/* RIGHT: Login Card */}
+      <div className="relative w-full lg:w-[500px] flex items-center justify-center p-6 lg:p-12 z-10">
+        <div className="w-full max-w-sm">
+          {/* Decorative frame */}
+          <div className="relative">
+            <div className="absolute -inset-3 rounded-3xl bg-gradient-to-br from-amber-400/30 via-red-500/10 to-amber-400/30 blur-xl" />
+            <div className="relative bg-white/98 backdrop-blur-xl rounded-2xl shadow-2xl overflow-hidden border border-amber-200/50">
+              {/* Card header ribbon */}
+              <div className="bg-gradient-to-r from-[#5c0a0a] via-[#7a0d0d] to-[#5c0a0a] px-6 py-3 flex items-center gap-2">
+                <div className="w-1 h-4 bg-amber-400" />
+                <span className="text-[10px] tracking-[0.3em] text-amber-100 font-bold">GATE PASS SYSTEM</span>
+              </div>
+
+              <div className="p-8 space-y-6">
+                <div>
+                  <h2 className="text-2xl font-bold text-[#2d0505]" style={{fontFamily: 'Georgia, serif'}}>Sign in to continue</h2>
+                  <p className="text-sm text-slate-500 mt-1">Use your assigned corporate credentials.</p>
+                </div>
+
+                <form onSubmit={submit} className="space-y-5">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs tracking-wider text-slate-600 font-semibold uppercase">Username *</Label>
+                    <Input
+                      value={username}
+                      onChange={e => setUsername(e.target.value)}
+                      required
+                      className="h-11 border-slate-200 focus:border-red-800 focus:ring-red-800/20 rounded-lg"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs tracking-wider text-slate-600 font-semibold uppercase">Password *</Label>
+                    <Input
+                      type="password"
+                      value={password}
+                      onChange={e => setPassword(e.target.value)}
+                      required
+                      className="h-11 border-slate-200 focus:border-red-800 focus:ring-red-800/20 rounded-lg"
+                    />
+                  </div>
+                  <Button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full h-12 bg-gradient-to-r from-[#7a0d0d] to-[#a01414] hover:from-[#5c0a0a] hover:to-[#7a0d0d] text-white font-semibold tracking-wider shadow-lg shadow-red-900/30 transition-all"
+                  >
+                    {loading ? 'Signing in...' : 'SIGN IN →'}
+                  </Button>
+                </form>
+
+                <div className="pt-4 border-t border-slate-100">
+                  <div className="text-[10px] tracking-[0.2em] text-slate-400 font-semibold uppercase mb-2">Demo Access</div>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <button
+                      type="button"
+                      onClick={() => { setUsername('admin'); setPassword('admin123') }}
+                      className="p-2 rounded-lg bg-slate-50 hover:bg-red-50 border border-slate-200 hover:border-red-300 text-left transition"
+                    >
+                      <div className="font-semibold text-slate-700">Admin</div>
+                      <div className="text-slate-500 text-[10px]">admin / admin123</div>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setUsername('security'); setPassword('security123') }}
+                      className="p-2 rounded-lg bg-slate-50 hover:bg-red-50 border border-slate-200 hover:border-red-300 text-left transition"
+                    >
+                      <div className="font-semibold text-slate-700">Security</div>
+                      <div className="text-slate-500 text-[10px]">security / security123</div>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Mobile-only footer */}
+          <div className="lg:hidden text-center mt-6 text-[10px] tracking-widest text-amber-100/50">
+            © 2026 CKC JEWELLERS · SECURITY DEPT
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
@@ -92,10 +207,11 @@ function AdminShell({ user, onLogout, children, active, setActive }) {
   const SidebarContent = () => (
     <>
       <div className="p-5 border-b border-slate-800 flex items-center gap-3">
-        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center">
-          <Building2 className="w-5 h-5 text-white" />
+        <img src="/ckc-emblem.svg" alt="CKC" className="w-11 h-11 rounded-lg shadow-lg" />
+        <div className="flex-1">
+          <div className="font-bold text-sm leading-tight" style={{fontFamily: '"Times New Roman", Georgia, serif', fontVariant: 'small-caps'}}>C. Krishniah <span className="text-amber-300">Chetty</span></div>
+          <div className="text-[10px] text-amber-200/60 tracking-[0.15em] mt-0.5">FLEET · ADMIN</div>
         </div>
-        <div className="flex-1"><div className="font-bold">CKC Fleet</div><div className="text-xs text-slate-400">Admin Panel</div></div>
         <button onClick={() => setDrawerOpen(false)} className="md:hidden text-slate-300 hover:text-white p-1"><X className="w-5 h-5" /></button>
       </div>
       <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
@@ -134,10 +250,13 @@ function AdminShell({ user, onLogout, children, active, setActive }) {
         </>
       )}
       <main className="flex-1 overflow-auto min-w-0">
-        <header className="md:hidden bg-slate-900 text-white p-4 flex items-center justify-between sticky top-0 z-30">
+        <header className="md:hidden bg-gradient-to-r from-[#5c0a0a] via-[#7a0d0d] to-[#5c0a0a] text-white p-3 flex items-center justify-between sticky top-0 z-30 shadow-lg">
           <button onClick={() => setDrawerOpen(true)} className="p-1"><Menu className="w-6 h-6" /></button>
-          <div className="flex items-center gap-2"><Building2 className="w-5 h-5 text-amber-400" /><span className="font-bold">CKC Fleet</span></div>
-          <Button variant="ghost" size="sm" onClick={onLogout} className="text-white p-2"><LogOut className="w-4 h-4" /></Button>
+          <div className="flex items-center gap-2">
+            <img src="/ckc-emblem.svg" alt="CKC" className="w-8 h-8 rounded-md" />
+            <span className="font-bold text-sm" style={{fontFamily: 'Georgia, serif', fontVariant: 'small-caps'}}>C. Krishniah <span className="text-amber-300">Chetty</span></span>
+          </div>
+          <Button variant="ghost" size="sm" onClick={onLogout} className="text-white p-2 hover:bg-white/10"><LogOut className="w-4 h-4" /></Button>
         </header>
         {children}
       </main>
@@ -831,13 +950,17 @@ function SecurityHome({ user, onLogout }) {
     { id: 'outside', label: 'Currently Outside', icon: Truck, color: 'from-slate-600 to-slate-700' },
   ]
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-700 text-white">
-      <header className="p-4 flex items-center justify-between border-b border-slate-700">
+    <div className="min-h-screen bg-gradient-to-br from-[#3d0808] via-[#5c0a0a] to-[#2d0505] text-white">
+      <header className="p-4 flex items-center justify-between border-b border-red-900/50 bg-black/20 backdrop-blur">
         <div className="flex items-center gap-2">
-          {screen !== 'home' && <Button variant="ghost" size="sm" onClick={() => setScreen('home')} className="text-white"><ArrowLeft className="w-4 h-4" /></Button>}
-          <Building2 className="w-5 h-5 text-amber-400" /><span className="font-bold">CKC Fleet Security</span>
+          {screen !== 'home' && <Button variant="ghost" size="sm" onClick={() => setScreen('home')} className="text-white hover:bg-white/10"><ArrowLeft className="w-4 h-4" /></Button>}
+          <img src="/ckc-emblem.svg" alt="CKC" className="w-9 h-9 rounded-md" />
+          <div>
+            <div className="font-bold text-sm leading-none" style={{fontFamily: 'Georgia, serif', fontVariant: 'small-caps'}}>C. Krishniah <span className="text-amber-300">Chetty</span></div>
+            <div className="text-[9px] tracking-[0.2em] text-amber-200/60 mt-0.5">SECURITY · GATE PASS</div>
+          </div>
         </div>
-        <Button variant="ghost" size="sm" onClick={onLogout} className="text-white"><LogOut className="w-4 h-4" /></Button>
+        <Button variant="ghost" size="sm" onClick={onLogout} className="text-white hover:bg-white/10"><LogOut className="w-4 h-4" /></Button>
       </header>
       {screen === 'home' && (
         <div className="p-6 max-w-md mx-auto">
