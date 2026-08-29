@@ -1409,20 +1409,31 @@ function Reports() {
         doc.setFillColor(255, 255, 255); doc.circle(60, 55, 32, 'F')
         doc.addImage(logoDataUrl, 'PNG', 32, 27, 56, 56)
       }
-      doc.setTextColor(255, 255, 255); doc.setFont('times', 'bold'); doc.setFontSize(24)
-      doc.text('C. K', 105, 55)
-      doc.setFontSize(18); doc.text('RISHNIAH', 143, 55)
-      doc.setFontSize(24); doc.text('C', 226, 55)
-      doc.setTextColor(252, 211, 77); doc.setFont('times', 'bolditalic'); doc.setFontSize(24); doc.text('hetty', 240, 55)
-      doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.text('TM', 293, 43)
-      doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.text('G R O U P   O F   J E W E L L E R S', 105, 70)
-      doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'bold'); doc.setFontSize(11)
-      doc.text('Fleet Management System — ' + title, 105, 90)
+      // Brand wordmark — clean single-line with proper spacing
+      const brandX = 108
+      doc.setTextColor(255, 255, 255); doc.setFont('times', 'bold'); doc.setFontSize(22)
+      const part1 = 'C. KRISHNIAH'
+      doc.text(part1, brandX, 46)
+      const w1 = doc.getTextWidth(part1)
+      doc.setTextColor(252, 211, 77); doc.setFont('times', 'bolditalic')
+      const chettyX = brandX + w1 + 10
+      doc.text('Chetty', chettyX, 46)
+      const w2 = doc.getTextWidth('Chetty')
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(8)
+      doc.text('TM', chettyX + w2 + 2, 34)
+      // Sub-line
       doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(252, 211, 77)
-      doc.text(`Period: ${rangeStr}`, pageW - 30, 40, { align: 'right' })
-      doc.text(`Vehicle: ${selectedVehicle ? selectedVehicle.vehicleNumber : 'All Vehicles'}`, pageW - 30, 54, { align: 'right' })
-      doc.text(`Generated: ${now.toLocaleString('en-IN')}`, pageW - 30, 68, { align: 'right' })
-      doc.setFontSize(7); doc.text('EST. 1869  ·  HERITAGE JEWELLERS', pageW - 30, 90, { align: 'right' })
+      doc.text('G R O U P    O F    J E W E L L E R S', brandX, 62)
+      // Report title
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(255, 255, 255)
+      doc.text('Fleet Management System — ' + title, brandX, 86)
+      // Meta on right (evenly spaced 14pt apart)
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(252, 211, 77)
+      doc.text(`Period:  ${rangeStr}`, pageW - 30, 36, { align: 'right' })
+      doc.text(`Vehicle: ${selectedVehicle ? selectedVehicle.vehicleNumber : 'All Vehicles'}`, pageW - 30, 50, { align: 'right' })
+      doc.text(`Generated: ${now.toLocaleString('en-IN')}`, pageW - 30, 64, { align: 'right' })
+      doc.setTextColor(255, 255, 255); doc.setFontSize(7)
+      doc.text('EST. 1869  ·  HERITAGE JEWELLERS', pageW - 30, 86, { align: 'right' })
 
       doc.setTextColor(15, 23, 42)
       let y = 135
