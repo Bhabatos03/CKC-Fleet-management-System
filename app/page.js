@@ -37,8 +37,8 @@ const fmtDT = (d) => d ? new Date(d).toLocaleString('en-IN', { day: '2-digit', m
 const fmtINR = (n) => `₹${Number(n || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 })}`
 
 function Login({ onLogin }) {
-  const [username, setUsername] = useState('admin')
-  const [password, setPassword] = useState('admin123')
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [tick, setTick] = useState(0)
   useEffect(() => {
@@ -246,35 +246,6 @@ function Login({ onLogin }) {
                     )}
                   </Button>
                 </form>
-
-                {/* Quick-select roles */}
-                <div className="pt-4 border-t border-slate-100">
-                  <div className="text-[10px] tracking-[0.25em] text-slate-400 font-semibold uppercase mb-2.5">Quick Access</div>
-                  <div className="grid grid-cols-2 gap-2 text-xs">
-                    <button
-                      type="button"
-                      onClick={() => { setUsername('admin'); setPassword('admin123') }}
-                      className="p-2.5 rounded-lg bg-slate-50 hover:bg-red-50 border border-slate-200 hover:border-red-300 text-left transition group"
-                    >
-                      <div className="flex items-center gap-1.5">
-                        <LayoutDashboard className="w-3 h-3 text-red-700" />
-                        <div className="font-semibold text-slate-700 text-[11px]">Administrator</div>
-                      </div>
-                      <div className="text-slate-500 text-[10px] mt-0.5 font-mono">admin / admin123</div>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => { setUsername('security'); setPassword('security123') }}
-                      className="p-2.5 rounded-lg bg-slate-50 hover:bg-red-50 border border-slate-200 hover:border-red-300 text-left transition group"
-                    >
-                      <div className="flex items-center gap-1.5">
-                        <ShieldAlert className="w-3 h-3 text-red-700" />
-                        <div className="font-semibold text-slate-700 text-[11px]">Security</div>
-                      </div>
-                      <div className="text-slate-500 text-[10px] mt-0.5 font-mono">security / security123</div>
-                    </button>
-                  </div>
-                </div>
               </div>
             </div>
           </div>
