@@ -40,6 +40,11 @@ function Login({ onLogin }) {
   const [username, setUsername] = useState('admin')
   const [password, setPassword] = useState('admin123')
   const [loading, setLoading] = useState(false)
+  const [tick, setTick] = useState(0)
+  useEffect(() => {
+    const t = setInterval(() => setTick(x => (x + 1) % 3), 3500)
+    return () => clearInterval(t)
+  }, [])
   const submit = async (e) => {
     e.preventDefault(); setLoading(true)
     try {
@@ -48,133 +53,232 @@ function Login({ onLogin }) {
       onLogin(data.user); toast.success(`Welcome, ${data.user.name}`)
     } catch (e) { toast.error(e.message) } finally { setLoading(false) }
   }
+  const rotating = [
+    { icon: Truck, label: 'Vehicles Tracked', value: '250+' },
+    { icon: Fuel, label: 'Fuel Efficiency', value: '18.4 km/L' },
+    { icon: Gauge, label: 'Trips This Month', value: '1,240' },
+  ]
+  const Rot = rotating[tick].icon
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row bg-[#3d0808] relative overflow-hidden">
-      {/* Ambient glow blobs */}
-      <div className="absolute -top-40 -left-40 w-[500px] h-[500px] rounded-full bg-red-600/30 blur-3xl pointer-events-none" />
-      <div className="absolute -bottom-40 -right-40 w-[600px] h-[600px] rounded-full bg-amber-500/10 blur-3xl pointer-events-none" />
-      <div className="absolute top-1/2 left-1/3 w-[300px] h-[300px] rounded-full bg-red-900/40 blur-3xl pointer-events-none" />
+    <div className="min-h-screen flex flex-col lg:flex-row relative overflow-hidden" style={{background: 'radial-gradient(1200px 800px at 15% 20%, #5c0a0a 0%, #3a0606 45%, #1a0303 100%)'}}>
+      {/* Ambient gradients */}
+      <div className="absolute -top-40 -left-40 w-[520px] h-[520px] rounded-full bg-red-700/20 blur-3xl pointer-events-none animate-pulse" style={{animationDuration: '5s'}} />
+      <div className="absolute -bottom-60 -right-40 w-[700px] h-[700px] rounded-full bg-amber-600/10 blur-3xl pointer-events-none animate-pulse" style={{animationDuration: '7s'}} />
+      <div className="absolute top-1/3 left-1/2 w-[320px] h-[320px] rounded-full bg-red-950/50 blur-3xl pointer-events-none" />
 
-      {/* LEFT: Brand Panel */}
-      <div className="relative flex-1 flex flex-col justify-between p-8 lg:p-16 text-white z-10">
-        {/* Top: Logo mark */}
-        <div className="space-y-6">
-          <div className="flex items-center gap-4">
-            <div className="relative">
-              <img src="/ckc-emblem.svg" alt="CKC" className="w-20 h-20 rounded-2xl shadow-2xl ring-1 ring-amber-300/30" />
-              <div className="absolute -inset-1 rounded-2xl border border-amber-300/20 animate-pulse pointer-events-none" />
+      {/* Fine noise/grid texture */}
+      <div className="absolute inset-0 opacity-[0.035] pointer-events-none" style={{
+        backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)',
+        backgroundSize: '52px 52px'
+      }} />
+
+      {/* Vignette */}
+      <div className="absolute inset-0 pointer-events-none" style={{boxShadow: 'inset 0 0 260px 60px rgba(0,0,0,0.55)'}} />
+
+      {/* Moving truck strip */}
+      <div className="hidden lg:block absolute bottom-24 left-0 right-0 pointer-events-none overflow-hidden opacity-30">
+        <div className="flex gap-40 animate-marquee whitespace-nowrap">
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="flex items-center gap-3 text-amber-200/40">
+              <Truck className="w-6 h-6" />
+              <div className="h-px w-40 bg-gradient-to-r from-amber-300/40 to-transparent" />
             </div>
-            <div>
-              <div className="text-[10px] tracking-[0.3em] text-amber-200/80 font-semibold">SINCE 1869</div>
-              <div className="text-xs tracking-[0.2em] text-amber-100/60">TRUSTED JEWELLERS</div>
+          ))}
+        </div>
+      </div>
+
+      {/* LEFT: Brand & Value Prop */}
+      <div className="relative flex-1 flex flex-col justify-between p-8 lg:p-16 text-white z-10">
+        {/* Top: Elegant wordmark */}
+        <div className="space-y-8">
+          <div className="flex items-center gap-4">
+            {/* Typographic monogram (no image) */}
+            <div className="relative">
+              <div className="w-16 h-16 rounded-full border border-amber-300/40 flex items-center justify-center" style={{background: 'radial-gradient(circle at 30% 30%, rgba(251,191,36,0.15), transparent 70%)'}}>
+                <span className="text-3xl font-bold text-amber-300" style={{fontFamily: 'Georgia, "Times New Roman", serif'}}>C</span>
+              </div>
+              <div className="absolute -top-1 -right-1 text-[8px] tracking-widest text-amber-300/70 font-bold">TM</div>
+            </div>
+            <div className="border-l border-amber-300/20 pl-4">
+              <div className="text-[10px] tracking-[0.3em] text-amber-200/90 font-semibold">EST. 1869</div>
+              <div className="text-[10px] tracking-[0.2em] text-amber-100/50 mt-1">HERITAGE JEWELLERS</div>
             </div>
           </div>
 
-          <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-400/30 text-amber-200 text-[10px] tracking-[0.25em] font-semibold uppercase">
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" /> Enterprise Fleet Portal
+          <div className="space-y-3">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-400/25 text-amber-200 text-[10px] tracking-[0.3em] font-semibold uppercase backdrop-blur-sm">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399] animate-pulse" /> Fleet Management System · Live
             </div>
-            <h1 className="text-3xl lg:text-5xl font-bold leading-tight tracking-wide" style={{fontFamily: '"Times New Roman", Georgia, serif', fontVariant: 'small-caps'}}>
+            <h1 className="text-3xl lg:text-5xl xl:text-6xl font-normal leading-[1.05] tracking-wide" style={{fontFamily: '"Times New Roman", Georgia, serif', fontVariant: 'small-caps'}}>
               C. Krishniah <br />
-              <span className="text-amber-300">Chetty</span>
-              <span className="text-xl lg:text-2xl text-amber-200/70 align-super ml-1" style={{fontVariant: 'normal'}}>™</span>
+              <span className="text-amber-300 italic font-medium">Chetty</span>
+              <span className="text-lg lg:text-xl text-amber-200/70 align-super ml-1" style={{fontVariant: 'normal'}}>™</span>
             </h1>
-            <div className="text-xs lg:text-sm tracking-[0.35em] text-amber-100/70 font-medium">GROUP&nbsp;OF&nbsp;JEWELLERS</div>
+            <div className="flex items-center gap-3">
+              <div className="h-px w-8 bg-amber-400/60" />
+              <div className="text-[11px] lg:text-xs tracking-[0.4em] text-amber-100/70 font-medium">GROUP OF JEWELLERS</div>
+            </div>
           </div>
         </div>
 
-        {/* Middle: Tagline */}
-        <div className="hidden lg:block space-y-6 my-12">
+        {/* Middle: Fleet-focused tagline */}
+        <div className="hidden lg:block space-y-8 my-10">
           <div>
-            <div className="w-16 h-[2px] bg-gradient-to-r from-amber-400 to-transparent mb-4" />
-            <blockquote className="text-3xl xl:text-4xl font-light italic leading-snug text-white/95" style={{fontFamily: 'Georgia, serif'}}>
-              "Where Security Meets<br />
-              <span className="text-amber-300 font-normal">Accountability.</span>"
-            </blockquote>
+            <div className="w-16 h-[2px] bg-gradient-to-r from-amber-400 to-transparent mb-5" />
+            <h2 className="text-3xl xl:text-5xl font-light leading-tight text-white/95" style={{fontFamily: 'Georgia, serif'}}>
+              Every kilometre.<br />
+              Every litre. <span className="text-amber-300 italic">Accounted for.</span>
+            </h2>
+            <p className="text-base xl:text-lg text-white/70 leading-relaxed max-w-md font-light mt-5">
+              An enterprise-grade fleet operations platform — real-time vehicle movement, fuel analytics, and mileage intelligence for the CKC fleet.
+            </p>
           </div>
-          <p className="text-lg text-white/70 leading-relaxed max-w-md font-light">
-            Managing every movement with <span className="text-amber-200">precision</span> and confidence.
-          </p>
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-white/60 max-w-lg">
-            <div className="flex items-center gap-2"><span className="w-1 h-1 rounded-full bg-amber-400" /> Real-time tracking</div>
-            <div className="flex items-center gap-2"><span className="w-1 h-1 rounded-full bg-amber-400" /> QR-verified handoff</div>
-            <div className="flex items-center gap-2"><span className="w-1 h-1 rounded-full bg-amber-400" /> Auditable trail</div>
+
+          {/* Live rotating stat card */}
+          <div className="max-w-sm">
+            <div className="relative overflow-hidden rounded-xl bg-white/5 backdrop-blur-sm border border-amber-400/20 p-4">
+              <div className="absolute top-0 left-0 h-full w-1 bg-gradient-to-b from-amber-300 to-amber-600" />
+              <div className="flex items-center gap-4">
+                <div className="w-11 h-11 rounded-lg bg-amber-500/20 flex items-center justify-center text-amber-300">
+                  <Rot className="w-5 h-5" />
+                </div>
+                <div className="flex-1">
+                  <div className="text-[10px] tracking-[0.25em] text-amber-200/70 font-semibold uppercase">{rotating[tick].label}</div>
+                  <div className="text-2xl font-bold text-white transition-all" key={tick}>{rotating[tick].value}</div>
+                </div>
+                <div className="flex gap-1">
+                  {rotating.map((_, i) => (
+                    <div key={i} className={`h-1 rounded-full transition-all ${i === tick ? 'w-4 bg-amber-400' : 'w-1.5 bg-white/20'}`} />
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Feature chips */}
+          <div className="grid grid-cols-2 gap-3 max-w-lg">
+            {[
+              { icon: Car, label: 'Vehicle Master' },
+              { icon: Gauge, label: 'Live Mileage' },
+              { icon: Fuel, label: 'Fuel Analytics' },
+              { icon: ShieldAlert, label: 'Compliance Alerts' },
+            ].map((f, i) => {
+              const I = f.icon
+              return (
+                <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition">
+                  <div className="w-8 h-8 rounded-md bg-amber-500/20 flex items-center justify-center text-amber-300"><I className="w-4 h-4" /></div>
+                  <span className="text-sm text-white/80 font-medium">{f.label}</span>
+                </div>
+              )
+            })}
           </div>
         </div>
 
         {/* Bottom: Footer */}
-        <div className="hidden lg:flex items-center justify-between text-xs text-amber-100/40 font-medium tracking-wider">
+        <div className="hidden lg:flex items-center justify-between text-[10px] text-amber-100/40 font-medium tracking-[0.2em]">
           <div>© 2026 C KRISHNIAH CHETTY JEWELLERS PVT. LTD.</div>
-          <div>SECURITY DEPT · v1.0</div>
+          <div className="flex items-center gap-2">
+            <span className="w-1 h-1 rounded-full bg-emerald-400 animate-pulse" />
+            FLEET OPS · v1.0
+          </div>
         </div>
       </div>
 
       {/* RIGHT: Login Card */}
       <div className="relative w-full lg:w-[500px] flex items-center justify-center p-6 lg:p-12 z-10">
         <div className="w-full max-w-sm">
-          {/* Decorative frame */}
           <div className="relative">
-            <div className="absolute -inset-3 rounded-3xl bg-gradient-to-br from-amber-400/30 via-red-500/10 to-amber-400/30 blur-xl" />
+            {/* Halo */}
+            <div className="absolute -inset-4 rounded-3xl bg-gradient-to-br from-amber-400/30 via-red-500/10 to-amber-400/30 blur-2xl animate-pulse" style={{animationDuration: '4s'}} />
+
             <div className="relative bg-white/98 backdrop-blur-xl rounded-2xl shadow-2xl overflow-hidden border border-amber-200/50">
-              {/* Card header ribbon */}
+              {/* Ribbon */}
               <div className="bg-gradient-to-r from-[#5c0a0a] via-[#7a0d0d] to-[#5c0a0a] px-6 py-3 flex items-center gap-2">
-                <div className="w-1 h-4 bg-amber-400" />
-                <span className="text-[10px] tracking-[0.3em] text-amber-100 font-bold">GATE PASS SYSTEM</span>
+                <Truck className="w-3.5 h-3.5 text-amber-300" />
+                <span className="text-[10px] tracking-[0.3em] text-amber-100 font-bold">FLEET MANAGEMENT SYSTEM</span>
+                <div className="ml-auto flex items-center gap-1.5 text-[9px] tracking-widest text-emerald-300">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> LIVE
+                </div>
               </div>
 
               <div className="p-8 space-y-6">
                 <div>
-                  <h2 className="text-2xl font-bold text-[#2d0505]" style={{fontFamily: 'Georgia, serif'}}>Sign in to continue</h2>
-                  <p className="text-sm text-slate-500 mt-1">Use your assigned corporate credentials.</p>
+                  <h2 className="text-2xl font-bold text-[#2d0505]" style={{fontFamily: 'Georgia, serif'}}>Welcome Back</h2>
+                  <p className="text-sm text-slate-500 mt-1">Sign in to access the fleet control centre.</p>
                 </div>
 
                 <form onSubmit={submit} className="space-y-5">
                   <div className="space-y-1.5">
-                    <Label className="text-xs tracking-wider text-slate-600 font-semibold uppercase">Username *</Label>
-                    <Input
-                      value={username}
-                      onChange={e => setUsername(e.target.value)}
-                      required
-                      className="h-11 border-slate-200 focus:border-red-800 focus:ring-red-800/20 rounded-lg"
-                    />
+                    <Label className="text-xs tracking-[0.15em] text-slate-600 font-semibold uppercase">Username</Label>
+                    <div className="relative">
+                      <Input
+                        value={username}
+                        onChange={e => setUsername(e.target.value)}
+                        required
+                        placeholder="e.g. admin"
+                        className="h-11 pl-10 border-slate-200 focus:border-red-800 focus:ring-red-800/20 rounded-lg"
+                      />
+                      <Users className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
+                    </div>
                   </div>
                   <div className="space-y-1.5">
-                    <Label className="text-xs tracking-wider text-slate-600 font-semibold uppercase">Password *</Label>
-                    <Input
-                      type="password"
-                      value={password}
-                      onChange={e => setPassword(e.target.value)}
-                      required
-                      className="h-11 border-slate-200 focus:border-red-800 focus:ring-red-800/20 rounded-lg"
-                    />
+                    <Label className="text-xs tracking-[0.15em] text-slate-600 font-semibold uppercase">Password</Label>
+                    <div className="relative">
+                      <Input
+                        type="password"
+                        value={password}
+                        onChange={e => setPassword(e.target.value)}
+                        required
+                        placeholder="Enter your password"
+                        className="h-11 pl-10 border-slate-200 focus:border-red-800 focus:ring-red-800/20 rounded-lg"
+                      />
+                      <ShieldAlert className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
+                    </div>
                   </div>
                   <Button
                     type="submit"
                     disabled={loading}
-                    className="w-full h-12 bg-gradient-to-r from-[#7a0d0d] to-[#a01414] hover:from-[#5c0a0a] hover:to-[#7a0d0d] text-white font-semibold tracking-wider shadow-lg shadow-red-900/30 transition-all"
+                    className="w-full h-12 bg-gradient-to-r from-[#7a0d0d] via-[#a01414] to-[#7a0d0d] hover:brightness-110 text-white font-semibold tracking-[0.15em] shadow-lg shadow-red-900/40 transition-all group"
                   >
-                    {loading ? 'Signing in...' : 'SIGN IN →'}
+                    {loading ? (
+                      <span className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
+                        AUTHENTICATING...
+                      </span>
+                    ) : (
+                      <span className="flex items-center justify-center gap-2">
+                        ENTER FLEET CONSOLE
+                        <ArrowRightCircle className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                      </span>
+                    )}
                   </Button>
                 </form>
 
+                {/* Quick-select roles */}
                 <div className="pt-4 border-t border-slate-100">
-                  <div className="text-[10px] tracking-[0.2em] text-slate-400 font-semibold uppercase mb-2">Demo Access</div>
+                  <div className="text-[10px] tracking-[0.25em] text-slate-400 font-semibold uppercase mb-2.5">Quick Access</div>
                   <div className="grid grid-cols-2 gap-2 text-xs">
                     <button
                       type="button"
                       onClick={() => { setUsername('admin'); setPassword('admin123') }}
-                      className="p-2 rounded-lg bg-slate-50 hover:bg-red-50 border border-slate-200 hover:border-red-300 text-left transition"
+                      className="p-2.5 rounded-lg bg-slate-50 hover:bg-red-50 border border-slate-200 hover:border-red-300 text-left transition group"
                     >
-                      <div className="font-semibold text-slate-700">Admin</div>
-                      <div className="text-slate-500 text-[10px]">admin / admin123</div>
+                      <div className="flex items-center gap-1.5">
+                        <LayoutDashboard className="w-3 h-3 text-red-700" />
+                        <div className="font-semibold text-slate-700 text-[11px]">Administrator</div>
+                      </div>
+                      <div className="text-slate-500 text-[10px] mt-0.5 font-mono">admin / admin123</div>
                     </button>
                     <button
                       type="button"
                       onClick={() => { setUsername('security'); setPassword('security123') }}
-                      className="p-2 rounded-lg bg-slate-50 hover:bg-red-50 border border-slate-200 hover:border-red-300 text-left transition"
+                      className="p-2.5 rounded-lg bg-slate-50 hover:bg-red-50 border border-slate-200 hover:border-red-300 text-left transition group"
                     >
-                      <div className="font-semibold text-slate-700">Security</div>
-                      <div className="text-slate-500 text-[10px]">security / security123</div>
+                      <div className="flex items-center gap-1.5">
+                        <ShieldAlert className="w-3 h-3 text-red-700" />
+                        <div className="font-semibold text-slate-700 text-[11px]">Security</div>
+                      </div>
+                      <div className="text-slate-500 text-[10px] mt-0.5 font-mono">security / security123</div>
                     </button>
                   </div>
                 </div>
@@ -182,9 +286,8 @@ function Login({ onLogin }) {
             </div>
           </div>
 
-          {/* Mobile-only footer */}
-          <div className="lg:hidden text-center mt-6 text-[10px] tracking-widest text-amber-100/50">
-            © 2026 CKC JEWELLERS · SECURITY DEPT
+          <div className="lg:hidden text-center mt-6 text-[10px] tracking-[0.2em] text-amber-100/50">
+            © 2026 CKC JEWELLERS · FLEET OPS
           </div>
         </div>
       </div>
@@ -207,10 +310,12 @@ function AdminShell({ user, onLogout, children, active, setActive }) {
   const SidebarContent = () => (
     <>
       <div className="p-5 border-b border-slate-800 flex items-center gap-3">
-        <img src="/ckc-emblem.svg" alt="CKC" className="w-11 h-11 rounded-lg shadow-lg" />
-        <div className="flex-1">
-          <div className="font-bold text-sm leading-tight" style={{fontFamily: '"Times New Roman", Georgia, serif', fontVariant: 'small-caps'}}>C. Krishniah <span className="text-amber-300">Chetty</span></div>
-          <div className="text-[10px] text-amber-200/60 tracking-[0.15em] mt-0.5">FLEET · ADMIN</div>
+        <div className="w-11 h-11 rounded-lg border border-amber-400/40 flex items-center justify-center" style={{background: 'radial-gradient(circle at 30% 30%, rgba(251,191,36,0.15), transparent 70%)'}}>
+          <span className="text-xl font-bold text-amber-300" style={{fontFamily: 'Georgia, serif'}}>C</span>
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="font-semibold text-sm leading-tight truncate" style={{fontFamily: '"Times New Roman", Georgia, serif', fontVariant: 'small-caps'}}>C. Krishniah <span className="text-amber-300 italic">Chetty</span></div>
+          <div className="text-[10px] text-amber-200/60 tracking-[0.2em] mt-0.5">FLEET · ADMIN</div>
         </div>
         <button onClick={() => setDrawerOpen(false)} className="md:hidden text-slate-300 hover:text-white p-1"><X className="w-5 h-5" /></button>
       </div>
@@ -253,8 +358,10 @@ function AdminShell({ user, onLogout, children, active, setActive }) {
         <header className="md:hidden bg-gradient-to-r from-[#5c0a0a] via-[#7a0d0d] to-[#5c0a0a] text-white p-3 flex items-center justify-between sticky top-0 z-30 shadow-lg">
           <button onClick={() => setDrawerOpen(true)} className="p-1"><Menu className="w-6 h-6" /></button>
           <div className="flex items-center gap-2">
-            <img src="/ckc-emblem.svg" alt="CKC" className="w-8 h-8 rounded-md" />
-            <span className="font-bold text-sm" style={{fontFamily: 'Georgia, serif', fontVariant: 'small-caps'}}>C. Krishniah <span className="text-amber-300">Chetty</span></span>
+            <div className="w-8 h-8 rounded-md border border-amber-300/40 flex items-center justify-center">
+              <span className="text-sm font-bold text-amber-300" style={{fontFamily: 'Georgia, serif'}}>C</span>
+            </div>
+            <span className="font-semibold text-sm" style={{fontFamily: 'Georgia, serif', fontVariant: 'small-caps'}}>C. Krishniah <span className="text-amber-300 italic">Chetty</span></span>
           </div>
           <Button variant="ghost" size="sm" onClick={onLogout} className="text-white p-2 hover:bg-white/10"><LogOut className="w-4 h-4" /></Button>
         </header>
@@ -954,10 +1061,12 @@ function SecurityHome({ user, onLogout }) {
       <header className="p-4 flex items-center justify-between border-b border-red-900/50 bg-black/20 backdrop-blur">
         <div className="flex items-center gap-2">
           {screen !== 'home' && <Button variant="ghost" size="sm" onClick={() => setScreen('home')} className="text-white hover:bg-white/10"><ArrowLeft className="w-4 h-4" /></Button>}
-          <img src="/ckc-emblem.svg" alt="CKC" className="w-9 h-9 rounded-md" />
+          <div className="w-9 h-9 rounded-md border border-amber-300/40 flex items-center justify-center">
+            <span className="text-base font-bold text-amber-300" style={{fontFamily: 'Georgia, serif'}}>C</span>
+          </div>
           <div>
-            <div className="font-bold text-sm leading-none" style={{fontFamily: 'Georgia, serif', fontVariant: 'small-caps'}}>C. Krishniah <span className="text-amber-300">Chetty</span></div>
-            <div className="text-[9px] tracking-[0.2em] text-amber-200/60 mt-0.5">SECURITY · GATE PASS</div>
+            <div className="font-semibold text-sm leading-none" style={{fontFamily: 'Georgia, serif', fontVariant: 'small-caps'}}>C. Krishniah <span className="text-amber-300 italic">Chetty</span></div>
+            <div className="text-[9px] tracking-[0.25em] text-amber-200/60 mt-0.5">FLEET · SECURITY</div>
           </div>
         </div>
         <Button variant="ghost" size="sm" onClick={onLogout} className="text-white hover:bg-white/10"><LogOut className="w-4 h-4" /></Button>
