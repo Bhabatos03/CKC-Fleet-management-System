@@ -147,9 +147,9 @@ function Login({ onLogin }) {
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-400/25 text-amber-200 text-[10px] tracking-[0.3em] font-semibold uppercase backdrop-blur-sm">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399] animate-pulse" /> Fleet Management System · Live
             </div>
-            <h1 className="text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-normal leading-none tracking-wide whitespace-nowrap" style={{fontFamily: '"Times New Roman", Georgia, serif', fontVariant: 'small-caps'}}>
-              C. Krishniah <span className="text-amber-300 italic font-medium">Chetty</span>
-              <span className="text-base lg:text-lg text-amber-200/70 align-super ml-1" style={{fontVariant: 'normal'}}>™</span>
+            <h1 className="text-3xl lg:text-4xl xl:text-5xl font-semibold leading-tight tracking-wide whitespace-nowrap text-white" style={{fontFamily: '"Times New Roman", Georgia, serif'}}>
+              C. Krishniah Chetty
+              <span className="text-base lg:text-lg text-white/70 align-super ml-1">™</span>
             </h1>
             <div className="flex items-center gap-3">
               <div className="h-px w-8 bg-amber-400/60" />
