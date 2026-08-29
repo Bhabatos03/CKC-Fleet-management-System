@@ -384,7 +384,7 @@ function Dashboard() {
     { label: 'Total Vehicles', value: data.fleet.total, icon: Car, color: 'bg-gradient-to-br from-[#7a0d0d] to-[#a01414]' },
     { label: 'Available', value: data.fleet.available, icon: Truck, color: 'bg-gradient-to-br from-emerald-600 to-emerald-700' },
     { label: 'Outside', value: data.fleet.outside, icon: ArrowRightCircle, color: 'bg-gradient-to-br from-amber-500 to-amber-600' },
-    { label: 'Maintenance', value: data.fleet.maintenance, icon: AlertTriangle, color: 'bg-gradient-to-br from-slate-700 to-slate-800' },
+    { label: 'Maintenance', value: data.fleet.maintenance, icon: AlertTriangle, color: 'bg-gradient-to-br from-[#4a0808] to-[#7a0d0d]' },
   ]
   const today = [
     { label: "Today's Trips", value: data.today.trips },
@@ -401,19 +401,24 @@ function Dashboard() {
   ]
   const statusPie = [
     { name: 'Available', value: data.fleet.available, color: '#10b981' },
-    { name: 'Outside', value: data.fleet.outside, color: '#f59e0b' },
-    { name: 'Maintenance', value: data.fleet.maintenance, color: '#ef4444' },
+    { name: 'Outside', value: data.fleet.outside, color: '#d97706' },
+    { name: 'Maintenance', value: data.fleet.maintenance, color: '#7a0d0d' },
     { name: 'Inactive', value: data.fleet.inactive, color: '#94a3b8' },
   ].filter(s => s.value > 0)
   return (
     <div className="p-6 space-y-6">
-      <div><h1 className="text-3xl font-bold text-slate-900">Fleet Dashboard</h1><p className="text-slate-500">Real-time overview of fleet operations</p></div>
+      <div>
+        <h1 className="text-3xl font-bold text-slate-900 relative inline-block">Fleet Dashboard
+          <span className="absolute -bottom-1 left-0 w-16 h-1 bg-gradient-to-r from-[#7a0d0d] to-amber-500 rounded-full" />
+        </h1>
+        <p className="text-slate-500 mt-2">Real-time overview of fleet operations</p>
+      </div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {kpis.map(k => {
           const Icon = k.icon
           return (
-            <Card key={k.label}><CardContent className="p-5 flex items-center gap-4">
-              <div className={`${k.color} w-12 h-12 rounded-lg flex items-center justify-center text-white`}><Icon className="w-6 h-6" /></div>
+            <Card key={k.label} className="border-t-4 border-t-[#7a0d0d] hover:shadow-lg transition-shadow"><CardContent className="p-5 flex items-center gap-4">
+              <div className={`${k.color} w-12 h-12 rounded-lg flex items-center justify-center text-white shadow-md`}><Icon className="w-6 h-6" /></div>
               <div><div className="text-2xl font-bold">{k.value}</div><div className="text-xs text-slate-500">{k.label}</div></div>
             </CardContent></Card>
           )
@@ -525,8 +530,8 @@ function Vehicles() {
   return (
     <div className="p-6 space-y-4">
       <div className="flex items-center justify-between">
-        <div><h1 className="text-3xl font-bold text-slate-900">Vehicle Master</h1><p className="text-slate-500">Manage fleet vehicles</p></div>
-        <Button onClick={() => { setEditing(null); setOpen(true) }} className="bg-slate-900 hover:bg-slate-800">+ Add Vehicle</Button>
+        <div><h1 className="text-3xl font-bold text-slate-900 relative inline-block">Vehicle Master<span className="absolute -bottom-1 left-0 w-16 h-1 bg-gradient-to-r from-[#7a0d0d] to-amber-500 rounded-full" /></h1><p className="text-slate-500 mt-2">Manage fleet vehicles</p></div>
+        <Button onClick={() => { setEditing(null); setOpen(true) }} className="bg-gradient-to-r from-[#7a0d0d] to-[#a01414] hover:brightness-110 text-white shadow-md">+ Add Vehicle</Button>
       </div>
       <Card><CardContent className="p-4">
         <div className="mb-4 relative max-w-sm">
@@ -549,7 +554,7 @@ function Vehicles() {
                 <TableCell>{driverName(v.assignedDriverId)}</TableCell>
                 <TableCell>{v.currentOdometer?.toLocaleString()} km</TableCell>
                 <TableCell>{v.expectedMileage} km/L</TableCell>
-                <TableCell><Badge variant={v.status === 'Available' ? 'default' : v.status === 'Outside' ? 'secondary' : 'destructive'}>{v.status}</Badge></TableCell>
+                    <TableCell><Badge variant={v.status === 'Available' ? 'default' : v.status === 'Outside' ? 'secondary' : 'destructive'} className={v.status === 'Available' ? 'bg-[#7a0d0d] hover:bg-[#5c0a0a]' : ''}>{v.status}</Badge></TableCell>
                 <TableCell className="text-right space-x-2">
                   <Button size="sm" variant="outline" onClick={() => { setEditing(v); setOpen(true) }}>Edit</Button>
                   <Button size="sm" variant="destructive" onClick={() => remove(v.id)}>Delete</Button>
@@ -616,7 +621,7 @@ function VehicleDialog({ open, onOpenChange, onSubmit, initial, drivers }) {
           <div><Label>Assigned Location</Label><Input value={f.assignedLocation || ''} onChange={e => set('assignedLocation', e.target.value)} /></div>
           <div className="col-span-2"><Label>Remarks</Label><Textarea value={f.remarks || ''} onChange={e => set('remarks', e.target.value)} /></div>
         </div>
-        <DialogFooter><Button onClick={() => onSubmit(f)}>Save</Button></DialogFooter>
+        <DialogFooter><Button onClick={() => onSubmit(f)} className="bg-gradient-to-r from-[#7a0d0d] to-[#a01414] hover:brightness-110 text-white">Save</Button></DialogFooter>
       </DialogContent>
     </Dialog>
   )
@@ -639,8 +644,8 @@ function Drivers() {
   return (
     <div className="p-6 space-y-4">
       <div className="flex items-center justify-between">
-        <div><h1 className="text-3xl font-bold text-slate-900">Driver Master</h1><p className="text-slate-500">Manage drivers</p></div>
-        <Button onClick={() => { setEditing(null); setOpen(true) }} className="bg-slate-900 hover:bg-slate-800">+ Add Driver</Button>
+        <div><h1 className="text-3xl font-bold text-slate-900 relative inline-block">Driver Master<span className="absolute -bottom-1 left-0 w-16 h-1 bg-gradient-to-r from-[#7a0d0d] to-amber-500 rounded-full" /></h1><p className="text-slate-500 mt-2">Manage drivers</p></div>
+        <Button onClick={() => { setEditing(null); setOpen(true) }} className="bg-gradient-to-r from-[#7a0d0d] to-[#a01414] hover:brightness-110 text-white shadow-md">+ Add Driver</Button>
       </div>
       <Card><CardContent className="p-4"><div className="overflow-x-auto"><Table>
         <TableHeader><TableRow>
@@ -655,7 +660,7 @@ function Drivers() {
                 <TableCell className="font-semibold">{d.name}</TableCell>
                 <TableCell>{d.empId}</TableCell><TableCell>{d.mobile}</TableCell><TableCell>{d.licence}</TableCell>
                 <TableCell className={expiring ? 'text-rose-600 font-semibold' : ''}>{fmtDate(d.licenceExpiry)}</TableCell>
-                <TableCell><Badge>{d.status}</Badge></TableCell>
+                <TableCell><Badge className="bg-[#7a0d0d] hover:bg-[#5c0a0a]">{d.status}</Badge></TableCell>
                 <TableCell className="text-right space-x-2">
                   <Button size="sm" variant="outline" onClick={() => { setEditing(d); setOpen(true) }}>Edit</Button>
                   <Button size="sm" variant="destructive" onClick={() => remove(d.id)}>Delete</Button>
@@ -692,7 +697,7 @@ function DriverDialog({ open, onOpenChange, onSubmit, initial }) {
           </div>
           <div className="col-span-2"><Label>Remarks</Label><Textarea value={f.remarks || ''} onChange={e => set('remarks', e.target.value)} /></div>
         </div>
-        <DialogFooter><Button onClick={() => onSubmit(f)}>Save</Button></DialogFooter>
+        <DialogFooter><Button onClick={() => onSubmit(f)} className="bg-gradient-to-r from-[#7a0d0d] to-[#a01414] hover:brightness-110 text-white">Save</Button></DialogFooter>
       </DialogContent>
     </Dialog>
   )
@@ -734,7 +739,7 @@ function Trips() {
   return (
     <div className="p-6 space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <div><h1 className="text-3xl font-bold text-slate-900">Trip Register</h1><p className="text-slate-500">Vehicle movement history</p></div>
+        <div><h1 className="text-3xl font-bold text-slate-900 relative inline-block">Trip Register<span className="absolute -bottom-1 left-0 w-16 h-1 bg-gradient-to-r from-[#7a0d0d] to-amber-500 rounded-full" /></h1><p className="text-slate-500 mt-2">Vehicle movement history</p></div>
         <div className="flex gap-2">
           <Button onClick={exportCsv} variant="outline"><Download className="w-4 h-4 mr-2" /> CSV</Button>
           <Button onClick={exportExcel} variant="outline" className="border-emerald-600 text-emerald-700 hover:bg-emerald-50"><FileSpreadsheet className="w-4 h-4 mr-2" /> Excel</Button>
@@ -838,7 +843,7 @@ function FuelRegister() {
   return (
     <div className="p-6 space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <div><h1 className="text-3xl font-bold text-slate-900">Fuel Register</h1><p className="text-slate-500">All fuel filling entries</p></div>
+        <div><h1 className="text-3xl font-bold text-slate-900 relative inline-block">Fuel Register<span className="absolute -bottom-1 left-0 w-16 h-1 bg-gradient-to-r from-[#7a0d0d] to-amber-500 rounded-full" /></h1><p className="text-slate-500 mt-2">All fuel filling entries</p></div>
         <div className="flex gap-2">
           <Button onClick={exportCsv} variant="outline"><Download className="w-4 h-4 mr-2" /> CSV</Button>
           <Button onClick={exportExcel} variant="outline" className="border-emerald-600 text-emerald-700 hover:bg-emerald-50"><FileSpreadsheet className="w-4 h-4 mr-2" /> Excel</Button>
@@ -956,7 +961,7 @@ function Maintenance() {
   return (
     <div className="p-6 space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <div><h1 className="text-3xl font-bold text-slate-900">Maintenance</h1><p className="text-slate-500">Service history · parts · workshops · next-service reminders</p></div>
+        <div><h1 className="text-3xl font-bold text-slate-900 relative inline-block">Maintenance<span className="absolute -bottom-1 left-0 w-16 h-1 bg-gradient-to-r from-[#7a0d0d] to-amber-500 rounded-full" /></h1><p className="text-slate-500 mt-2">Service history · parts · workshops · next-service reminders</p></div>
         <Button onClick={() => { setEditing(null); setOpen(true) }} className="bg-gradient-to-r from-[#7a0d0d] to-[#a01414] text-white"><Plus className="w-4 h-4 mr-1" /> Add Service Record</Button>
       </div>
 
@@ -1213,7 +1218,7 @@ function Mileage() {
   if (!data) return <div className="p-8">Loading...</div>
   return (
     <div className="p-6 space-y-4">
-      <div><h1 className="text-3xl font-bold text-slate-900">Mileage Analytics</h1><p className="text-slate-500">Per-vehicle 30-day mileage</p></div>
+      <div><h1 className="text-3xl font-bold text-slate-900 relative inline-block">Mileage Analytics<span className="absolute -bottom-1 left-0 w-16 h-1 bg-gradient-to-r from-[#7a0d0d] to-amber-500 rounded-full" /></h1><p className="text-slate-500 mt-2">Per-vehicle 30-day mileage</p></div>
       <Card><CardContent className="p-4"><Table>
         <TableHeader><TableRow>
           <TableHead>Vehicle</TableHead><TableHead>KM (30d)</TableHead><TableHead>Litres</TableHead>
@@ -1545,8 +1550,8 @@ function Reports() {
   return (
     <div className="p-6 space-y-4">
       <div>
-        <h1 className="text-3xl font-bold text-slate-900">Reports</h1>
-        <p className="text-slate-500">Generate branded PDF & Excel reports for any date range.</p>
+        <h1 className="text-3xl font-bold text-slate-900 relative inline-block">Reports<span className="absolute -bottom-1 left-0 w-16 h-1 bg-gradient-to-r from-[#7a0d0d] to-amber-500 rounded-full" /></h1>
+        <p className="text-slate-500 mt-2">Generate branded PDF & Excel reports for any date range.</p>
       </div>
       <Card>
         <CardContent className="p-6 space-y-5">
