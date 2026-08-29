@@ -26,8 +26,8 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <head>
-        <link rel="icon" href="/ckc-emblem.svg" type="image/svg+xml" />
-        <link rel="apple-touch-icon" href="/ckc-emblem.svg" />
+        <link rel="icon" href="/ckc-logo.png" type="image/png" />
+        <link rel="apple-touch-icon" href="/ckc-logo.png" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-title" content="CKC Fleet" />

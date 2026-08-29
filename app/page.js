@@ -92,13 +92,7 @@ function Login({ onLogin }) {
         {/* Top: Elegant wordmark */}
         <div className="space-y-8">
           <div className="flex items-center gap-4">
-            {/* Typographic monogram (no image) */}
-            <div className="relative">
-              <div className="w-16 h-16 rounded-full border border-amber-300/40 flex items-center justify-center" style={{background: 'radial-gradient(circle at 30% 30%, rgba(251,191,36,0.15), transparent 70%)'}}>
-                <span className="text-3xl font-bold text-amber-300" style={{fontFamily: 'Georgia, "Times New Roman", serif'}}>C</span>
-              </div>
-              <div className="absolute -top-1 -right-1 text-[8px] tracking-widest text-amber-300/70 font-bold">TM</div>
-            </div>
+            <img src="/ckc-logo.png" alt="CKC" className="w-20 h-20 object-contain drop-shadow-2xl" />
             <div className="border-l border-amber-300/20 pl-4">
               <div className="text-[10px] tracking-[0.3em] text-amber-200/90 font-semibold">EST. 1869</div>
               <div className="text-[10px] tracking-[0.2em] text-amber-100/50 mt-1">HERITAGE JEWELLERS</div>
@@ -109,10 +103,9 @@ function Login({ onLogin }) {
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-400/25 text-amber-200 text-[10px] tracking-[0.3em] font-semibold uppercase backdrop-blur-sm">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399] animate-pulse" /> Fleet Management System · Live
             </div>
-            <h1 className="text-3xl lg:text-5xl xl:text-6xl font-normal leading-[1.05] tracking-wide" style={{fontFamily: '"Times New Roman", Georgia, serif', fontVariant: 'small-caps'}}>
-              C. Krishniah <br />
-              <span className="text-amber-300 italic font-medium">Chetty</span>
-              <span className="text-lg lg:text-xl text-amber-200/70 align-super ml-1" style={{fontVariant: 'normal'}}>™</span>
+            <h1 className="text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-normal leading-none tracking-wide whitespace-nowrap" style={{fontFamily: '"Times New Roman", Georgia, serif', fontVariant: 'small-caps'}}>
+              C. Krishniah <span className="text-amber-300 italic font-medium">Chetty</span>
+              <span className="text-base lg:text-lg text-amber-200/70 align-super ml-1" style={{fontVariant: 'normal'}}>™</span>
             </h1>
             <div className="flex items-center gap-3">
               <div className="h-px w-8 bg-amber-400/60" />
@@ -310,9 +303,7 @@ function AdminShell({ user, onLogout, children, active, setActive }) {
   const SidebarContent = () => (
     <>
       <div className="p-5 border-b border-slate-800 flex items-center gap-3">
-        <div className="w-11 h-11 rounded-lg border border-amber-400/40 flex items-center justify-center" style={{background: 'radial-gradient(circle at 30% 30%, rgba(251,191,36,0.15), transparent 70%)'}}>
-          <span className="text-xl font-bold text-amber-300" style={{fontFamily: 'Georgia, serif'}}>C</span>
-        </div>
+        <img src="/ckc-logo.png" alt="CKC" className="w-11 h-11 object-contain" />
         <div className="flex-1 min-w-0">
           <div className="font-semibold text-sm leading-tight truncate" style={{fontFamily: '"Times New Roman", Georgia, serif', fontVariant: 'small-caps'}}>C. Krishniah <span className="text-amber-300 italic">Chetty</span></div>
           <div className="text-[10px] text-amber-200/60 tracking-[0.2em] mt-0.5">FLEET · ADMIN</div>
@@ -358,9 +349,7 @@ function AdminShell({ user, onLogout, children, active, setActive }) {
         <header className="md:hidden bg-gradient-to-r from-[#5c0a0a] via-[#7a0d0d] to-[#5c0a0a] text-white p-3 flex items-center justify-between sticky top-0 z-30 shadow-lg">
           <button onClick={() => setDrawerOpen(true)} className="p-1"><Menu className="w-6 h-6" /></button>
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-md border border-amber-300/40 flex items-center justify-center">
-              <span className="text-sm font-bold text-amber-300" style={{fontFamily: 'Georgia, serif'}}>C</span>
-            </div>
+            <img src="/ckc-logo.png" alt="CKC" className="w-8 h-8 object-contain" />
             <span className="font-semibold text-sm" style={{fontFamily: 'Georgia, serif', fontVariant: 'small-caps'}}>C. Krishniah <span className="text-amber-300 italic">Chetty</span></span>
           </div>
           <Button variant="ghost" size="sm" onClick={onLogout} className="text-white p-2 hover:bg-white/10"><LogOut className="w-4 h-4" /></Button>
@@ -1061,11 +1050,9 @@ function SecurityHome({ user, onLogout }) {
       <header className="p-4 flex items-center justify-between border-b border-red-900/50 bg-black/20 backdrop-blur">
         <div className="flex items-center gap-2">
           {screen !== 'home' && <Button variant="ghost" size="sm" onClick={() => setScreen('home')} className="text-white hover:bg-white/10"><ArrowLeft className="w-4 h-4" /></Button>}
-          <div className="w-9 h-9 rounded-md border border-amber-300/40 flex items-center justify-center">
-            <span className="text-base font-bold text-amber-300" style={{fontFamily: 'Georgia, serif'}}>C</span>
-          </div>
+          <img src="/ckc-logo.png" alt="CKC" className="w-9 h-9 object-contain" />
           <div>
-            <div className="font-semibold text-sm leading-none" style={{fontFamily: 'Georgia, serif', fontVariant: 'small-caps'}}>C. Krishniah <span className="text-amber-300 italic">Chetty</span></div>
+            <div className="font-semibold text-sm leading-none whitespace-nowrap" style={{fontFamily: 'Georgia, serif', fontVariant: 'small-caps'}}>C. Krishniah <span className="text-amber-300 italic">Chetty</span></div>
             <div className="text-[9px] tracking-[0.25em] text-amber-200/60 mt-0.5">FLEET · SECURITY</div>
           </div>
         </div>
