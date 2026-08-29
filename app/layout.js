@@ -5,12 +5,32 @@ import { Toaster } from 'sonner'
 export const metadata = {
   title: 'CKC Fleet Management System',
   description: 'C Krishniah Chetty Jewellers Pvt. Ltd. - Fleet Management',
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'CKC Fleet',
+  },
+}
+
+export const viewport = {
+  themeColor: '#0f172a',
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: 'cover',
 }
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <head>
+        <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+        <link rel="apple-touch-icon" href="/icon-192.svg" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-title" content="CKC Fleet" />
         <script dangerouslySetInnerHTML={{__html:'window.addEventListener("error",function(e){if(e.error instanceof DOMException&&e.error.name==="DataCloneError"&&e.message&&e.message.includes("PerformanceServerTiming")){e.stopImmediatePropagation();e.preventDefault()}},true);'}} />
       </head>
       <body>

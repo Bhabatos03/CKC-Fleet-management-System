@@ -13,7 +13,7 @@ import { toast } from 'sonner'
 import {
   LayoutDashboard, Car, Users, LogOut, Fuel, Truck, ArrowRightCircle,
   ArrowLeftCircle, AlertTriangle, ClipboardList, Search,
-  Download, Gauge, ShieldAlert, Building2, ArrowLeft
+  Download, Gauge, ShieldAlert, Building2, ArrowLeft, Menu, X
 } from 'lucide-react'
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid,
@@ -77,6 +77,7 @@ function Login({ onLogin }) {
 }
 
 function AdminShell({ user, onLogout, children, active, setActive }) {
+  const [drawerOpen, setDrawerOpen] = useState(false)
   const nav = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'vehicles', label: 'Vehicles', icon: Car },
@@ -86,38 +87,56 @@ function AdminShell({ user, onLogout, children, active, setActive }) {
     { id: 'mileage', label: 'Mileage', icon: Gauge },
     { id: 'reports', label: 'Reports', icon: Download },
   ]
+  const pick = (id) => { setActive(id); setDrawerOpen(false) }
+  const SidebarContent = () => (
+    <>
+      <div className="p-5 border-b border-slate-800 flex items-center gap-3">
+        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center">
+          <Building2 className="w-5 h-5 text-white" />
+        </div>
+        <div className="flex-1"><div className="font-bold">CKC Fleet</div><div className="text-xs text-slate-400">Admin Panel</div></div>
+        <button onClick={() => setDrawerOpen(false)} className="md:hidden text-slate-300 hover:text-white p-1"><X className="w-5 h-5" /></button>
+      </div>
+      <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
+        {nav.map(n => {
+          const Icon = n.icon
+          return (
+            <button key={n.id} onClick={() => pick(n.id)}
+              className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg text-sm transition ${active === n.id ? 'bg-amber-500 text-white font-semibold' : 'hover:bg-slate-800 text-slate-300'}`}>
+              <Icon className="w-4 h-4" /> {n.label}
+            </button>
+          )
+        })}
+      </nav>
+      <div className="p-3 border-t border-slate-800">
+        <div className="px-3 py-2 text-xs text-slate-400">Signed in as</div>
+        <div className="px-3 pb-2 text-sm font-medium">{user.name}</div>
+        <Button variant="outline" size="sm" onClick={onLogout} className="w-full bg-transparent border-slate-700 text-slate-200 hover:bg-slate-800 hover:text-white">
+          <LogOut className="w-4 h-4 mr-2" /> Sign Out
+        </Button>
+      </div>
+    </>
+  )
   return (
     <div className="flex min-h-screen bg-slate-50">
+      {/* Desktop sidebar */}
       <aside className="w-64 bg-slate-900 text-slate-100 flex-shrink-0 hidden md:flex flex-col">
-        <div className="p-5 border-b border-slate-800 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center">
-            <Building2 className="w-5 h-5 text-white" />
-          </div>
-          <div><div className="font-bold">CKC Fleet</div><div className="text-xs text-slate-400">Admin Panel</div></div>
-        </div>
-        <nav className="flex-1 p-3 space-y-1">
-          {nav.map(n => {
-            const Icon = n.icon
-            return (
-              <button key={n.id} onClick={() => setActive(n.id)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition ${active === n.id ? 'bg-amber-500 text-white font-semibold' : 'hover:bg-slate-800 text-slate-300'}`}>
-                <Icon className="w-4 h-4" /> {n.label}
-              </button>
-            )
-          })}
-        </nav>
-        <div className="p-3 border-t border-slate-800">
-          <div className="px-3 py-2 text-xs text-slate-400">Signed in as</div>
-          <div className="px-3 pb-2 text-sm font-medium">{user.name}</div>
-          <Button variant="outline" size="sm" onClick={onLogout} className="w-full bg-transparent border-slate-700 text-slate-200 hover:bg-slate-800 hover:text-white">
-            <LogOut className="w-4 h-4 mr-2" /> Sign Out
-          </Button>
-        </div>
+        <SidebarContent />
       </aside>
-      <main className="flex-1 overflow-auto">
-        <header className="md:hidden bg-slate-900 text-white p-4 flex items-center justify-between">
+      {/* Mobile drawer */}
+      {drawerOpen && (
+        <>
+          <div onClick={() => setDrawerOpen(false)} className="fixed inset-0 bg-black/60 z-40 md:hidden" />
+          <aside className="fixed left-0 top-0 bottom-0 w-72 bg-slate-900 text-slate-100 z-50 flex flex-col md:hidden animate-in slide-in-from-left duration-200">
+            <SidebarContent />
+          </aside>
+        </>
+      )}
+      <main className="flex-1 overflow-auto min-w-0">
+        <header className="md:hidden bg-slate-900 text-white p-4 flex items-center justify-between sticky top-0 z-30">
+          <button onClick={() => setDrawerOpen(true)} className="p-1"><Menu className="w-6 h-6" /></button>
           <div className="flex items-center gap-2"><Building2 className="w-5 h-5 text-amber-400" /><span className="font-bold">CKC Fleet</span></div>
-          <Button variant="ghost" size="sm" onClick={onLogout} className="text-white"><LogOut className="w-4 h-4" /></Button>
+          <Button variant="ghost" size="sm" onClick={onLogout} className="text-white p-2"><LogOut className="w-4 h-4" /></Button>
         </header>
         {children}
       </main>
