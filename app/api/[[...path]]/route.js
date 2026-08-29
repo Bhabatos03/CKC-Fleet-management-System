@@ -367,6 +367,7 @@ export async function POST(request, { params }) {
         amount: Number((quantity * rate).toFixed(2)),
         station: body.station,
         receiptNumber: body.receiptNumber || '',
+        receiptImage: body.receiptImage || null,
         remarks: body.remarks || '',
         createdAt: new Date().toISOString(),
       }

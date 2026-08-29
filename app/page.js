@@ -13,7 +13,8 @@ import { toast } from 'sonner'
 import {
   LayoutDashboard, Car, Users, LogOut, Fuel, Truck, ArrowRightCircle,
   ArrowLeftCircle, AlertTriangle, ClipboardList, Search,
-  Download, Gauge, ShieldAlert, Building2, ArrowLeft, Menu, X
+  Download, Gauge, ShieldAlert, Building2, ArrowLeft, Menu, X,
+  Camera, FileText, Image as ImageIcon
 } from 'lucide-react'
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid,
@@ -520,6 +521,7 @@ function Trips() {
 
 function FuelRegister() {
   const [items, setItems] = useState([])
+  const [viewImg, setViewImg] = useState(null)
   useEffect(() => { api('fuel').then(setItems) }, [])
   const exportCsv = () => {
     const headers = ['Date', 'Vehicle', 'Odometer', 'Quantity(L)', 'Rate', 'Amount', 'Station', 'Receipt']
@@ -538,7 +540,7 @@ function FuelRegister() {
         <TableHeader><TableRow>
           <TableHead>Date</TableHead><TableHead>Vehicle</TableHead><TableHead>Odometer</TableHead>
           <TableHead>Qty (L)</TableHead><TableHead>Rate</TableHead><TableHead>Amount</TableHead>
-          <TableHead>Station</TableHead><TableHead>Receipt</TableHead>
+          <TableHead>Station</TableHead><TableHead>Receipt</TableHead><TableHead>Photo</TableHead>
         </TableRow></TableHeader>
         <TableBody>
           {items.slice(0, 100).map(t => (
@@ -551,10 +553,23 @@ function FuelRegister() {
               <TableCell className="font-semibold">{fmtINR(t.amount)}</TableCell>
               <TableCell className="text-xs">{t.station}</TableCell>
               <TableCell className="text-xs">{t.receiptNumber}</TableCell>
+              <TableCell>
+                {t.receiptImage ? (
+                  <button onClick={() => setViewImg(t.receiptImage)} className="w-10 h-10 rounded border overflow-hidden hover:ring-2 hover:ring-amber-500">
+                    <img src={t.receiptImage} alt="" className="w-full h-full object-cover" />
+                  </button>
+                ) : <span className="text-slate-300 text-xs">—</span>}
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>
       </Table></div></CardContent></Card>
+      <Dialog open={!!viewImg} onOpenChange={(v) => !v && setViewImg(null)}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader><DialogTitle>Receipt Photo</DialogTitle></DialogHeader>
+          {viewImg && <img src={viewImg} alt="Receipt" className="w-full rounded" />}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
@@ -594,12 +609,203 @@ function Mileage() {
 
 function Reports() {
   const [data, setData] = useState(null)
-  useEffect(() => { api('dashboard').then(setData) }, [])
+  const [trips, setTrips] = useState([])
+  const [fuel, setFuel] = useState([])
+  const [vehicles, setVehicles] = useState([])
+  const [generating, setGenerating] = useState(false)
+  useEffect(() => {
+    api('dashboard').then(setData)
+    api('trips').then(setTrips)
+    api('fuel').then(setFuel)
+    api('vehicles').then(setVehicles)
+  }, [])
   if (!data) return <div className="p-8">Loading...</div>
+
+  const generatePDF = async (type) => {
+    setGenerating(true)
+    try {
+      const { jsPDF } = await import('jspdf')
+      const autoTable = (await import('jspdf-autotable')).default
+      const doc = new jsPDF({ unit: 'pt', format: 'a4' })
+      const pageW = doc.internal.pageSize.getWidth()
+      const now = new Date()
+      const isDaily = type === 'daily'
+      const todayStr = now.toISOString().slice(0, 10)
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+
+      const filterFn = (dateStr) => {
+        const d = new Date(dateStr)
+        return isDaily ? dateStr?.slice(0, 10) === todayStr : d >= monthStart
+      }
+      const tripsFiltered = trips.filter(t => filterFn(t.dateOut))
+      const fuelFiltered = fuel.filter(f => filterFn(f.date))
+
+      // Header - branded
+      doc.setFillColor(15, 23, 42)
+      doc.rect(0, 0, pageW, 90, 'F')
+      // Gold logo tile
+      doc.setFillColor(251, 191, 36)
+      doc.roundedRect(30, 22, 46, 46, 8, 8, 'F')
+      doc.setTextColor(255, 255, 255)
+      doc.setFontSize(9)
+      doc.text('CKC', 53, 50, { align: 'center' })
+      doc.setFontSize(18)
+      doc.setFont('helvetica', 'bold')
+      doc.text('C Krishniah Chetty Jewellers Pvt. Ltd.', 90, 42)
+      doc.setFontSize(11)
+      doc.setFont('helvetica', 'normal')
+      doc.text('Fleet Management — ' + (isDaily ? 'Daily Report' : 'Monthly Report'), 90, 60)
+      doc.setFontSize(9)
+      doc.text(`Generated: ${now.toLocaleString('en-IN')}`, 90, 76)
+
+      // Reset text
+      doc.setTextColor(15, 23, 42)
+      let y = 115
+
+      // Summary section
+      doc.setFontSize(13); doc.setFont('helvetica', 'bold')
+      doc.text(isDaily ? "Today's Summary" : "Monthly Summary", 30, y); y += 10
+      doc.setDrawColor(251, 191, 36); doc.setLineWidth(2)
+      doc.line(30, y, 90, y); y += 15
+
+      const kmTotal = tripsFiltered.reduce((s, t) => s + (t.kmRun || 0), 0)
+      const fuelLit = fuelFiltered.reduce((s, f) => s + f.quantity, 0)
+      const fuelCost = fuelFiltered.reduce((s, f) => s + f.amount, 0)
+      const avgMileage = fuelLit > 0 ? (kmTotal / fuelLit).toFixed(2) : 'N/A'
+
+      const summaryRows = [
+        ['Total Trips', tripsFiltered.length],
+        ['KM Travelled', kmTotal + ' km'],
+        ['Fuel Consumed', fuelLit.toFixed(2) + ' L'],
+        ['Fuel Cost', '₹' + fuelCost.toLocaleString('en-IN')],
+        ['Avg Mileage', avgMileage + ' km/L'],
+      ]
+      autoTable(doc, {
+        startY: y,
+        head: [['Metric', 'Value']],
+        body: summaryRows,
+        theme: 'grid',
+        headStyles: { fillColor: [15, 23, 42], textColor: 255 },
+        styles: { fontSize: 10 },
+        margin: { left: 30, right: 30 },
+      })
+      y = doc.lastAutoTable.finalY + 20
+
+      // Trips table
+      if (tripsFiltered.length) {
+        doc.setFontSize(13); doc.setFont('helvetica', 'bold')
+        doc.text('Vehicle Movements', 30, y); y += 5
+        doc.line(30, y + 3, 130, y + 3); y += 12
+        autoTable(doc, {
+          startY: y,
+          head: [['Trip ID', 'Vehicle', 'Driver', 'Out', 'In', 'KM', 'Destination']],
+          body: tripsFiltered.slice(0, 50).map(t => [
+            t.tripId, t.vehicleNumber, t.driverName || '-',
+            new Date(t.dateOut).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }),
+            t.timeIn ? new Date(t.timeIn).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '-',
+            t.kmRun || '-', t.destination || '-',
+          ]),
+          theme: 'striped', headStyles: { fillColor: [15, 23, 42] },
+          styles: { fontSize: 8 }, margin: { left: 30, right: 30 },
+        })
+        y = doc.lastAutoTable.finalY + 20
+      }
+
+      // Fuel table
+      if (fuelFiltered.length) {
+        if (y > 700) { doc.addPage(); y = 40 }
+        doc.setFontSize(13); doc.setFont('helvetica', 'bold')
+        doc.text('Fuel Entries', 30, y); y += 5
+        doc.line(30, y + 3, 100, y + 3); y += 12
+        autoTable(doc, {
+          startY: y,
+          head: [['Date', 'Vehicle', 'Odometer', 'Qty (L)', 'Rate', 'Amount', 'Station']],
+          body: fuelFiltered.slice(0, 50).map(f => [
+            new Date(f.date).toLocaleDateString('en-IN'),
+            f.vehicleNumber, f.odometer?.toLocaleString() || '-',
+            f.quantity, '₹' + f.rate,
+            '₹' + f.amount.toLocaleString('en-IN'),
+            f.station || '-',
+          ]),
+          theme: 'striped', headStyles: { fillColor: [217, 119, 6] },
+          styles: { fontSize: 8 }, margin: { left: 30, right: 30 },
+        })
+        y = doc.lastAutoTable.finalY + 20
+      }
+
+      // Low mileage section (monthly only)
+      if (!isDaily && data.alerts.lowMileage.length) {
+        if (y > 680) { doc.addPage(); y = 40 }
+        doc.setFontSize(13); doc.setFont('helvetica', 'bold')
+        doc.setTextColor(220, 38, 38)
+        doc.text('Low Mileage Alerts', 30, y); y += 12
+        doc.setTextColor(15, 23, 42)
+        autoTable(doc, {
+          startY: y,
+          head: [['Vehicle', 'Expected km/L', 'Threshold', 'Actual km/L', 'Variance']],
+          body: data.alerts.lowMileage.map(v => [
+            v.vehicleNumber, v.expectedMileage, v.threshold,
+            v.actualMileage.toFixed(2),
+            ((v.actualMileage - v.expectedMileage) / v.expectedMileage * 100).toFixed(1) + '%',
+          ]),
+          theme: 'grid', headStyles: { fillColor: [220, 38, 38] },
+          styles: { fontSize: 9 }, margin: { left: 30, right: 30 },
+        })
+      }
+
+      // Footer on all pages
+      const pageCount = doc.internal.getNumberOfPages()
+      for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i)
+        doc.setFontSize(8); doc.setTextColor(120)
+        doc.text('CKC Fleet Management System · Confidential', 30, doc.internal.pageSize.getHeight() - 20)
+        doc.text(`Page ${i} of ${pageCount}`, pageW - 30, doc.internal.pageSize.getHeight() - 20, { align: 'right' })
+      }
+
+      const fileName = `CKC-${isDaily ? 'Daily' : 'Monthly'}-Report-${now.toISOString().slice(0, 10)}.pdf`
+      doc.save(fileName)
+      toast.success('PDF generated')
+    } catch (e) {
+      console.error(e); toast.error('PDF generation failed: ' + e.message)
+    } finally { setGenerating(false) }
+  }
+
   return (
     <div className="p-6 space-y-4">
       <h1 className="text-3xl font-bold text-slate-900">Reports</h1>
-      <p className="text-slate-500">Quick monthly summaries. Use Trip/Fuel registers for CSV exports.</p>
+      <p className="text-slate-500">Generate branded PDF reports and view summary KPIs.</p>
+
+      <div className="grid md:grid-cols-2 gap-4">
+        <Card className="border-2 border-slate-900">
+          <CardContent className="p-6 space-y-3">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-lg bg-slate-900 text-white flex items-center justify-center"><FileText className="w-6 h-6" /></div>
+              <div>
+                <div className="font-bold text-lg">Daily Report</div>
+                <div className="text-xs text-slate-500">Today's trips, fuel & KPIs</div>
+              </div>
+            </div>
+            <Button onClick={() => generatePDF('daily')} disabled={generating} className="w-full bg-slate-900 hover:bg-slate-800">
+              <Download className="w-4 h-4 mr-2" /> Generate Daily PDF
+            </Button>
+          </CardContent>
+        </Card>
+        <Card className="border-2 border-amber-500">
+          <CardContent className="p-6 space-y-3">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-lg bg-amber-500 text-white flex items-center justify-center"><FileText className="w-6 h-6" /></div>
+              <div>
+                <div className="font-bold text-lg">Monthly Report</div>
+                <div className="text-xs text-slate-500">Full month + low-mileage analysis</div>
+              </div>
+            </div>
+            <Button onClick={() => generatePDF('monthly')} disabled={generating} className="w-full bg-amber-500 hover:bg-amber-600">
+              <Download className="w-4 h-4 mr-2" /> Generate Monthly PDF
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+
       <div className="grid md:grid-cols-3 gap-4">
         {[
           { title: 'Monthly KM Run', value: `${data.month.km} km` },
@@ -750,12 +956,39 @@ function VehicleIn({ onDone }) {
 
 function FuelEntry({ onDone }) {
   const [vehicles, setVehicles] = useState([])
-  const [f, setF] = useState({ vehicleId: '', odometer: '', quantity: '', rate: '', station: '', receiptNumber: '', remarks: '' })
+  const [f, setF] = useState({ vehicleId: '', odometer: '', quantity: '', rate: '', station: '', receiptNumber: '', remarks: '', receiptImage: null })
+  const [uploading, setUploading] = useState(false)
   useEffect(() => { api('vehicles').then(setVehicles) }, [])
   const selectedVehicle = vehicles.find(v => v.id === f.vehicleId)
   useEffect(() => { if (selectedVehicle) setF(x => ({ ...x, odometer: selectedVehicle.currentOdometer })) }, [f.vehicleId, selectedVehicle])
   const set = (k, v) => setF(x => ({ ...x, [k]: v }))
   const amount = (Number(f.quantity) || 0) * (Number(f.rate) || 0)
+
+  const handleFile = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploading(true)
+    try {
+      // Resize to max 1024px width to keep base64 small
+      const img = await new Promise((res, rej) => {
+        const i = new Image()
+        i.onload = () => res(i)
+        i.onerror = rej
+        i.src = URL.createObjectURL(file)
+      })
+      const maxW = 1024
+      const scale = Math.min(1, maxW / img.width)
+      const canvas = document.createElement('canvas')
+      canvas.width = img.width * scale
+      canvas.height = img.height * scale
+      canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height)
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.75)
+      set('receiptImage', dataUrl)
+      toast.success('Receipt attached')
+    } catch (err) { toast.error('Failed to load image') }
+    finally { setUploading(false) }
+  }
+
   const submit = async () => {
     if (!f.vehicleId || !f.quantity || !f.rate) return toast.error('Fill required fields')
     try { await api('fuel', { method: 'POST', body: f }); toast.success(`Fuel entry saved. Amount: ${fmtINR(amount)}`); onDone() }
@@ -779,6 +1012,26 @@ function FuelEntry({ onDone }) {
         <div className="p-3 bg-amber-50 rounded text-center"><div className="text-xs">Total Amount</div><div className="text-2xl font-bold">{fmtINR(amount)}</div></div>
         <div><Label>Fuel Station</Label><Input value={f.station} onChange={e => set('station', e.target.value)} /></div>
         <div><Label>Receipt Number</Label><Input value={f.receiptNumber} onChange={e => set('receiptNumber', e.target.value)} /></div>
+
+        <div>
+          <Label>Receipt Photo</Label>
+          {f.receiptImage ? (
+            <div className="relative mt-1">
+              <img src={f.receiptImage} alt="Receipt" className="w-full rounded-lg border" />
+              <button onClick={() => set('receiptImage', null)} className="absolute top-2 right-2 bg-rose-600 text-white rounded-full w-8 h-8 flex items-center justify-center shadow-lg">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          ) : (
+            <label className="mt-1 flex flex-col items-center justify-center border-2 border-dashed border-slate-300 rounded-lg p-6 cursor-pointer hover:bg-slate-50 active:bg-slate-100">
+              <Camera className="w-8 h-8 text-slate-400 mb-2" />
+              <div className="text-sm font-medium text-slate-700">{uploading ? 'Loading...' : 'Take Photo / Choose File'}</div>
+              <div className="text-xs text-slate-500">Attach fuel receipt</div>
+              <input type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFile} />
+            </label>
+          )}
+        </div>
+
         <div><Label>Remarks</Label><Textarea value={f.remarks} onChange={e => set('remarks', e.target.value)} /></div>
         <Button onClick={submit} className="w-full bg-amber-600 hover:bg-amber-700 h-12 text-lg">Save Fuel Entry</Button>
       </div>
