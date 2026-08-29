@@ -14,7 +14,8 @@ import {
   LayoutDashboard, Car, Users, LogOut, Fuel, Truck, ArrowRightCircle,
   ArrowLeftCircle, AlertTriangle, ClipboardList, Search,
   Download, Gauge, ShieldAlert, Building2, ArrowLeft, Menu, X,
-  Camera, FileText, Image as ImageIcon, FileSpreadsheet, WifiOff, Wifi
+  Camera, FileText, Image as ImageIcon, FileSpreadsheet, WifiOff, Wifi,
+  Wrench, Plus, Trash2
 } from 'lucide-react'
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid,
@@ -310,6 +311,7 @@ function AdminShell({ user, onLogout, children, active, setActive }) {
     { id: 'drivers', label: 'Drivers', icon: Users },
     { id: 'trips', label: 'Trip Register', icon: ClipboardList },
     { id: 'fuel', label: 'Fuel Register', icon: Fuel },
+    { id: 'maintenance', label: 'Maintenance', icon: Wrench },
     { id: 'mileage', label: 'Mileage', icon: Gauge },
     { id: 'reports', label: 'Reports', icon: Download },
   ]
@@ -913,6 +915,297 @@ function FuelRegister() {
     </div>
   )
 }
+
+function Maintenance() {
+  const [items, setItems] = useState([])
+  const [vehicles, setVehicles] = useState([])
+  const [open, setOpen] = useState(false)
+  const [editing, setEditing] = useState(null)
+  const [vehicleFilter, setVehicleFilter] = useState('all')
+  const load = () => Promise.all([api('maintenance'), api('vehicles')]).then(([m, v]) => { setItems(m); setVehicles(v) })
+  useEffect(() => { load() }, [])
+
+  const filtered = items.filter(m => vehicleFilter === 'all' || m.vehicleId === vehicleFilter)
+  const totalCost = filtered.reduce((s, m) => s + (m.totalCost || 0), 0)
+
+  const submit = async (data) => {
+    try {
+      if (editing) {
+        await api(`maintenance/${editing.id}`, { method: 'PUT', body: data })
+        toast.success('Service record updated')
+      } else {
+        await api('maintenance', { method: 'POST', body: data })
+        toast.success('Service record added')
+      }
+      setOpen(false); setEditing(null); load()
+    } catch (e) { toast.error(e.message) }
+  }
+  const remove = async (id) => {
+    if (!confirm('Delete this service record?')) return
+    await api(`maintenance/${id}`, { method: 'DELETE' })
+    toast.success('Deleted'); load()
+  }
+
+  const in30 = new Date(Date.now() + 30 * 864e5)
+  const upcoming = vehicles.filter(v => {
+    const dueDate = v.serviceDueDate ? new Date(v.serviceDueDate) : null
+    const kmSoon = v.serviceDueKm && v.currentOdometer >= v.serviceDueKm - 500
+    return (dueDate && dueDate < in30) || kmSoon
+  })
+
+  return (
+    <div className="p-6 space-y-4">
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div><h1 className="text-3xl font-bold text-slate-900">Maintenance</h1><p className="text-slate-500">Service history · parts · workshops · next-service reminders</p></div>
+        <Button onClick={() => { setEditing(null); setOpen(true) }} className="bg-gradient-to-r from-[#7a0d0d] to-[#a01414] text-white"><Plus className="w-4 h-4 mr-1" /> Add Service Record</Button>
+      </div>
+
+      {upcoming.length > 0 && (
+        <Card className="border-2 border-amber-300 bg-amber-50/40">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-amber-800"><AlertTriangle className="w-5 h-5" /> Upcoming Service Reminders ({upcoming.length})</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {upcoming.map(v => {
+                const daysLeft = v.serviceDueDate ? Math.floor((new Date(v.serviceDueDate) - Date.now()) / 864e5) : null
+                const kmLeft = v.serviceDueKm ? v.serviceDueKm - (v.currentOdometer || 0) : null
+                const overdue = (daysLeft !== null && daysLeft < 0) || (kmLeft !== null && kmLeft <= 0)
+                return (
+                  <div key={v.id} className={`p-3 rounded-lg border ${overdue ? 'bg-rose-50 border-rose-300' : 'bg-white border-amber-200'}`}>
+                    <div className="flex justify-between items-start">
+                      <div className="font-bold">{v.vehicleNumber}</div>
+                      {overdue && <Badge variant="destructive">OVERDUE</Badge>}
+                    </div>
+                    <div className="text-xs text-slate-600 mt-1">{v.make} {v.model}</div>
+                    {daysLeft !== null && (
+                      <div className="text-xs mt-1">
+                        <span className="text-slate-500">Next service: </span>
+                        <b className={daysLeft < 7 ? 'text-rose-600' : 'text-slate-800'}>{daysLeft < 0 ? `${-daysLeft} days ago` : `${daysLeft} days`}</b>
+                      </div>
+                    )}
+                    {kmLeft !== null && (
+                      <div className="text-xs">
+                        <span className="text-slate-500">Distance: </span>
+                        <b className={kmLeft < 500 ? 'text-rose-600' : 'text-slate-800'}>{kmLeft > 0 ? `${kmLeft.toLocaleString()} km left` : `${(-kmLeft).toLocaleString()} km overdue`}</b>
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      <Card>
+        <CardContent className="p-4 space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div>
+              <Label className="text-xs text-slate-500">Filter by Vehicle</Label>
+              <Select value={vehicleFilter} onValueChange={setVehicleFilter}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Vehicles</SelectItem>
+                  {vehicles.map(v => <SelectItem key={v.id} value={v.id}>{v.vehicleNumber}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="md:col-span-2 flex items-end gap-4 text-sm bg-slate-50 rounded-lg p-3">
+              <div><span className="text-slate-500">Records: </span><b>{filtered.length}</b></div>
+              <div><span className="text-slate-500">Total Cost: </span><b>{fmtINR(totalCost)}</b></div>
+            </div>
+          </div>
+          <div className="overflow-x-auto"><Table>
+            <TableHeader><TableRow>
+              <TableHead>Date</TableHead><TableHead>Vehicle</TableHead><TableHead>Type</TableHead>
+              <TableHead>Workshop</TableHead><TableHead>Odo</TableHead><TableHead>Parts</TableHead>
+              <TableHead>Cost</TableHead><TableHead>Next Service</TableHead><TableHead></TableHead>
+            </TableRow></TableHeader>
+            <TableBody>
+              {filtered.map(m => (
+                <TableRow key={m.id}>
+                  <TableCell className="text-xs">{fmtDate(m.serviceDate)}</TableCell>
+                  <TableCell className="font-semibold">{m.vehicleNumber}</TableCell>
+                  <TableCell><Badge variant="outline">{m.serviceType}</Badge></TableCell>
+                  <TableCell className="text-xs">{m.workshop || '-'}</TableCell>
+                  <TableCell className="text-xs">{m.odometer?.toLocaleString() || '-'}</TableCell>
+                  <TableCell className="text-xs max-w-[200px] truncate">{(m.parts || []).map(p => typeof p === 'string' ? p : p.name).join(', ') || '-'}</TableCell>
+                  <TableCell className="font-semibold">{fmtINR(m.totalCost || m.cost)}</TableCell>
+                  <TableCell className="text-xs">
+                    {m.nextServiceDate && <div>{fmtDate(m.nextServiceDate)}</div>}
+                    {m.nextServiceKm ? <div className="text-slate-500">@ {m.nextServiceKm.toLocaleString()} km</div> : null}
+                  </TableCell>
+                  <TableCell className="text-right space-x-1">
+                    <Button size="sm" variant="outline" onClick={() => { setEditing(m); setOpen(true) }}>Edit</Button>
+                    <Button size="sm" variant="destructive" onClick={() => remove(m.id)}><Trash2 className="w-3 h-3" /></Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+              {filtered.length === 0 && (
+                <TableRow><TableCell colSpan={9} className="text-center text-slate-500 py-8">No service records yet. Click "Add Service Record" to log the first one.</TableCell></TableRow>
+              )}
+            </TableBody>
+          </Table></div>
+        </CardContent>
+      </Card>
+
+      <MaintenanceDialog open={open} onOpenChange={setOpen} onSubmit={submit} initial={editing} vehicles={vehicles} />
+    </div>
+  )
+}
+
+function MaintenanceDialog({ open, onOpenChange, onSubmit, initial, vehicles }) {
+  const [f, setF] = useState({})
+  const [partInput, setPartInput] = useState({ name: '', qty: 1, cost: 0 })
+
+  useEffect(() => {
+    setF(initial || {
+      vehicleId: '', serviceDate: new Date().toISOString().slice(0, 10),
+      odometer: 0, workshop: '', serviceType: 'General Service',
+      description: '', parts: [], cost: 0, laborCost: 0,
+      nextServiceKm: 0, nextServiceDate: '', invoiceNumber: '', remarks: ''
+    })
+    setPartInput({ name: '', qty: 1, cost: 0 })
+  }, [initial, open])
+
+  const set = (k, v) => setF(x => ({ ...x, [k]: v }))
+  const selectedVehicle = vehicles.find(v => v.id === f.vehicleId)
+
+  const addPart = () => {
+    if (!partInput.name) return
+    setF(x => ({
+      ...x,
+      parts: [...(x.parts || []), { ...partInput }],
+      cost: (Number(x.cost) || 0) + (Number(partInput.qty) * Number(partInput.cost) || 0)
+    }))
+    setPartInput({ name: '', qty: 1, cost: 0 })
+  }
+  const removePart = (i) => {
+    setF(x => {
+      const p = x.parts[i]
+      const dec = (Number(p.qty) * Number(p.cost)) || 0
+      return { ...x, parts: x.parts.filter((_, idx) => idx !== i), cost: Math.max(0, (Number(x.cost) || 0) - dec) }
+    })
+  }
+
+  const partsTotal = (f.parts || []).reduce((s, p) => s + (Number(p.qty) * Number(p.cost) || 0), 0)
+  const grandTotal = Number(f.cost || 0) + Number(f.laborCost || 0)
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-3xl max-h-[92vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>{initial ? 'Edit Service Record' : 'Add Service Record'}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="col-span-2 md:col-span-1">
+              <Label>Vehicle *</Label>
+              <Select value={f.vehicleId} onValueChange={v => set('vehicleId', v)}>
+                <SelectTrigger><SelectValue placeholder="Select vehicle" /></SelectTrigger>
+                <SelectContent>{vehicles.map(v => <SelectItem key={v.id} value={v.id}>{v.vehicleNumber} — {v.make} {v.model}</SelectItem>)}</SelectContent>
+              </Select>
+              {selectedVehicle && <div className="text-xs text-slate-500 mt-1">Current odo: {selectedVehicle.currentOdometer?.toLocaleString()} km</div>}
+            </div>
+            <div>
+              <Label>Service Type</Label>
+              <Select value={f.serviceType} onValueChange={v => set('serviceType', v)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {['General Service', 'Oil Change', 'Tyre Change', 'Brake Service', 'Battery', 'Body Repair', 'Engine Repair', 'AC Service', 'Electrical', 'Other'].map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Service Date *</Label>
+              <Input type="date" value={f.serviceDate?.slice(0, 10) || ''} onChange={e => set('serviceDate', e.target.value)} />
+            </div>
+            <div>
+              <Label>Odometer (km)</Label>
+              <Input type="number" value={f.odometer || ''} onChange={e => set('odometer', +e.target.value)} />
+            </div>
+            <div>
+              <Label>Workshop / Garage</Label>
+              <Input value={f.workshop || ''} onChange={e => set('workshop', e.target.value)} placeholder="e.g. Authorized Toyota Service" />
+            </div>
+            <div>
+              <Label>Invoice Number</Label>
+              <Input value={f.invoiceNumber || ''} onChange={e => set('invoiceNumber', e.target.value)} />
+            </div>
+          </div>
+
+          <div>
+            <Label>Service Description</Label>
+            <Textarea value={f.description || ''} onChange={e => set('description', e.target.value)} placeholder="What was done in this service..." rows={2} />
+          </div>
+
+          <div className="border rounded-lg p-3 bg-slate-50">
+            <Label className="font-semibold mb-2 block">Parts Changed</Label>
+            <div className="grid grid-cols-12 gap-2 items-end">
+              <div className="col-span-6"><Label className="text-xs">Part Name</Label><Input value={partInput.name} onChange={e => setPartInput({ ...partInput, name: e.target.value })} placeholder="e.g. Brake Pad" /></div>
+              <div className="col-span-2"><Label className="text-xs">Qty</Label><Input type="number" value={partInput.qty} onChange={e => setPartInput({ ...partInput, qty: +e.target.value })} /></div>
+              <div className="col-span-3"><Label className="text-xs">Cost/unit</Label><Input type="number" value={partInput.cost} onChange={e => setPartInput({ ...partInput, cost: +e.target.value })} /></div>
+              <div className="col-span-1"><Button type="button" onClick={addPart} size="sm" className="w-full"><Plus className="w-4 h-4" /></Button></div>
+            </div>
+            {(f.parts || []).length > 0 && (
+              <div className="mt-3 space-y-1">
+                {f.parts.map((p, i) => (
+                  <div key={i} className="flex items-center gap-2 text-sm bg-white p-2 rounded border">
+                    <div className="flex-1"><b>{p.name}</b> <span className="text-slate-500">× {p.qty}</span></div>
+                    <div className="text-slate-700">{fmtINR((p.qty || 1) * (p.cost || 0))}</div>
+                    <button onClick={() => removePart(i)} className="text-rose-500 hover:text-rose-700"><X className="w-4 h-4" /></button>
+                  </div>
+                ))}
+                <div className="text-xs text-slate-500 pt-1">Parts subtotal: <b>{fmtINR(partsTotal)}</b></div>
+              </div>
+            )}
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            <div>
+              <Label>Parts Cost (₹)</Label>
+              <Input type="number" value={f.cost || 0} onChange={e => set('cost', +e.target.value)} />
+            </div>
+            <div>
+              <Label>Labor Cost (₹)</Label>
+              <Input type="number" value={f.laborCost || 0} onChange={e => set('laborCost', +e.target.value)} />
+            </div>
+            <div className="bg-red-50 border border-red-100 rounded-lg p-3">
+              <Label className="text-xs">Total Cost</Label>
+              <div className="text-xl font-bold text-[#7a0d0d]">{fmtINR(grandTotal)}</div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 border-t pt-4">
+            <div>
+              <Label>Next Service KM</Label>
+              <Input type="number" value={f.nextServiceKm || ''} onChange={e => set('nextServiceKm', +e.target.value)} placeholder="e.g. 50000" />
+              {selectedVehicle && f.nextServiceKm > 0 && (
+                <div className="text-xs text-slate-500 mt-1">{(f.nextServiceKm - selectedVehicle.currentOdometer).toLocaleString()} km from now</div>
+              )}
+            </div>
+            <div>
+              <Label>Next Service Date</Label>
+              <Input type="date" value={f.nextServiceDate?.slice(0, 10) || ''} onChange={e => set('nextServiceDate', e.target.value)} />
+            </div>
+          </div>
+
+          <div>
+            <Label>Remarks</Label>
+            <Textarea value={f.remarks || ''} onChange={e => set('remarks', e.target.value)} rows={2} />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button onClick={() => onSubmit(f)} className="bg-[#7a0d0d] hover:bg-[#5c0a0a]" disabled={!f.vehicleId || !f.serviceDate}>
+            {initial ? 'Update Record' : 'Save Service Record'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
 
 function Mileage() {
   const [data, setData] = useState(null)
@@ -1601,6 +1894,7 @@ function App() {
       {active === 'drivers' && <Drivers />}
       {active === 'trips' && <Trips />}
       {active === 'fuel' && <FuelRegister />}
+      {active === 'maintenance' && <Maintenance />}
       {active === 'mileage' && <Mileage />}
       {active === 'reports' && <Reports />}
     </AdminShell>

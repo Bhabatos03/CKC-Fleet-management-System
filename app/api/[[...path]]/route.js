@@ -184,6 +184,10 @@ export async function GET(request, { params }) {
       const items = await db.collection('fuel_entries').find({}).sort({ date: -1 }).limit(500).toArray()
       return json(items.map(clean))
     }
+    if (path === 'maintenance') {
+      const items = await db.collection('maintenance').find({}).sort({ serviceDate: -1 }).toArray()
+      return json(items.map(clean))
+    }
     if (path === 'dashboard') {
       const [vehicles, trips, fuel, drivers] = await Promise.all([
         db.collection('vehicles').find({}).toArray(),
@@ -374,6 +378,37 @@ export async function POST(request, { params }) {
       await db.collection('fuel_entries').insertOne(entry)
       return json(clean(entry))
     }
+    if (path === 'maintenance') {
+      const vehicle = await db.collection('vehicles').findOne({ id: body.vehicleId })
+      if (!vehicle) return json({ error: 'Vehicle not found' }, 404)
+      const entry = {
+        id: uuidv4(),
+        vehicleId: vehicle.id, vehicleNumber: vehicle.vehicleNumber,
+        serviceDate: body.serviceDate || new Date().toISOString(),
+        odometer: Number(body.odometer || 0),
+        workshop: body.workshop || '',
+        serviceType: body.serviceType || 'General Service',
+        description: body.description || '',
+        parts: body.parts || [],
+        cost: Number(body.cost || 0),
+        laborCost: Number(body.laborCost || 0),
+        totalCost: Number(body.cost || 0) + Number(body.laborCost || 0),
+        nextServiceKm: Number(body.nextServiceKm || 0),
+        nextServiceDate: body.nextServiceDate || null,
+        invoiceNumber: body.invoiceNumber || '',
+        invoiceImage: body.invoiceImage || null,
+        remarks: body.remarks || '',
+        createdAt: new Date().toISOString(),
+      }
+      await db.collection('maintenance').insertOne(entry)
+      // Also update vehicle master
+      const update = {}
+      if (entry.nextServiceKm) update.serviceDueKm = entry.nextServiceKm
+      if (entry.nextServiceDate) update.serviceDueDate = entry.nextServiceDate
+      if (entry.odometer) update.currentOdometer = Math.max(vehicle.currentOdometer || 0, entry.odometer)
+      if (Object.keys(update).length) await db.collection('vehicles').updateOne({ id: vehicle.id }, { $set: update })
+      return json(clean(entry))
+    }
 
     return json({ error: 'Not found' }, 404)
   } catch (e) {
@@ -388,7 +423,7 @@ export async function PUT(request, { params }) {
     const pathArr = (await params).path || []
     const [col, id] = pathArr
     const body = await request.json()
-    const map = { vehicles: 'vehicles', drivers: 'drivers' }
+    const map = { vehicles: 'vehicles', drivers: 'drivers', maintenance: 'maintenance' }
     if (!map[col]) return json({ error: 'Not found' }, 404)
     delete body._id; delete body.id
     await db.collection(map[col]).updateOne({ id }, { $set: body })
@@ -403,7 +438,7 @@ export async function DELETE(request, { params }) {
     const db = await getDb()
     const pathArr = (await params).path || []
     const [col, id] = pathArr
-    const map = { vehicles: 'vehicles', drivers: 'drivers' }
+    const map = { vehicles: 'vehicles', drivers: 'drivers', maintenance: 'maintenance' }
     if (!map[col]) return json({ error: 'Not found' }, 404)
     await db.collection(map[col]).deleteOne({ id })
     return json({ ok: true })
