@@ -914,7 +914,7 @@ function Reports() {
       // Fetch logo as base64 for embedding
       let logoDataUrl = null
       try {
-        const res = await fetch('/ckc-logo.png')
+        const res = await fetch('/ckc-logo-pdf.png')
         const blob = await res.blob()
         logoDataUrl = await new Promise((resolve) => {
           const fr = new FileReader()
@@ -932,9 +932,11 @@ function Reports() {
       doc.setLineWidth(1.5)
       doc.line(0, 108, pageW, 108)
 
-      // Logo (embedded PNG)
+      // Logo (embedded PNG) with white circular backdrop for contrast
       if (logoDataUrl) {
-        doc.addImage(logoDataUrl, 'PNG', 30, 25, 60, 60)
+        doc.setFillColor(255, 255, 255)
+        doc.circle(60, 55, 32, 'F')
+        doc.addImage(logoDataUrl, 'PNG', 32, 27, 56, 56)
       }
 
       // Brand wordmark — match login page "C. Krishniah Chetty™"
