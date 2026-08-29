@@ -321,7 +321,7 @@ function AdminShell({ user, onLogout, children, active, setActive }) {
       <div className="p-5 border-b border-slate-800 flex items-center gap-3">
         <img src="/ckc-logo.png" alt="CKC" className="w-11 h-11 object-contain" />
         <div className="flex-1 min-w-0">
-          <div className="font-semibold text-sm leading-tight truncate" style={{fontFamily: '"Times New Roman", Georgia, serif', fontVariant: 'small-caps'}}>C. Krishniah <span className="text-amber-300 italic">Chetty</span></div>
+          <div className="font-semibold text-sm leading-tight truncate text-white" style={{fontFamily: '"Times New Roman", Georgia, serif'}}>C. Krishniah Chetty</div>
           <div className="text-[10px] text-amber-200/60 tracking-[0.2em] mt-0.5">FLEET · ADMIN</div>
         </div>
         <button onClick={() => setDrawerOpen(false)} className="md:hidden text-slate-300 hover:text-white p-1"><X className="w-5 h-5" /></button>
@@ -366,7 +366,7 @@ function AdminShell({ user, onLogout, children, active, setActive }) {
           <button onClick={() => setDrawerOpen(true)} className="p-1"><Menu className="w-6 h-6" /></button>
           <div className="flex items-center gap-2">
             <img src="/ckc-logo.png" alt="CKC" className="w-8 h-8 object-contain" />
-            <span className="font-semibold text-sm" style={{fontFamily: 'Georgia, serif', fontVariant: 'small-caps'}}>C. Krishniah <span className="text-amber-300 italic">Chetty</span></span>
+            <span className="font-semibold text-sm text-white" style={{fontFamily: '"Times New Roman", Georgia, serif'}}>C. Krishniah Chetty</span>
           </div>
           <Button variant="ghost" size="sm" onClick={onLogout} className="text-white p-2 hover:bg-white/10"><LogOut className="w-4 h-4" /></Button>
         </header>
@@ -1409,18 +1409,13 @@ function Reports() {
         doc.setFillColor(255, 255, 255); doc.circle(60, 55, 32, 'F')
         doc.addImage(logoDataUrl, 'PNG', 32, 27, 56, 56)
       }
-      // Brand wordmark — clean single-line with proper spacing
+      // Brand wordmark — single font, single color (white)
       const brandX = 108
       doc.setTextColor(255, 255, 255); doc.setFont('times', 'bold'); doc.setFontSize(22)
-      const part1 = 'C. KRISHNIAH'
-      doc.text(part1, brandX, 46)
-      const w1 = doc.getTextWidth(part1)
-      doc.setTextColor(252, 211, 77); doc.setFont('times', 'bolditalic')
-      const chettyX = brandX + w1 + 10
-      doc.text('Chetty', chettyX, 46)
-      const w2 = doc.getTextWidth('Chetty')
+      doc.text('C. Krishniah Chetty', brandX, 46)
+      const w1 = doc.getTextWidth('C. Krishniah Chetty')
       doc.setFont('helvetica', 'bold'); doc.setFontSize(8)
-      doc.text('TM', chettyX + w2 + 2, 34)
+      doc.text('TM', brandX + w1 + 3, 34)
       // Sub-line
       doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(252, 211, 77)
       doc.text('G R O U P    O F    J E W E L L E R S', brandX, 62)
@@ -1620,7 +1615,7 @@ function SecurityHome({ user, onLogout }) {
           {screen !== 'home' && <Button variant="ghost" size="sm" onClick={() => setScreen('home')} className="text-white hover:bg-white/10"><ArrowLeft className="w-4 h-4" /></Button>}
           <img src="/ckc-logo.png" alt="CKC" className="w-9 h-9 object-contain" />
           <div>
-            <div className="font-semibold text-sm leading-none whitespace-nowrap" style={{fontFamily: 'Georgia, serif', fontVariant: 'small-caps'}}>C. Krishniah <span className="text-amber-300 italic">Chetty</span></div>
+            <div className="font-semibold text-sm leading-none whitespace-nowrap text-white" style={{fontFamily: '"Times New Roman", Georgia, serif'}}>C. Krishniah Chetty</div>
             <div className="text-[9px] tracking-[0.25em] text-amber-200/60 mt-0.5">FLEET · SECURITY</div>
           </div>
         </div>
