@@ -1213,34 +1213,303 @@ function MaintenanceDialog({ open, onOpenChange, onSubmit, initial, vehicles }) 
 
 
 function Mileage() {
-  const [data, setData] = useState(null)
-  useEffect(() => { api('dashboard').then(setData) }, [])
-  if (!data) return <div className="p-8">Loading...</div>
+  const [trips, setTrips] = useState([])
+  const [fuel, setFuel] = useState([])
+  const [vehicles, setVehicles] = useState([])
+  const [loading, setLoading] = useState(true)
+  const today = new Date().toISOString().slice(0, 10)
+  const monthAgo = new Date(Date.now() - 30 * 864e5).toISOString().slice(0, 10)
+  const [fromDate, setFromDate] = useState(monthAgo)
+  const [toDate, setToDate] = useState(today)
+  const [vehicleFilter, setVehicleFilter] = useState('all')
+  const [generating, setGenerating] = useState(false)
+
+  useEffect(() => {
+    Promise.all([api('trips'), api('fuel'), api('vehicles')]).then(([t, f, v]) => {
+      setTrips(t); setFuel(f); setVehicles(v); setLoading(false)
+    })
+  }, [])
+
+  if (loading) return <div className="p-8">Loading...</div>
+
+  const inRange = (dstr) => dstr >= fromDate && dstr <= toDate
+
+  const perVehicle = vehicles
+    .filter(v => vehicleFilter === 'all' || v.id === vehicleFilter)
+    .map(v => {
+      const vTrips = trips.filter(t => t.vehicleId === v.id && t.kmRun && inRange(t.dateOut?.slice(0, 10)))
+      const vFuel = fuel.filter(f => f.vehicleId === v.id && inRange(f.date?.slice(0, 10)))
+      const km = vTrips.reduce((s, t) => s + t.kmRun, 0)
+      const lit = vFuel.reduce((s, f) => s + f.quantity, 0)
+      const cost = vFuel.reduce((s, f) => s + f.amount, 0)
+      const mileage = lit > 0 ? km / lit : null
+      const variance = mileage !== null ? ((mileage - v.expectedMileage) / v.expectedMileage * 100) : null
+      return {
+        id: v.id, vehicleNumber: v.vehicleNumber, make: v.make, model: v.model,
+        expectedMileage: v.expectedMileage, threshold: v.lowMileageThreshold,
+        km, litres: lit, cost, mileage, variance,
+        lowMileage: mileage !== null && mileage < v.lowMileageThreshold,
+        trips: vTrips.length, refuels: vFuel.length,
+      }
+    })
+
+  const totalKm = perVehicle.reduce((s, p) => s + p.km, 0)
+  const totalLit = perVehicle.reduce((s, p) => s + p.litres, 0)
+  const totalCost = perVehicle.reduce((s, p) => s + p.cost, 0)
+  const avgMileage = totalLit > 0 ? (totalKm / totalLit).toFixed(2) : 'N/A'
+  const lowCount = perVehicle.filter(p => p.lowMileage).length
+
+  const applyPreset = (p) => {
+    const now = new Date()
+    if (p === 'today') { setFromDate(today); setToDate(today) }
+    else if (p === '7d') { setFromDate(new Date(Date.now() - 7 * 864e5).toISOString().slice(0, 10)); setToDate(today) }
+    else if (p === '30d') { setFromDate(monthAgo); setToDate(today) }
+    else if (p === 'month') { setFromDate(new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10)); setToDate(today) }
+    else if (p === 'year') { setFromDate(new Date(now.getFullYear(), 0, 1).toISOString().slice(0, 10)); setToDate(today) }
+  }
+
+  const exportExcel = async () => {
+    const summaryRows = [
+      ['Period', `${fromDate} to ${toDate}`],
+      ['Vehicle Filter', vehicleFilter === 'all' ? 'All Vehicles' : vehicles.find(v => v.id === vehicleFilter)?.vehicleNumber],
+      ['Total KM', totalKm],
+      ['Total Fuel (L)', totalLit.toFixed(2)],
+      ['Total Fuel Cost', totalCost.toFixed(2)],
+      ['Avg Fleet Mileage (km/L)', avgMileage],
+      ['Low Mileage Vehicles', lowCount],
+    ]
+    const detailHeaders = ['Vehicle', 'Make/Model', 'Trips', 'KM Run', 'Refuels', 'Litres', 'Fuel Cost', 'Actual km/L', 'Expected km/L', 'Threshold', 'Variance %', 'Status']
+    const detailRows = perVehicle.map(p => [
+      p.vehicleNumber, `${p.make || ''} ${p.model || ''}`.trim(),
+      p.trips, p.km, p.refuels, p.litres.toFixed(2), p.cost.toFixed(2),
+      p.mileage !== null ? p.mileage.toFixed(2) : 'Insufficient Data',
+      p.expectedMileage, p.threshold,
+      p.variance !== null ? p.variance.toFixed(1) + '%' : '-',
+      p.lowMileage ? 'LOW MILEAGE' : (p.mileage !== null ? 'OK' : 'N/A'),
+    ])
+    await exportXlsx(`CKC-Mileage-Report-${fromDate}_to_${toDate}.xlsx`, [
+      { name: 'Summary', headers: ['Metric', 'Value'], rows: summaryRows },
+      { name: 'Per-Vehicle Mileage', headers: detailHeaders, rows: detailRows },
+    ])
+    toast.success('Excel downloaded')
+  }
+
+  const generatePDF = async () => {
+    setGenerating(true)
+    try {
+      const { jsPDF } = await import('jspdf')
+      const autoTable = (await import('jspdf-autotable')).default
+      const doc = new jsPDF({ unit: 'pt', format: 'a4' })
+      const pageW = doc.internal.pageSize.getWidth()
+      const now = new Date()
+      const rangeStr = fromDate === toDate ? new Date(fromDate).toLocaleDateString('en-IN') : `${new Date(fromDate).toLocaleDateString('en-IN')} — ${new Date(toDate).toLocaleDateString('en-IN')}`
+      const vehLabel = vehicleFilter === 'all' ? 'All Vehicles' : vehicles.find(v => v.id === vehicleFilter)?.vehicleNumber
+
+      let logoDataUrl = null
+      try {
+        const res = await fetch('/ckc-logo-pdf.png')
+        const blob = await res.blob()
+        logoDataUrl = await new Promise((r) => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(blob) })
+      } catch {}
+
+      // Header (same style as Reports page)
+      doc.setFillColor(58, 6, 6); doc.rect(0, 0, pageW, 110, 'F')
+      doc.setDrawColor(217, 119, 6); doc.setLineWidth(1.5); doc.line(0, 108, pageW, 108)
+      if (logoDataUrl) {
+        doc.setFillColor(255, 255, 255); doc.circle(60, 55, 32, 'F')
+        doc.addImage(logoDataUrl, 'PNG', 32, 27, 56, 56)
+      }
+      const brandX = 108
+      doc.setTextColor(255, 255, 255); doc.setFont('times', 'bold'); doc.setFontSize(22)
+      doc.text('C. Krishniah Chetty', brandX, 46)
+      const w1 = doc.getTextWidth('C. Krishniah Chetty')
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(8)
+      doc.text('TM', brandX + w1 + 3, 34)
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(252, 211, 77)
+      doc.text('G R O U P    O F    J E W E L L E R S', brandX, 62)
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(255, 255, 255)
+      doc.text('Fleet Management System — Mileage Report', brandX, 86)
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(252, 211, 77)
+      doc.text(`Period:  ${rangeStr}`, pageW - 30, 36, { align: 'right' })
+      doc.text(`Vehicle: ${vehLabel}`, pageW - 30, 50, { align: 'right' })
+      doc.text(`Generated: ${now.toLocaleString('en-IN')}`, pageW - 30, 64, { align: 'right' })
+      doc.setTextColor(255, 255, 255); doc.setFontSize(7)
+      doc.text('EST. 1869  ·  HERITAGE JEWELLERS', pageW - 30, 86, { align: 'right' })
+
+      doc.setTextColor(15, 23, 42)
+      let y = 135
+
+      // Summary
+      doc.setFontSize(13); doc.setFont('helvetica', 'bold')
+      doc.text('Fleet Mileage Summary', 30, y); y += 8
+      doc.setDrawColor(217, 119, 6); doc.setLineWidth(2); doc.line(30, y, 130, y); y += 15
+      autoTable(doc, {
+        startY: y,
+        head: [['Metric', 'Value']],
+        body: [
+          ['Total KM Travelled', totalKm.toLocaleString('en-IN') + ' km'],
+          ['Total Fuel Consumed', totalLit.toFixed(2) + ' L'],
+          ['Total Fuel Cost', 'Rs. ' + totalCost.toLocaleString('en-IN')],
+          ['Average Fleet Mileage', avgMileage + ' km/L'],
+          ['Vehicles Below Threshold', lowCount],
+        ],
+        theme: 'grid', headStyles: { fillColor: [139, 20, 20], textColor: 255 },
+        styles: { fontSize: 10 }, margin: { left: 30, right: 30 },
+      })
+      y = doc.lastAutoTable.finalY + 20
+
+      // Per-vehicle table
+      if (y > 620) { doc.addPage(); y = 40 }
+      doc.setFontSize(13); doc.setFont('helvetica', 'bold')
+      doc.text('Per-Vehicle Mileage', 30, y); y += 12
+
+      autoTable(doc, {
+        startY: y,
+        head: [['Vehicle', 'Trips', 'KM', 'Litres', 'Actual', 'Expected', 'Variance', 'Status']],
+        body: perVehicle.map(p => [
+          p.vehicleNumber, p.trips, p.km, p.litres.toFixed(1),
+          p.mileage !== null ? p.mileage.toFixed(2) : 'N/A',
+          p.expectedMileage,
+          p.variance !== null ? p.variance.toFixed(1) + '%' : '-',
+          p.lowMileage ? 'LOW' : (p.mileage !== null ? 'OK' : 'N/A'),
+        ]),
+        theme: 'striped', headStyles: { fillColor: [139, 20, 20] },
+        styles: { fontSize: 9 }, margin: { left: 30, right: 30 },
+        didParseCell: (h) => {
+          if (h.section === 'body' && h.column.index === 7 && h.cell.raw === 'LOW') {
+            h.cell.styles.textColor = [220, 38, 38]; h.cell.styles.fontStyle = 'bold'
+          }
+        },
+      })
+      y = doc.lastAutoTable.finalY + 20
+
+      // Low mileage detail (if any)
+      const lowVehicles = perVehicle.filter(p => p.lowMileage)
+      if (lowVehicles.length > 0) {
+        if (y > 680) { doc.addPage(); y = 40 }
+        doc.setFontSize(13); doc.setFont('helvetica', 'bold'); doc.setTextColor(220, 38, 38)
+        doc.text('Low Mileage Investigation Required', 30, y); y += 12
+        doc.setTextColor(15, 23, 42)
+        autoTable(doc, {
+          startY: y,
+          head: [['Vehicle', 'Expected km/L', 'Threshold', 'Actual km/L', 'Variance', 'Fuel Wastage Est.']],
+          body: lowVehicles.map(p => {
+            const wastedLit = p.mileage ? (p.km / p.threshold) - p.litres : 0
+            return [
+              p.vehicleNumber, p.expectedMileage, p.threshold,
+              p.mileage.toFixed(2),
+              p.variance.toFixed(1) + '%',
+              wastedLit > 0 ? wastedLit.toFixed(1) + ' L extra' : '-',
+            ]
+          }),
+          theme: 'grid', headStyles: { fillColor: [220, 38, 38] },
+          styles: { fontSize: 9 }, margin: { left: 30, right: 30 },
+        })
+      }
+
+      const pageCount = doc.internal.getNumberOfPages()
+      for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i)
+        const pageH = doc.internal.pageSize.getHeight()
+        doc.setDrawColor(217, 119, 6); doc.setLineWidth(0.5); doc.line(30, pageH - 32, pageW - 30, pageH - 32)
+        doc.setFontSize(8); doc.setTextColor(120); doc.setFont('helvetica', 'normal')
+        doc.text('C. Krishniah Chetty (TM) Group of Jewellers  ·  Fleet Management System  ·  Confidential', 30, pageH - 20)
+        doc.text(`Page ${i} of ${pageCount}`, pageW - 30, pageH - 20, { align: 'right' })
+      }
+
+      doc.save(`CKC-Mileage-Report-${fromDate}_to_${toDate}.pdf`)
+      toast.success('PDF generated')
+    } catch (e) { console.error(e); toast.error('PDF failed: ' + e.message) }
+    finally { setGenerating(false) }
+  }
+
   return (
     <div className="p-6 space-y-4">
-      <div><h1 className="text-3xl font-bold text-slate-900 relative inline-block">Mileage Analytics<span className="absolute -bottom-1 left-0 w-16 h-1 bg-gradient-to-r from-[#7a0d0d] to-amber-500 rounded-full" /></h1><p className="text-slate-500 mt-2">Per-vehicle 30-day mileage</p></div>
-      <Card><CardContent className="p-4"><Table>
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div><h1 className="text-3xl font-bold text-slate-900 relative inline-block">Mileage Analytics<span className="absolute -bottom-1 left-0 w-16 h-1 bg-gradient-to-r from-[#7a0d0d] to-amber-500 rounded-full" /></h1><p className="text-slate-500 mt-2">Per-vehicle mileage for any date range</p></div>
+      </div>
+
+      <Card>
+        <CardContent className="p-6 space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+            <div>
+              <Label className="text-xs text-slate-500 tracking-wider uppercase">From Date</Label>
+              <Input type="date" value={fromDate} onChange={e => setFromDate(e.target.value)} max={toDate} />
+            </div>
+            <div>
+              <Label className="text-xs text-slate-500 tracking-wider uppercase">To Date</Label>
+              <Input type="date" value={toDate} onChange={e => setToDate(e.target.value)} min={fromDate} max={today} />
+            </div>
+            <div>
+              <Label className="text-xs text-slate-500 tracking-wider uppercase">Vehicle</Label>
+              <Select value={vehicleFilter} onValueChange={setVehicleFilter}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Vehicles</SelectItem>
+                  {vehicles.map(v => <SelectItem key={v.id} value={v.id}>{v.vehicleNumber}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-end gap-2">
+              <Button onClick={generatePDF} disabled={generating} className="flex-1 h-10 bg-gradient-to-r from-[#7a0d0d] to-[#a01414] hover:brightness-110 text-white">
+                <FileText className="w-4 h-4 mr-1" /> {generating ? '...' : 'PDF'}
+              </Button>
+              <Button onClick={exportExcel} className="flex-1 h-10 bg-emerald-600 hover:bg-emerald-700 text-white">
+                <FileSpreadsheet className="w-4 h-4 mr-1" /> Excel
+              </Button>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2 text-xs">
+            <button onClick={() => applyPreset('today')} className="px-3 py-1 rounded-full bg-slate-100 hover:bg-red-100 hover:text-red-800 border">Today</button>
+            <button onClick={() => applyPreset('7d')} className="px-3 py-1 rounded-full bg-slate-100 hover:bg-red-100 hover:text-red-800 border">Last 7 days</button>
+            <button onClick={() => applyPreset('30d')} className="px-3 py-1 rounded-full bg-slate-100 hover:bg-red-100 hover:text-red-800 border">Last 30 days</button>
+            <button onClick={() => applyPreset('month')} className="px-3 py-1 rounded-full bg-slate-100 hover:bg-red-100 hover:text-red-800 border">This Month</button>
+            <button onClick={() => applyPreset('year')} className="px-3 py-1 rounded-full bg-slate-100 hover:bg-red-100 hover:text-red-800 border">This Year</button>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3 pt-3 border-t">
+            <div className="p-3 bg-red-50 border border-red-100 rounded-lg"><div className="text-xs text-slate-500">Total KM</div><div className="text-xl font-bold text-[#7a0d0d]">{totalKm.toLocaleString()}</div></div>
+            <div className="p-3 bg-amber-50 border border-amber-100 rounded-lg"><div className="text-xs text-slate-500">Fuel (L)</div><div className="text-xl font-bold text-amber-700">{totalLit.toFixed(1)}</div></div>
+            <div className="p-3 bg-amber-50 border border-amber-100 rounded-lg"><div className="text-xs text-slate-500">Fuel Cost</div><div className="text-xl font-bold text-amber-700">{fmtINR(totalCost)}</div></div>
+            <div className="p-3 bg-slate-50 rounded-lg"><div className="text-xs text-slate-500">Avg Mileage</div><div className="text-xl font-bold">{avgMileage}<span className="text-sm text-slate-500 ml-1">km/L</span></div></div>
+            <div className={`p-3 rounded-lg border ${lowCount > 0 ? 'bg-rose-50 border-rose-200' : 'bg-slate-50 border-slate-100'}`}><div className="text-xs text-slate-500">Low Mileage</div><div className={`text-xl font-bold ${lowCount > 0 ? 'text-rose-600' : ''}`}>{lowCount}</div></div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card><CardContent className="p-4"><div className="overflow-x-auto"><Table>
         <TableHeader><TableRow>
-          <TableHead>Vehicle</TableHead><TableHead>KM (30d)</TableHead><TableHead>Litres</TableHead>
-          <TableHead>Actual km/L</TableHead><TableHead>Expected</TableHead><TableHead>Variance</TableHead><TableHead>Status</TableHead>
+          <TableHead>Vehicle</TableHead><TableHead>Trips</TableHead><TableHead>KM</TableHead>
+          <TableHead>Litres</TableHead><TableHead>Fuel Cost</TableHead>
+          <TableHead>Actual km/L</TableHead><TableHead>Expected</TableHead><TableHead>Variance</TableHead>
+          <TableHead>Status</TableHead>
         </TableRow></TableHeader>
         <TableBody>
-          {data.perVehicle.map(v => {
-            const variance = v.actualMileage ? ((v.actualMileage - v.expectedMileage) / v.expectedMileage * 100) : null
-            return (
-              <TableRow key={v.id}>
-                <TableCell className="font-semibold">{v.vehicleNumber}</TableCell>
-                <TableCell>{v.km}</TableCell>
-                <TableCell>{v.litres.toFixed(1)}</TableCell>
-                <TableCell className={v.lowMileage ? 'text-rose-600 font-bold' : 'font-semibold'}>{v.actualMileage ? v.actualMileage.toFixed(2) : 'Insufficient Data'}</TableCell>
-                <TableCell>{v.expectedMileage}</TableCell>
-                <TableCell className={variance < 0 ? 'text-rose-600' : 'text-emerald-600'}>{variance !== null ? `${variance.toFixed(1)}%` : '-'}</TableCell>
-                <TableCell>{v.lowMileage ? <Badge variant="destructive">Low Mileage</Badge> : v.actualMileage ? <Badge className="bg-emerald-500">OK</Badge> : <Badge variant="secondary">N/A</Badge>}</TableCell>
-              </TableRow>
-            )
-          })}
+          {perVehicle.map(v => (
+            <TableRow key={v.id}>
+              <TableCell className="font-semibold">{v.vehicleNumber}</TableCell>
+              <TableCell>{v.trips}</TableCell>
+              <TableCell>{v.km.toLocaleString()}</TableCell>
+              <TableCell>{v.litres.toFixed(1)}</TableCell>
+              <TableCell>{fmtINR(v.cost)}</TableCell>
+              <TableCell className={v.lowMileage ? 'text-rose-600 font-bold' : 'font-semibold'}>
+                {v.mileage !== null ? v.mileage.toFixed(2) : <span className="text-slate-400 text-xs italic">Insufficient Data</span>}
+              </TableCell>
+              <TableCell>{v.expectedMileage}</TableCell>
+              <TableCell className={v.variance !== null ? (v.variance < 0 ? 'text-rose-600' : 'text-emerald-600') : ''}>
+                {v.variance !== null ? `${v.variance.toFixed(1)}%` : '-'}
+              </TableCell>
+              <TableCell>
+                {v.lowMileage ? <Badge variant="destructive">Low Mileage</Badge> :
+                  v.mileage !== null ? <Badge className="bg-emerald-500 hover:bg-emerald-600">OK</Badge> :
+                  <Badge variant="secondary">N/A</Badge>}
+              </TableCell>
+            </TableRow>
+          ))}
+          {perVehicle.length === 0 && (
+            <TableRow><TableCell colSpan={9} className="text-center text-slate-500 py-8">No data for selected filters.</TableCell></TableRow>
+          )}
         </TableBody>
-      </Table></CardContent></Card>
+      </Table></div></CardContent></Card>
     </div>
   )
 }
