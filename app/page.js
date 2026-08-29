@@ -656,28 +656,63 @@ function DriverDialog({ open, onOpenChange, onSubmit, initial }) {
 function Trips() {
   const [items, setItems] = useState([])
   const [search, setSearch] = useState('')
+  const today = new Date().toISOString().slice(0, 10)
+  const monthAgo = new Date(Date.now() - 30 * 864e5).toISOString().slice(0, 10)
+  const [fromDate, setFromDate] = useState(monthAgo)
+  const [toDate, setToDate] = useState(today)
   useEffect(() => { api('trips').then(setItems) }, [])
-  const filtered = items.filter(t => !search ||
-    t.vehicleNumber?.toLowerCase().includes(search.toLowerCase()) ||
-    t.driverName?.toLowerCase().includes(search.toLowerCase()) ||
-    t.destination?.toLowerCase().includes(search.toLowerCase()))
+  const filtered = items.filter(t => {
+    const d = t.dateOut?.slice(0, 10)
+    if (fromDate && d < fromDate) return false
+    if (toDate && d > toDate) return false
+    if (search) {
+      const s = search.toLowerCase()
+      if (!(t.vehicleNumber?.toLowerCase().includes(s) || t.driverName?.toLowerCase().includes(s) || t.destination?.toLowerCase().includes(s))) return false
+    }
+    return true
+  })
   const exportCsv = () => {
     const headers = ['Trip ID', 'Date', 'Vehicle', 'Driver', 'Time Out', 'Time In', 'Odo Out', 'Odo In', 'KM Run', 'Destination', 'Status']
     const rows = filtered.map(t => [t.tripId, fmtDate(t.dateOut), t.vehicleNumber, t.driverName, fmtDT(t.dateOut), fmtDT(t.timeIn), t.odometerOut, t.odometerIn, t.kmRun, t.destination, t.status])
     const csv = [headers, ...rows].map(r => r.map(c => `"${c ?? ''}"`).join(',')).join('\n')
     const blob = new Blob([csv], { type: 'text/csv' })
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `trips-${Date.now()}.csv`; a.click()
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `trips-${fromDate}_to_${toDate}.csv`; a.click()
   }
+  const totalKm = filtered.reduce((s, t) => s + (t.kmRun || 0), 0)
   return (
     <div className="p-6 space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div><h1 className="text-3xl font-bold text-slate-900">Trip Register</h1><p className="text-slate-500">Vehicle movement history</p></div>
         <Button onClick={exportCsv} variant="outline"><Download className="w-4 h-4 mr-2" /> Export CSV</Button>
       </div>
-      <Card><CardContent className="p-4">
-        <div className="mb-4 relative max-w-sm">
-          <Search className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
-          <Input placeholder="Search..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
+      <Card><CardContent className="p-4 space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+          <div>
+            <Label className="text-xs text-slate-500">From Date</Label>
+            <Input type="date" value={fromDate} onChange={e => setFromDate(e.target.value)} max={toDate} />
+          </div>
+          <div>
+            <Label className="text-xs text-slate-500">To Date</Label>
+            <Input type="date" value={toDate} onChange={e => setToDate(e.target.value)} min={fromDate} max={today} />
+          </div>
+          <div className="md:col-span-2">
+            <Label className="text-xs text-slate-500">Search</Label>
+            <div className="relative">
+              <Search className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
+              <Input placeholder="Vehicle, driver, destination..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
+            </div>
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-2 text-xs">
+          <button onClick={() => { setFromDate(today); setToDate(today) }} className="px-3 py-1 rounded-full bg-slate-100 hover:bg-red-100 hover:text-red-800 border">Today</button>
+          <button onClick={() => { setFromDate(new Date(Date.now() - 7 * 864e5).toISOString().slice(0, 10)); setToDate(today) }} className="px-3 py-1 rounded-full bg-slate-100 hover:bg-red-100 hover:text-red-800 border">Last 7 days</button>
+          <button onClick={() => { setFromDate(monthAgo); setToDate(today) }} className="px-3 py-1 rounded-full bg-slate-100 hover:bg-red-100 hover:text-red-800 border">Last 30 days</button>
+          <button onClick={() => { const d = new Date(); setFromDate(new Date(d.getFullYear(), d.getMonth(), 1).toISOString().slice(0,10)); setToDate(today) }} className="px-3 py-1 rounded-full bg-slate-100 hover:bg-red-100 hover:text-red-800 border">This Month</button>
+          <button onClick={() => { const d = new Date(); setFromDate(new Date(d.getFullYear(), 0, 1).toISOString().slice(0,10)); setToDate(today) }} className="px-3 py-1 rounded-full bg-slate-100 hover:bg-red-100 hover:text-red-800 border">This Year</button>
+        </div>
+        <div className="flex gap-4 text-sm bg-slate-50 rounded-lg p-3">
+          <div><span className="text-slate-500">Trips: </span><b>{filtered.length}</b></div>
+          <div><span className="text-slate-500">Total KM: </span><b>{totalKm.toLocaleString()}</b></div>
         </div>
         <div className="overflow-x-auto"><Table>
           <TableHeader><TableRow>
@@ -686,7 +721,7 @@ function Trips() {
             <TableHead>Destination</TableHead><TableHead>Status</TableHead>
           </TableRow></TableHeader>
           <TableBody>
-            {filtered.slice(0, 100).map(t => (
+            {filtered.slice(0, 200).map(t => (
               <TableRow key={t.id}>
                 <TableCell className="font-mono text-xs">{t.tripId}</TableCell>
                 <TableCell className="font-semibold">{t.vehicleNumber}</TableCell>
@@ -708,28 +743,63 @@ function Trips() {
 function FuelRegister() {
   const [items, setItems] = useState([])
   const [viewImg, setViewImg] = useState(null)
+  const today = new Date().toISOString().slice(0, 10)
+  const monthAgo = new Date(Date.now() - 30 * 864e5).toISOString().slice(0, 10)
+  const [fromDate, setFromDate] = useState(monthAgo)
+  const [toDate, setToDate] = useState(today)
   useEffect(() => { api('fuel').then(setItems) }, [])
+  const filtered = items.filter(t => {
+    const d = t.date?.slice(0, 10)
+    if (fromDate && d < fromDate) return false
+    if (toDate && d > toDate) return false
+    return true
+  })
+  const totalLit = filtered.reduce((s, f) => s + f.quantity, 0)
+  const totalCost = filtered.reduce((s, f) => s + f.amount, 0)
   const exportCsv = () => {
     const headers = ['Date', 'Vehicle', 'Odometer', 'Quantity(L)', 'Rate', 'Amount', 'Station', 'Receipt']
-    const rows = items.map(t => [fmtDate(t.date), t.vehicleNumber, t.odometer, t.quantity, t.rate, t.amount, t.station, t.receiptNumber])
+    const rows = filtered.map(t => [fmtDate(t.date), t.vehicleNumber, t.odometer, t.quantity, t.rate, t.amount, t.station, t.receiptNumber])
     const csv = [headers, ...rows].map(r => r.map(c => `"${c ?? ''}"`).join(',')).join('\n')
     const blob = new Blob([csv], { type: 'text/csv' })
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `fuel-${Date.now()}.csv`; a.click()
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `fuel-${fromDate}_to_${toDate}.csv`; a.click()
   }
   return (
     <div className="p-6 space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div><h1 className="text-3xl font-bold text-slate-900">Fuel Register</h1><p className="text-slate-500">All fuel filling entries</p></div>
         <Button onClick={exportCsv} variant="outline"><Download className="w-4 h-4 mr-2" /> Export CSV</Button>
       </div>
-      <Card><CardContent className="p-4"><div className="overflow-x-auto"><Table>
+      <Card><CardContent className="p-4 space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+          <div>
+            <Label className="text-xs text-slate-500">From Date</Label>
+            <Input type="date" value={fromDate} onChange={e => setFromDate(e.target.value)} max={toDate} />
+          </div>
+          <div>
+            <Label className="text-xs text-slate-500">To Date</Label>
+            <Input type="date" value={toDate} onChange={e => setToDate(e.target.value)} min={fromDate} max={today} />
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-2 text-xs">
+          <button onClick={() => { setFromDate(today); setToDate(today) }} className="px-3 py-1 rounded-full bg-slate-100 hover:bg-red-100 hover:text-red-800 border">Today</button>
+          <button onClick={() => { setFromDate(new Date(Date.now() - 7 * 864e5).toISOString().slice(0, 10)); setToDate(today) }} className="px-3 py-1 rounded-full bg-slate-100 hover:bg-red-100 hover:text-red-800 border">Last 7 days</button>
+          <button onClick={() => { setFromDate(monthAgo); setToDate(today) }} className="px-3 py-1 rounded-full bg-slate-100 hover:bg-red-100 hover:text-red-800 border">Last 30 days</button>
+          <button onClick={() => { const d = new Date(); setFromDate(new Date(d.getFullYear(), d.getMonth(), 1).toISOString().slice(0,10)); setToDate(today) }} className="px-3 py-1 rounded-full bg-slate-100 hover:bg-red-100 hover:text-red-800 border">This Month</button>
+          <button onClick={() => { const d = new Date(); setFromDate(new Date(d.getFullYear(), 0, 1).toISOString().slice(0,10)); setToDate(today) }} className="px-3 py-1 rounded-full bg-slate-100 hover:bg-red-100 hover:text-red-800 border">This Year</button>
+        </div>
+        <div className="flex flex-wrap gap-4 text-sm bg-slate-50 rounded-lg p-3">
+          <div><span className="text-slate-500">Entries: </span><b>{filtered.length}</b></div>
+          <div><span className="text-slate-500">Total Litres: </span><b>{totalLit.toFixed(1)} L</b></div>
+          <div><span className="text-slate-500">Total Cost: </span><b>{fmtINR(totalCost)}</b></div>
+        </div>
+        <div className="overflow-x-auto"><Table>
         <TableHeader><TableRow>
           <TableHead>Date</TableHead><TableHead>Vehicle</TableHead><TableHead>Odometer</TableHead>
           <TableHead>Qty (L)</TableHead><TableHead>Rate</TableHead><TableHead>Amount</TableHead>
           <TableHead>Station</TableHead><TableHead>Receipt</TableHead><TableHead>Photo</TableHead>
         </TableRow></TableHeader>
         <TableBody>
-          {items.slice(0, 100).map(t => (
+          {filtered.slice(0, 200).map(t => (
             <TableRow key={t.id}>
               <TableCell className="text-xs">{fmtDate(t.date)}</TableCell>
               <TableCell className="font-semibold">{t.vehicleNumber}</TableCell>
@@ -749,7 +819,8 @@ function FuelRegister() {
             </TableRow>
           ))}
         </TableBody>
-      </Table></div></CardContent></Card>
+      </Table></div>
+      </CardContent></Card>
       <Dialog open={!!viewImg} onOpenChange={(v) => !v && setViewImg(null)}>
         <DialogContent className="max-w-3xl">
           <DialogHeader><DialogTitle>Receipt Photo</DialogTitle></DialogHeader>
@@ -799,6 +870,11 @@ function Reports() {
   const [fuel, setFuel] = useState([])
   const [vehicles, setVehicles] = useState([])
   const [generating, setGenerating] = useState(false)
+  const today = new Date().toISOString().slice(0, 10)
+  const [fromDate, setFromDate] = useState(today)
+  const [toDate, setToDate] = useState(today)
+  const [preset, setPreset] = useState('daily')
+
   useEffect(() => {
     api('dashboard').then(setData)
     api('trips').then(setTrips)
@@ -807,7 +883,23 @@ function Reports() {
   }, [])
   if (!data) return <div className="p-8">Loading...</div>
 
-  const generatePDF = async (type) => {
+  const applyPreset = (p) => {
+    setPreset(p)
+    const now = new Date()
+    if (p === 'daily') { setFromDate(today); setToDate(today) }
+    else if (p === 'weekly') { setFromDate(new Date(Date.now() - 7 * 864e5).toISOString().slice(0, 10)); setToDate(today) }
+    else if (p === 'monthly') { setFromDate(new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10)); setToDate(today) }
+    else if (p === 'annually') { setFromDate(new Date(now.getFullYear(), 0, 1).toISOString().slice(0, 10)); setToDate(today) }
+  }
+
+  const filteredTrips = trips.filter(t => { const d = t.dateOut?.slice(0, 10); return d >= fromDate && d <= toDate })
+  const filteredFuel = fuel.filter(f => { const d = f.date?.slice(0, 10); return d >= fromDate && d <= toDate })
+  const kmTotal = filteredTrips.reduce((s, t) => s + (t.kmRun || 0), 0)
+  const litTotal = filteredFuel.reduce((s, f) => s + f.quantity, 0)
+  const costTotal = filteredFuel.reduce((s, f) => s + f.amount, 0)
+  const avgMileage = litTotal > 0 ? (kmTotal / litTotal).toFixed(2) : 'N/A'
+
+  const generatePDF = async () => {
     setGenerating(true)
     try {
       const { jsPDF } = await import('jspdf')
@@ -815,98 +907,82 @@ function Reports() {
       const doc = new jsPDF({ unit: 'pt', format: 'a4' })
       const pageW = doc.internal.pageSize.getWidth()
       const now = new Date()
-      const isDaily = type === 'daily'
-      const todayStr = now.toISOString().slice(0, 10)
-      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+      const titleMap = { daily: 'Daily Report', weekly: 'Weekly Report', monthly: 'Monthly Report', annually: 'Annual Report', custom: 'Custom Report' }
+      const title = titleMap[preset] || 'Custom Report'
+      const rangeStr = fromDate === toDate ? new Date(fromDate).toLocaleDateString('en-IN') : `${new Date(fromDate).toLocaleDateString('en-IN')} — ${new Date(toDate).toLocaleDateString('en-IN')}`
 
-      const filterFn = (dateStr) => {
-        const d = new Date(dateStr)
-        return isDaily ? dateStr?.slice(0, 10) === todayStr : d >= monthStart
-      }
-      const tripsFiltered = trips.filter(t => filterFn(t.dateOut))
-      const fuelFiltered = fuel.filter(f => filterFn(f.date))
+      // Header
+      doc.setFillColor(139, 20, 20)
+      doc.rect(0, 0, pageW, 100, 'F')
+      doc.setFillColor(255, 255, 255)
+      doc.roundedRect(30, 22, 56, 56, 6, 6, 'F')
+      doc.setTextColor(139, 20, 20)
+      doc.setFontSize(22); doc.setFont('helvetica', 'bold')
+      doc.text('C', 58, 62, { align: 'center' })
 
-      // Header - branded
-      doc.setFillColor(15, 23, 42)
-      doc.rect(0, 0, pageW, 90, 'F')
-      // Gold logo tile
-      doc.setFillColor(251, 191, 36)
-      doc.roundedRect(30, 22, 46, 46, 8, 8, 'F')
       doc.setTextColor(255, 255, 255)
+      doc.setFontSize(18); doc.setFont('helvetica', 'bold')
+      doc.text('C. Krishniah Chetty Jewellers Pvt. Ltd.', 100, 46)
+      doc.setFontSize(11); doc.setFont('helvetica', 'normal')
+      doc.text('Fleet Management — ' + title, 100, 65)
       doc.setFontSize(9)
-      doc.text('CKC', 53, 50, { align: 'center' })
-      doc.setFontSize(18)
-      doc.setFont('helvetica', 'bold')
-      doc.text('C Krishniah Chetty Jewellers Pvt. Ltd.', 90, 42)
-      doc.setFontSize(11)
-      doc.setFont('helvetica', 'normal')
-      doc.text('Fleet Management — ' + (isDaily ? 'Daily Report' : 'Monthly Report'), 90, 60)
-      doc.setFontSize(9)
-      doc.text(`Generated: ${now.toLocaleString('en-IN')}`, 90, 76)
+      doc.text(`Period: ${rangeStr}   |   Generated: ${now.toLocaleString('en-IN')}`, 100, 82)
 
-      // Reset text
       doc.setTextColor(15, 23, 42)
-      let y = 115
+      let y = 125
 
-      // Summary section
+      // Summary
       doc.setFontSize(13); doc.setFont('helvetica', 'bold')
-      doc.text(isDaily ? "Today's Summary" : "Monthly Summary", 30, y); y += 10
-      doc.setDrawColor(251, 191, 36); doc.setLineWidth(2)
+      doc.text('Summary', 30, y); y += 8
+      doc.setDrawColor(217, 119, 6); doc.setLineWidth(2)
       doc.line(30, y, 90, y); y += 15
 
-      const kmTotal = tripsFiltered.reduce((s, t) => s + (t.kmRun || 0), 0)
-      const fuelLit = fuelFiltered.reduce((s, f) => s + f.quantity, 0)
-      const fuelCost = fuelFiltered.reduce((s, f) => s + f.amount, 0)
-      const avgMileage = fuelLit > 0 ? (kmTotal / fuelLit).toFixed(2) : 'N/A'
-
-      const summaryRows = [
-        ['Total Trips', tripsFiltered.length],
-        ['KM Travelled', kmTotal + ' km'],
-        ['Fuel Consumed', fuelLit.toFixed(2) + ' L'],
-        ['Fuel Cost', '₹' + fuelCost.toLocaleString('en-IN')],
-        ['Avg Mileage', avgMileage + ' km/L'],
-      ]
       autoTable(doc, {
         startY: y,
         head: [['Metric', 'Value']],
-        body: summaryRows,
+        body: [
+          ['Total Trips', filteredTrips.length],
+          ['KM Travelled', kmTotal.toLocaleString('en-IN') + ' km'],
+          ['Fuel Consumed', litTotal.toFixed(2) + ' L'],
+          ['Fuel Cost', '₹' + costTotal.toLocaleString('en-IN')],
+          ['Avg Mileage', avgMileage + ' km/L'],
+        ],
         theme: 'grid',
-        headStyles: { fillColor: [15, 23, 42], textColor: 255 },
+        headStyles: { fillColor: [139, 20, 20], textColor: 255 },
         styles: { fontSize: 10 },
         margin: { left: 30, right: 30 },
       })
-      y = doc.lastAutoTable.finalY + 20
+      y = doc.lastAutoTable.finalY + 25
 
-      // Trips table
-      if (tripsFiltered.length) {
+      // Trips
+      if (filteredTrips.length) {
+        if (y > 700) { doc.addPage(); y = 40 }
         doc.setFontSize(13); doc.setFont('helvetica', 'bold')
-        doc.text('Vehicle Movements', 30, y); y += 5
-        doc.line(30, y + 3, 130, y + 3); y += 12
+        doc.text('Vehicle Movements', 30, y); y += 12
         autoTable(doc, {
           startY: y,
           head: [['Trip ID', 'Vehicle', 'Driver', 'Out', 'In', 'KM', 'Destination']],
-          body: tripsFiltered.slice(0, 50).map(t => [
+          body: filteredTrips.slice(0, 200).map(t => [
             t.tripId, t.vehicleNumber, t.driverName || '-',
             new Date(t.dateOut).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }),
             t.timeIn ? new Date(t.timeIn).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '-',
             t.kmRun || '-', t.destination || '-',
           ]),
-          theme: 'striped', headStyles: { fillColor: [15, 23, 42] },
+          theme: 'striped', headStyles: { fillColor: [139, 20, 20] },
           styles: { fontSize: 8 }, margin: { left: 30, right: 30 },
         })
-        y = doc.lastAutoTable.finalY + 20
+        y = doc.lastAutoTable.finalY + 25
       }
 
-      // Fuel table
-      if (fuelFiltered.length) {
+      // Fuel
+      if (filteredFuel.length) {
         if (y > 700) { doc.addPage(); y = 40 }
         doc.setFontSize(13); doc.setFont('helvetica', 'bold')
-        doc.text('Fuel Entries', 30, y); y += 5
-        doc.line(30, y + 3, 100, y + 3); y += 12
+        doc.text('Fuel Entries', 30, y); y += 12
         autoTable(doc, {
           startY: y,
           head: [['Date', 'Vehicle', 'Odometer', 'Qty (L)', 'Rate', 'Amount', 'Station']],
-          body: fuelFiltered.slice(0, 50).map(f => [
+          body: filteredFuel.slice(0, 200).map(f => [
             new Date(f.date).toLocaleDateString('en-IN'),
             f.vehicleNumber, f.odometer?.toLocaleString() || '-',
             f.quantity, '₹' + f.rate,
@@ -916,11 +992,11 @@ function Reports() {
           theme: 'striped', headStyles: { fillColor: [217, 119, 6] },
           styles: { fontSize: 8 }, margin: { left: 30, right: 30 },
         })
-        y = doc.lastAutoTable.finalY + 20
+        y = doc.lastAutoTable.finalY + 25
       }
 
-      // Low mileage section (monthly only)
-      if (!isDaily && data.alerts.lowMileage.length) {
+      // Low mileage (only for monthly/annual)
+      if ((preset === 'monthly' || preset === 'annually') && data.alerts.lowMileage.length) {
         if (y > 680) { doc.addPage(); y = 40 }
         doc.setFontSize(13); doc.setFont('helvetica', 'bold')
         doc.setTextColor(220, 38, 38)
@@ -939,7 +1015,6 @@ function Reports() {
         })
       }
 
-      // Footer on all pages
       const pageCount = doc.internal.getNumberOfPages()
       for (let i = 1; i <= pageCount; i++) {
         doc.setPage(i)
@@ -948,57 +1023,77 @@ function Reports() {
         doc.text(`Page ${i} of ${pageCount}`, pageW - 30, doc.internal.pageSize.getHeight() - 20, { align: 'right' })
       }
 
-      const fileName = `CKC-${isDaily ? 'Daily' : 'Monthly'}-Report-${now.toISOString().slice(0, 10)}.pdf`
-      doc.save(fileName)
+      doc.save(`CKC-${title.replace(/\s+/g, '-')}-${fromDate}_to_${toDate}.pdf`)
       toast.success('PDF generated')
     } catch (e) {
-      console.error(e); toast.error('PDF generation failed: ' + e.message)
+      console.error(e); toast.error('PDF failed: ' + e.message)
     } finally { setGenerating(false) }
   }
 
+  const presets = [
+    { id: 'daily', label: 'Daily' },
+    { id: 'weekly', label: 'Weekly' },
+    { id: 'monthly', label: 'Monthly' },
+    { id: 'annually', label: 'Annually' },
+    { id: 'custom', label: 'Custom' },
+  ]
+
   return (
     <div className="p-6 space-y-4">
-      <h1 className="text-3xl font-bold text-slate-900">Reports</h1>
-      <p className="text-slate-500">Generate branded PDF reports and view summary KPIs.</p>
-
-      <div className="grid md:grid-cols-2 gap-4">
-        <Card className="border-2 border-slate-900">
-          <CardContent className="p-6 space-y-3">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-lg bg-slate-900 text-white flex items-center justify-center"><FileText className="w-6 h-6" /></div>
-              <div>
-                <div className="font-bold text-lg">Daily Report</div>
-                <div className="text-xs text-slate-500">Today's trips, fuel & KPIs</div>
-              </div>
-            </div>
-            <Button onClick={() => generatePDF('daily')} disabled={generating} className="w-full bg-slate-900 hover:bg-slate-800">
-              <Download className="w-4 h-4 mr-2" /> Generate Daily PDF
-            </Button>
-          </CardContent>
-        </Card>
-        <Card className="border-2 border-amber-500">
-          <CardContent className="p-6 space-y-3">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-lg bg-amber-500 text-white flex items-center justify-center"><FileText className="w-6 h-6" /></div>
-              <div>
-                <div className="font-bold text-lg">Monthly Report</div>
-                <div className="text-xs text-slate-500">Full month + low-mileage analysis</div>
-              </div>
-            </div>
-            <Button onClick={() => generatePDF('monthly')} disabled={generating} className="w-full bg-amber-500 hover:bg-amber-600">
-              <Download className="w-4 h-4 mr-2" /> Generate Monthly PDF
-            </Button>
-          </CardContent>
-        </Card>
+      <div>
+        <h1 className="text-3xl font-bold text-slate-900">Reports</h1>
+        <p className="text-slate-500">Generate branded PDF reports for any date range.</p>
       </div>
+
+      <Card>
+        <CardContent className="p-6 space-y-5">
+          {/* Preset chips */}
+          <div className="flex flex-wrap gap-2">
+            {presets.map(p => (
+              <button
+                key={p.id}
+                onClick={() => applyPreset(p.id)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition border ${
+                  preset === p.id ? 'bg-[#7a0d0d] text-white border-[#7a0d0d]' : 'bg-white text-slate-700 border-slate-200 hover:border-red-300'
+                }`}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Date range */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <Label className="text-xs text-slate-500 tracking-wider uppercase">From Date</Label>
+              <Input type="date" value={fromDate} onChange={e => { setFromDate(e.target.value); setPreset('custom') }} max={toDate} />
+            </div>
+            <div>
+              <Label className="text-xs text-slate-500 tracking-wider uppercase">To Date</Label>
+              <Input type="date" value={toDate} onChange={e => { setToDate(e.target.value); setPreset('custom') }} min={fromDate} max={today} />
+            </div>
+            <div className="flex items-end">
+              <Button onClick={generatePDF} disabled={generating} className="w-full h-10 bg-gradient-to-r from-[#7a0d0d] to-[#a01414] hover:brightness-110 text-white">
+                <Download className="w-4 h-4 mr-2" /> {generating ? 'Generating...' : 'Generate PDF'}
+              </Button>
+            </div>
+          </div>
+
+          {/* Live preview KPIs */}
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3 pt-3 border-t">
+            <div className="p-3 bg-slate-50 rounded-lg"><div className="text-xs text-slate-500">Trips</div><div className="text-xl font-bold">{filteredTrips.length}</div></div>
+            <div className="p-3 bg-slate-50 rounded-lg"><div className="text-xs text-slate-500">KM Travelled</div><div className="text-xl font-bold">{kmTotal.toLocaleString()}</div></div>
+            <div className="p-3 bg-slate-50 rounded-lg"><div className="text-xs text-slate-500">Fuel (L)</div><div className="text-xl font-bold">{litTotal.toFixed(1)}</div></div>
+            <div className="p-3 bg-slate-50 rounded-lg"><div className="text-xs text-slate-500">Fuel Cost</div><div className="text-xl font-bold">{fmtINR(costTotal)}</div></div>
+            <div className="p-3 bg-slate-50 rounded-lg"><div className="text-xs text-slate-500">Avg Mileage</div><div className="text-xl font-bold">{avgMileage}<span className="text-sm text-slate-500 ml-1">km/L</span></div></div>
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="grid md:grid-cols-3 gap-4">
         {[
-          { title: 'Monthly KM Run', value: `${data.month.km} km` },
-          { title: 'Fuel Consumed', value: `${data.month.fuelLit.toFixed(0)} L` },
-          { title: 'Fuel Cost', value: fmtINR(data.month.fuelCost) },
-          { title: 'Avg Fleet Mileage', value: `${data.month.avgMileage} km/L` },
-          { title: "Today's Trips", value: data.today.trips },
+          { title: 'Monthly KM (all)', value: `${data.month.km} km` },
+          { title: 'Monthly Fuel Cost (all)', value: fmtINR(data.month.fuelCost) },
           { title: 'Low Mileage Vehicles', value: data.month.lowMileageCount },
         ].map(c => (
           <Card key={c.title}><CardContent className="p-6"><div className="text-sm text-slate-500">{c.title}</div><div className="text-3xl font-bold mt-2">{c.value}</div></CardContent></Card>
