@@ -724,8 +724,8 @@ function Trips() {
     }
     return true
   })
-  const headers = ['Trip ID', 'Date', 'Vehicle', 'Driver', 'Time Out', 'Time In', 'Odo Out', 'Odo In', 'KM Run', 'Destination', 'Status']
-  const rows = () => filtered.map(t => [t.tripId, fmtDate(t.dateOut), t.vehicleNumber, t.driverName, fmtDT(t.dateOut), fmtDT(t.timeIn), t.odometerOut, t.odometerIn, t.kmRun, t.destination, t.status])
+    const headers = ['Trip ID', 'Date', 'Vehicle Type', 'Vehicle', 'Driver/Employee', 'Time Out', 'Time In', 'Odo Out', 'Odo In', 'KM Run', 'Destination', 'Status']
+  const rows = () => filtered.map(t => [t.tripId, fmtDate(t.dateOut), t.vehicleType || '-', t.vehicleNumber, t.driverName || t.employeeName || '-', fmtDT(t.dateOut), fmtDT(t.timeIn), t.odometerOut, t.odometerIn, t.kmRun, t.destination, t.status])
   const exportCsv = () => {
     const csv = [headers, ...rows()].map(r => r.map(c => `"${c ?? ''}"`).join(',')).join('\n')
     const blob = new Blob([csv], { type: 'text/csv' })
