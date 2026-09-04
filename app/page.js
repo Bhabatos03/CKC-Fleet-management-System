@@ -784,9 +784,9 @@ function Trips() {
           <div><span className="text-slate-500">Trips: </span><b>{filtered.length}</b></div>
           <div><span className="text-slate-500">Total KM: </span><b>{totalKm.toLocaleString()}</b></div>
         </div>
-        <div className="overflow-x-auto"><Table>
+                <div className="overflow-x-auto"><Table>
           <TableHeader><TableRow>
-            <TableHead>Trip ID</TableHead><TableHead>Vehicle</TableHead><TableHead>Driver</TableHead>
+            <TableHead>Trip ID</TableHead><TableHead>Type</TableHead><TableHead>Vehicle</TableHead><TableHead>Driver/Employee</TableHead>
             <TableHead>Out</TableHead><TableHead>In</TableHead><TableHead>KM</TableHead>
             <TableHead>Destination</TableHead><TableHead>Status</TableHead>
           </TableRow></TableHeader>
@@ -794,8 +794,9 @@ function Trips() {
             {filtered.slice(0, 200).map(t => (
               <TableRow key={t.id}>
                 <TableCell className="font-mono text-xs">{t.tripId}</TableCell>
+                <TableCell className="text-xs">{t.vehicleType || '-'}</TableCell>
                 <TableCell className="font-semibold">{t.vehicleNumber}</TableCell>
-                <TableCell>{t.driverName}</TableCell>
+                <TableCell>{t.driverName || t.employeeName || '-'}</TableCell>
                 <TableCell className="text-xs">{fmtDT(t.dateOut)}</TableCell>
                 <TableCell className="text-xs">{fmtDT(t.timeIn)}</TableCell>
                 <TableCell className="font-semibold">{t.kmRun || '-'}</TableCell>
