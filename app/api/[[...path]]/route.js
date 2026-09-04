@@ -159,7 +159,6 @@ const clean = (obj) => {
 export async function GET(request, { params }) {
   try {
     const db = await getDb()
-    await seedIfEmpty(db)
     const pathArr = (await params).path || []
     const path = pathArr.join('/')
     const { searchParams } = new URL(request.url)
