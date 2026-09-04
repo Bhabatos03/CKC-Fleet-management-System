@@ -95,7 +95,9 @@ async function seedIfEmpty(db) {
       id: uuidv4(),
       tripId: `TRP${String(1000 + i)}`,
       vehicleId: v.id, vehicleNumber: v.vehicleNumber,
+      vehicleType: v.type === 'Two Wheeler' ? 'Two Wheeler' : 'Four Wheeler',
       driverId: d.id, driverName: d.name,
+      employeeName: null,
       dateOut: outTime.toISOString(),
       timeIn: inTime.toISOString(),
       odometerOut: odoOut,
@@ -321,12 +323,27 @@ export async function POST(request, { params }) {
       const vehicle = await db.collection('vehicles').findOne({ id: body.vehicleId })
       if (!vehicle) return json({ error: 'Vehicle not found' }, 404)
       if (vehicle.status === 'Outside') return json({ error: 'Vehicle is already outside' }, 400)
+      
+      const vehicleType = body.vehicleType || (vehicle.type === 'Two Wheeler' ? 'Two Wheeler' : 'Four Wheeler')
+      
+      // Validation: Two Wheeler requires employeeName
+      if (vehicleType === 'Two Wheeler' && !body.employeeName) {
+        return json({ error: 'Employee Name is required for two-wheelers' }, 400)
+      }
+      
+      // Validation: Four Wheeler requires driverId
+      if (vehicleType === 'Four Wheeler' && !body.driverId) {
+        return json({ error: 'Driver is required for four-wheelers' }, 400)
+      }
+      
       const driver = body.driverId ? await db.collection('drivers').findOne({ id: body.driverId }) : null
       const trip = {
         id: uuidv4(),
         tripId: `TRP${Date.now()}`,
         vehicleId: vehicle.id, vehicleNumber: vehicle.vehicleNumber,
-        driverId: driver?.id, driverName: driver?.name || body.driverName,
+        vehicleType: vehicleType,
+        driverId: driver?.id || null, driverName: driver?.name || body.driverName || null,
+        employeeName: body.employeeName || null,
         dateOut: new Date().toISOString(),
         odometerOut: Number(body.odometerOut),
         destination: body.destination,
