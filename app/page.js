@@ -1742,9 +1742,9 @@ function Reports() {
         doc.text('Vehicle Movements', 30, y); y += 12
         autoTable(doc, {
           startY: y,
-          head: [['Trip ID', 'Vehicle', 'Driver', 'Out', 'In', 'KM', 'Destination']],
+                    head: [['Trip ID', 'Type', 'Vehicle', 'Driver/Employee', 'Out', 'In', 'KM', 'Destination']],
           body: filteredTrips.slice(0, 200).map(t => [
-            t.tripId, t.vehicleNumber, t.driverName || '-',
+            t.tripId, t.vehicleType || '-', t.vehicleNumber, t.driverName || t.employeeName || '-',
             new Date(t.dateOut).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }),
             t.timeIn ? new Date(t.timeIn).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '-',
             t.kmRun || '-', t.destination || '-',
