@@ -1921,40 +1921,75 @@ function SecurityHome({ user, onLogout }) {
 function VehicleOut({ onDone }) {
   const [vehicles, setVehicles] = useState([])
   const [drivers, setDrivers] = useState([])
-  const [f, setF] = useState({ vehicleId: '', driverId: '', odometerOut: '', destination: '', purpose: '', passengerCount: 1, remarks: '' })
+  const [f, setF] = useState({ vehicleType: 'Four Wheeler', vehicleId: '', driverId: '', employeeName: '', odometerOut: '', destination: '', purpose: '', passengerCount: 1, remarks: '' })
   useEffect(() => {
     api('vehicles').then(vs => setVehicles(vs.filter(v => v.status === 'Available')))
     api('drivers').then(setDrivers)
   }, [])
+
+  const filteredVehicles = vehicles.filter(v =>
+    f.vehicleType === 'Two Wheeler' ? v.type === 'Two Wheeler' : v.type !== 'Two Wheeler'
+  )
+
   const selectedVehicle = vehicles.find(v => v.id === f.vehicleId)
   useEffect(() => {
     if (selectedVehicle) setF(x => ({ ...x, odometerOut: selectedVehicle.currentOdometer, driverId: selectedVehicle.assignedDriverId || x.driverId }))
   }, [f.vehicleId, selectedVehicle])
+
+  const setVehicleType = (type) => {
+    setF(x => ({ ...x, vehicleType: type, vehicleId: '', driverId: '', employeeName: '' }))
+  }
+
   const set = (k, v) => setF(x => ({ ...x, [k]: v }))
+
   const submit = async () => {
     if (!f.vehicleId || !f.odometerOut || !f.destination) return toast.error('Fill required fields')
+    if (f.vehicleType === 'Two Wheeler' && !f.employeeName) return toast.error('Employee Name is required for two-wheelers')
+    if (f.vehicleType === 'Four Wheeler' && !f.driverId) return toast.error('Driver is required for four-wheelers')
     try {
       const r = await apiOffline('trips/out', f)
       toast.success(r.queued ? 'Saved offline — will sync' : 'Vehicle OUT recorded')
       onDone()
     } catch (e) { toast.error(e.message) }
   }
+
   return (
     <div className="p-4 max-w-md mx-auto space-y-3 text-slate-900">
       <div className="bg-white rounded-xl p-4 space-y-3">
         <h2 className="text-lg font-bold text-emerald-600">Vehicle OUT Entry</h2>
+
+        <div><Label>Vehicle Type *</Label>
+          <Select value={f.vehicleType} onValueChange={setVehicleType}>
+            <SelectTrigger><SelectValue placeholder="Select vehicle type" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Two Wheeler">Two Wheeler</SelectItem>
+              <SelectItem value="Four Wheeler">Four Wheeler</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
         <div><Label>Vehicle *</Label>
           <Select value={f.vehicleId} onValueChange={v => set('vehicleId', v)}>
             <SelectTrigger><SelectValue placeholder="Select vehicle" /></SelectTrigger>
-            <SelectContent>{vehicles.map(v => <SelectItem key={v.id} value={v.id}>{v.vehicleNumber} - {v.make} {v.model}</SelectItem>)}</SelectContent>
+            <SelectContent>{filteredVehicles.map(v => <SelectItem key={v.id} value={v.id}>{v.vehicleNumber} - {v.make} {v.model}</SelectItem>)}</SelectContent>
           </Select>
         </div>
-        <div><Label>Driver</Label>
-          <Select value={f.driverId} onValueChange={v => set('driverId', v)}>
-            <SelectTrigger><SelectValue placeholder="Select driver" /></SelectTrigger>
-            <SelectContent>{drivers.map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}</SelectContent>
-          </Select>
-        </div>
+
+        {f.vehicleType === 'Four Wheeler' && (
+          <div><Label>Driver *</Label>
+            <Select value={f.driverId} onValueChange={v => set('driverId', v)}>
+              <SelectTrigger><SelectValue placeholder="Select driver" /></SelectTrigger>
+              <SelectContent>{drivers.map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+        )}
+
+        {f.vehicleType === 'Two Wheeler' && (
+          <div><Label>Employee Name *</Label>
+            <Input value={f.employeeName} onChange={e => set('employeeName', e.target.value)} placeholder="Enter Employee Name" />
+          </div>
+        )}
+
         <div><Label>Odometer OUT *</Label><Input type="number" value={f.odometerOut} onChange={e => set('odometerOut', e.target.value)} /></div>
         <div><Label>Destination *</Label><Input value={f.destination} onChange={e => set('destination', e.target.value)} /></div>
         <div><Label>Purpose</Label><Input value={f.purpose} onChange={e => set('purpose', e.target.value)} /></div>
@@ -1965,7 +2000,6 @@ function VehicleOut({ onDone }) {
     </div>
   )
 }
-
 function VehicleIn({ onDone }) {
   const [trips, setTrips] = useState([])
   const [selected, setSelected] = useState(null)
