@@ -1584,8 +1584,8 @@ function Reports() {
   }
 
   const exportExcel = async () => {
-    const tripHeaders = ['Trip ID', 'Date', 'Vehicle', 'Driver', 'Time Out', 'Time In', 'Odo Out', 'Odo In', 'KM Run', 'Destination', 'Status']
-    const tripRows = filteredTrips.map(t => [t.tripId, fmtDate(t.dateOut), t.vehicleNumber, t.driverName, fmtDT(t.dateOut), fmtDT(t.timeIn), t.odometerOut, t.odometerIn, t.kmRun, t.destination, t.status])
+        const tripHeaders = ['Trip ID', 'Date', 'Vehicle Type', 'Vehicle', 'Driver/Employee', 'Time Out', 'Time In', 'Odo Out', 'Odo In', 'KM Run', 'Destination', 'Status']
+    const tripRows = filteredTrips.map(t => [t.tripId, fmtDate(t.dateOut), t.vehicleType || '-', t.vehicleNumber, t.driverName || t.employeeName || '-', fmtDT(t.dateOut), fmtDT(t.timeIn), t.odometerOut, t.odometerIn, t.kmRun, t.destination, t.status])
     const fuelHeaders = ['Date', 'Vehicle', 'Odometer', 'Quantity(L)', 'Rate', 'Amount', 'Station', 'Receipt']
     const fuelRows = filteredFuel.map(t => [fmtDate(t.date), t.vehicleNumber, t.odometer, t.quantity, t.rate, t.amount, t.station, t.receiptNumber])
     const summaryHeaders = ['Metric', 'Value']
