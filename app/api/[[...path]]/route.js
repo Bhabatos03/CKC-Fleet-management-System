@@ -162,6 +162,14 @@ export async function GET(request, { params }) {
     const pathArr = (await params).path || []
     const path = pathArr.join('/')
     const { searchParams } = new URL(request.url)
+    const role = request.headers.get('x-user-role')
+    const storeId = request.headers.get('x-store-id')
+
+    let storeVehicleIds = null
+    if (role === 'store_admin' && storeId) {
+      const storeVehicles = await db.collection('vehicles').find({ assignedLocation: storeId }).toArray()
+      storeVehicleIds = storeVehicles.map(v => v.id)
+    }
 
     if (path === 'health') return json({ ok: true })
 
@@ -169,31 +177,37 @@ export async function GET(request, { params }) {
       const items = await db.collection('vehicles').find({}).toArray()
       return json(items.map(clean))
     }
-    if (path === 'drivers') {
-      const items = await db.collection('drivers').find({}).toArray()
+       if (path === 'trips') {
+      const query = storeVehicleIds ? { vehicleId: { $in: storeVehicleIds } } : {}
+      const items = await db.collection('trips').find(query).sort({ createdAt: -1 }).limit(500).toArray()
       return json(items.map(clean))
     }
-    if (path === 'trips') {
-      const items = await db.collection('trips').find({}).sort({ createdAt: -1 }).limit(500).toArray()
+       if (path === 'trips/outside') {
+      const query = { status: 'Outside', ...(storeVehicleIds ? { vehicleId: { $in: storeVehicleIds } } : {}) }
+      const items = await db.collection('trips').find(query).toArray()
       return json(items.map(clean))
     }
     if (path === 'trips/outside') {
       const items = await db.collection('trips').find({ status: 'Outside' }).toArray()
       return json(items.map(clean))
     }
-    if (path === 'fuel') {
-      const items = await db.collection('fuel_entries').find({}).sort({ date: -1 }).limit(500).toArray()
+        if (path === 'fuel') {
+      const query = storeVehicleIds ? { vehicleId: { $in: storeVehicleIds } } : {}
+      const items = await db.collection('fuel_entries').find(query).sort({ date: -1 }).limit(500).toArray()
       return json(items.map(clean))
     }
-    if (path === 'maintenance') {
-      const items = await db.collection('maintenance').find({}).sort({ serviceDate: -1 }).toArray()
+       if (path === 'maintenance') {
+      const query = storeVehicleIds ? { vehicleId: { $in: storeVehicleIds } } : {}
+      const items = await db.collection('maintenance').find(query).sort({ serviceDate: -1 }).toArray()
       return json(items.map(clean))
-    }
-    if (path === 'dashboard') {
+    } 
+       if (path === 'dashboard') {
+      const vehicleFilter = storeVehicleIds ? { id: { $in: storeVehicleIds } } : {}
+      const activityFilter = storeVehicleIds ? { vehicleId: { $in: storeVehicleIds } } : {}
       const [vehicles, trips, fuel, drivers] = await Promise.all([
-        db.collection('vehicles').find({}).toArray(),
-        db.collection('trips').find({}).toArray(),
-        db.collection('fuel_entries').find({}).toArray(),
+        db.collection('vehicles').find(vehicleFilter).toArray(),
+        db.collection('trips').find(activityFilter).toArray(),
+        db.collection('fuel_entries').find(activityFilter).toArray(),
         db.collection('drivers').find({}).toArray(),
       ])
       const now = new Date()
