@@ -22,9 +22,16 @@ import {
   PieChart, Pie, Cell, Legend
 } from 'recharts'
 
+const getUser = () => { try { return JSON.parse(localStorage.getItem('ckc_user') || '{}') } catch { return {} } }
+
 const api = async (path, opts = {}) => {
+  const user = getUser()
   const res = await fetch(`/api/${path}`, {
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'x-user-role': user.role || '',
+      'x-store-id': user.storeId || '',
+    },
     ...opts,
     body: opts.body ? JSON.stringify(opts.body) : undefined,
   })
