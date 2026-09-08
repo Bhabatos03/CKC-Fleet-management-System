@@ -298,12 +298,15 @@ export async function POST(request, { params }) {
 
     if (path === 'auth/login') {
       const users = {
-        admin: { password: 'admin123', role: 'admin', name: 'Administrator' },
-        security: { password: 'security123', role: 'security', name: 'Security User' },
-      }
+  admin:    { password: 'admin123',    role: 'admin',       name: 'Administrator' },
+  security: { password: 'security123', role: 'security',    name: 'Security User' },
+  tss:      { password: 'tss123',      role: 'store_admin', name: 'TSS', storeId: 'TSS' },
+  tsw:      { password: 'tsw123',      role: 'store_admin', name: 'TSW', storeId: 'TSW' },
+  ts:       { password: 'ts123',       role: 'store_admin', name: 'TS',  storeId: 'TS' },
+}
       const u = users[body.username]
       if (u && u.password === body.password) {
-        return json({ token: uuidv4(), user: { username: body.username, role: u.role, name: u.name } })
+       return json({ token: uuidv4(), user: { username: body.username, role: u.role, name: u.name, storeId: u.storeId || null } })
       }
       return json({ error: 'Invalid credentials' }, 401)
     }
