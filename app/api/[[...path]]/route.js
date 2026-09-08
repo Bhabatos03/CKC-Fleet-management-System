@@ -482,6 +482,12 @@ export async function DELETE(request, { params }) {
     const db = await getDb()
     const pathArr = (await params).path || []
     const [col, id] = pathArr
+    const role = request.headers.get('x-user-role')
+
+    if (role === 'store_admin') {
+      return json({ error: 'Store admins have read-only access' }, 403)
+    }
+
     const map = { vehicles: 'vehicles', drivers: 'drivers', maintenance: 'maintenance' }
     if (!map[col]) return json({ error: 'Not found' }, 404)
     await db.collection(map[col]).deleteOne({ id })
