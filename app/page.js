@@ -2112,7 +2112,6 @@ function FuelEntry({ onDone }) {
         <div className="p-3 bg-amber-50 rounded text-center"><div className="text-xs">Total Amount</div><div className="text-2xl font-bold">{fmtINR(amount)}</div></div>
         <div><Label>Fuel Station</Label><Input value={f.station} onChange={e => set('station', e.target.value)} /></div>
         <div><Label>Receipt Number</Label><Input value={f.receiptNumber} onChange={e => set('receiptNumber', e.target.value)} /></div>
-
         <div>
           <Label>Receipt Photo</Label>
           {f.receiptImage ? (
@@ -2123,15 +2122,20 @@ function FuelEntry({ onDone }) {
               </button>
             </div>
           ) : (
-            <label className="mt-1 flex flex-col items-center justify-center border-2 border-dashed border-slate-300 rounded-lg p-6 cursor-pointer hover:bg-slate-50 active:bg-slate-100">
-              <Camera className="w-8 h-8 text-slate-400 mb-2" />
-              <div className="text-sm font-medium text-slate-700">{uploading ? 'Loading...' : 'Take Photo / Choose File'}</div>
-              <div className="text-xs text-slate-500">Attach fuel receipt</div>
-              <input type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFile} />
-            </label>
+            <div className="mt-1 grid grid-cols-2 gap-2">
+              <label className="flex flex-col items-center justify-center border-2 border-dashed border-slate-300 rounded-lg p-4 cursor-pointer hover:bg-slate-50 active:bg-slate-100">
+                <Camera className="w-7 h-7 text-slate-400 mb-1" />
+                <div className="text-xs font-medium text-slate-700 text-center">{uploading ? 'Loading...' : 'Take Photo'}</div>
+                <input type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFile} />
+              </label>
+              <label className="flex flex-col items-center justify-center border-2 border-dashed border-slate-300 rounded-lg p-4 cursor-pointer hover:bg-slate-50 active:bg-slate-100">
+                <ImageIcon className="w-7 h-7 text-slate-400 mb-1" />
+                <div className="text-xs font-medium text-slate-700 text-center">{uploading ? 'Loading...' : 'Choose from Gallery'}</div>
+                <input type="file" accept="image/*" className="hidden" onChange={handleFile} />
+              </label>
+            </div>
           )}
         </div>
-
         <div><Label>Remarks</Label><Textarea value={f.remarks} onChange={e => set('remarks', e.target.value)} /></div>
         <Button onClick={submit} className="w-full bg-amber-600 hover:bg-amber-700 h-12 text-lg">Save Fuel Entry</Button>
       </div>
