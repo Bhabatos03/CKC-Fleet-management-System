@@ -707,10 +707,10 @@ function Drivers() {
     </div>
   )
 }
-
+const STORES = ['TS', 'TSS', 'TSW']
 function DriverDialog({ open, onOpenChange, onSubmit, initial }) {
   const [f, setF] = useState({})
-  useEffect(() => { setF(initial || { name: '', empId: '', mobile: '', licence: '', licenceExpiry: '', status: 'Active', remarks: '' }) }, [initial, open])
+     useEffect(() => { setF(initial || { name: '', empId: '', mobile: '', licence: '', licenceExpiry: '', status: 'Active', assignedLocation: '', remarks: '' }) }, [initial, open])
   const set = (k, v) => setF(x => ({ ...x, [k]: v }))
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -728,6 +728,12 @@ function DriverDialog({ open, onOpenChange, onSubmit, initial }) {
               <SelectContent>{['Active', 'Inactive', 'On Leave'].map(x => <SelectItem key={x} value={x}>{x}</SelectItem>)}</SelectContent>
             </Select>
           </div>
+          <div><Label>Assigned Store</Label>
+          <Select value={f.assignedLocation || ''} onValueChange={v => set('assignedLocation', v)}>
+            <SelectTrigger><SelectValue placeholder="Select store" /></SelectTrigger>
+            <SelectContent>{STORES.map(x => <SelectItem key={x} value={x}>{x}</SelectItem>)}</SelectContent>
+          </Select>
+        </div>
           <div className="col-span-2"><Label>Remarks</Label><Textarea value={f.remarks || ''} onChange={e => set('remarks', e.target.value)} /></div>
         </div>
         <DialogFooter><Button onClick={() => onSubmit(f)} className="bg-gradient-to-r from-[#7a0d0d] to-[#a01414] hover:brightness-110 text-white">Save</Button></DialogFooter>
