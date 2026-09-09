@@ -165,11 +165,13 @@ export async function GET(request, { params }) {
     const role = request.headers.get('x-user-role')
     const storeId = request.headers.get('x-store-id')
 
-    let storeVehicleIds = null
-    if (role === 'store_admin' && storeId) {
-      const storeVehicles = await db.collection('vehicles').find({ assignedLocation: storeId }).toArray()
-      storeVehicleIds = storeVehicles.map(v => v.id)
-    }
+   let storeVehicleIds = null
+let storeDriverIds = null
+if (role === 'store_admin' && storeId) {
+  const storeVehicles = await db.collection('vehicles').find({ assignedLocation: storeId }).toArray()
+  storeVehicleIds = storeVehicles.map(v => v.id)
+  storeDriverIds = storeVehicles.map(v => v.assignedDriverId).filter(Boolean)
+}
 
     if (path === 'health') return json({ ok: true })
 
