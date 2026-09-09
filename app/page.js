@@ -687,6 +687,7 @@ function Drivers() {
                 <TableCell className="font-semibold">{d.name}</TableCell>
                 <TableCell>{d.empId}</TableCell><TableCell>{d.mobile}</TableCell><TableCell>{d.licence}</TableCell>
                 <TableCell className={expiring ? 'text-rose-600 font-semibold' : ''}>{fmtDate(d.licenceExpiry)}</TableCell>
+                <TableCell>{d.assignedLocation || '-'}</TableCell>
                 <TableCell><Badge className="bg-[#7a0d0d] hover:bg-[#5c0a0a]">{d.status}</Badge></TableCell>
                 <TableCell className="text-right space-x-2">
                   {canEdit && (
