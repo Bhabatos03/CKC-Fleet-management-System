@@ -677,7 +677,7 @@ function Drivers() {
       <Card><CardContent className="p-4"><div className="overflow-x-auto"><Table>
         <TableHeader><TableRow>
           <TableHead>Name</TableHead><TableHead>Emp ID</TableHead><TableHead>Mobile</TableHead>
-          <TableHead>Licence</TableHead><TableHead>Licence Expiry</TableHead><TableHead>Status</TableHead><TableHead></TableHead>
+          <TableHead>Licence</TableHead><TableHead>Licence Expiry</TableHead><TableHead>Assigned Store</TableHead><TableHead>Status</TableHead><TableHead></TableHead>
         </TableRow></TableHeader>
         <TableBody>
           {items.map(d => {
