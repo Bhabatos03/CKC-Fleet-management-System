@@ -12,7 +12,7 @@ export default function DriverMasterPage() {
   const [editingId, setEditingId] = useState(null)
   const [form, setForm] = useState(emptyForm)
 
-  const user = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('user') || '{}') : {}
+  const user = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('ckc_user') || '{}') : {}
   const isAdmin = user.role === 'admin'
 
   const authHeaders = {
