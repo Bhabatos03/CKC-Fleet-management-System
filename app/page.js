@@ -1572,10 +1572,11 @@ function Reports() {
   const [vehicles, setVehicles] = useState([])
   const [generating, setGenerating] = useState(false)
   const today = new Date().toISOString().slice(0, 10)
-  const [fromDate, setFromDate] = useState(today)
-  const [toDate, setToDate] = useState(today)
-  const [preset, setPreset] = useState('daily')
+  const [fromDate, setFromDate] = useState('')
+  const [toDate, setToDate] = useState('')
+  const [preset, setPreset] = useState('')
   const [vehicleFilter, setVehicleFilter] = useState('all')
+  const [submitted, setSubmitted] = useState(false)
 
   useEffect(() => {
     api('dashboard').then(setData)
@@ -1587,6 +1588,7 @@ function Reports() {
 
   const applyPreset = (p) => {
     setPreset(p)
+    setSubmitted(false)
     const now = new Date()
     if (p === 'daily') { setFromDate(today); setToDate(today) }
     else if (p === 'weekly') { setFromDate(new Date(Date.now() - 7 * 864e5).toISOString().slice(0, 10)); setToDate(today) }
@@ -1594,13 +1596,23 @@ function Reports() {
     else if (p === 'annually') { setFromDate(new Date(now.getFullYear(), 0, 1).toISOString().slice(0, 10)); setToDate(today) }
   }
 
-  const filteredTrips = trips.filter(t => {
+  const handleFromDate = (v) => { setFromDate(v); setPreset('custom'); setSubmitted(false) }
+  const handleToDate = (v) => { setToDate(v); setPreset('custom'); setSubmitted(false) }
+  const handleVehicleFilter = (v) => { setVehicleFilter(v); setSubmitted(false) }
+
+  const handleGenerate = () => {
+    if (!fromDate || !toDate) return toast.error('Please select both From Date and To Date')
+    if (fromDate > toDate) return toast.error('From Date cannot be after To Date')
+    setSubmitted(true)
+  }
+
+  const filteredTrips = !submitted ? [] : trips.filter(t => {
     const d = t.dateOut?.slice(0, 10)
     if (d < fromDate || d > toDate) return false
     if (vehicleFilter !== 'all' && t.vehicleId !== vehicleFilter) return false
     return true
   })
-  const filteredFuel = fuel.filter(f => {
+  const filteredFuel = !submitted ? [] : fuel.filter(f => {
     const d = f.date?.slice(0, 10)
     if (d < fromDate || d > toDate) return false
     if (vehicleFilter !== 'all' && f.vehicleId !== vehicleFilter) return false
@@ -1634,7 +1646,7 @@ function Reports() {
   }
 
   const exportExcel = async () => {
-        const tripHeaders = ['Trip ID', 'Date', 'Vehicle Type', 'Vehicle', 'Driver/Employee', 'Time Out', 'Time In', 'Odo Out', 'Odo In', 'KM Run', 'Destination', 'Status']
+    const tripHeaders = ['Trip ID', 'Date', 'Vehicle Type', 'Vehicle', 'Driver/Employee', 'Time Out', 'Time In', 'Odo Out', 'Odo In', 'KM Run', 'Destination', 'Status']
     const tripRows = filteredTrips.map(t => [t.tripId, fmtDate(t.dateOut), t.vehicleType || '-', t.vehicleNumber, t.driverName || t.employeeName || '-', fmtDT(t.dateOut), fmtDT(t.timeIn), t.odometerOut, t.odometerIn, t.kmRun, t.destination, t.status])
     const fuelHeaders = ['Date', 'Vehicle', 'Odometer', 'Quantity(L)', 'Rate', 'Amount', 'Station', 'Receipt']
     const fuelRows = filteredFuel.map(t => [fmtDate(t.date), t.vehicleNumber, t.odometer, t.quantity, t.rate, t.amount, t.station, t.receiptNumber])
@@ -1657,7 +1669,6 @@ function Reports() {
   }
 
   const drawChart = (doc, x, y, w, h, series) => {
-    // Frame
     doc.setDrawColor(220); doc.setLineWidth(0.5)
     doc.rect(x, y, w, h)
     if (series.length === 0) {
@@ -1669,7 +1680,6 @@ function Reports() {
     const cw = w - pad.l - pad.r, ch = h - pad.t - pad.b
     const maxTrips = Math.max(...series.map(d => d.trips), 1)
     const maxCost = Math.max(...series.map(d => d.cost), 1)
-    // Grid lines
     doc.setDrawColor(240)
     for (let i = 1; i <= 4; i++) {
       const yy = y + pad.t + (ch * i) / 5
@@ -1678,16 +1688,13 @@ function Reports() {
     const barW = cw / series.length * 0.35
     series.forEach((d, i) => {
       const groupX = x + pad.l + (cw / series.length) * i + (cw / series.length) * 0.15
-      // Trips bar (burgundy)
       const th = (d.trips / maxTrips) * ch
       doc.setFillColor(139, 20, 20)
       doc.rect(groupX, y + pad.t + ch - th, barW, th, 'F')
-      // Cost bar (amber)
       const fh = (d.cost / maxCost) * ch
       doc.setFillColor(217, 119, 6)
       doc.rect(groupX + barW + 2, y + pad.t + ch - fh, barW, fh, 'F')
     })
-    // X labels (rotated / abbreviated)
     doc.setFontSize(6); doc.setTextColor(80)
     const step = Math.max(1, Math.ceil(series.length / 10))
     series.forEach((d, i) => {
@@ -1696,12 +1703,10 @@ function Reports() {
         doc.text(d.label, gx, y + h - 12, { align: 'center' })
       }
     })
-    // Y axis
     doc.setFontSize(7); doc.setTextColor(139, 20, 20)
     doc.text(`Max Trips: ${maxTrips}`, x + 4, y + pad.t + 8)
     doc.setTextColor(217, 119, 6)
     doc.text(`Max Cost: Rs.${Math.round(maxCost).toLocaleString('en-IN')}`, x + w - 4, y + pad.t + 8, { align: 'right' })
-    // Legend
     doc.setFillColor(139, 20, 20); doc.rect(x + pad.l, y + h - 6, 8, 4, 'F')
     doc.setFontSize(7); doc.setTextColor(60); doc.text('Trips', x + pad.l + 12, y + h - 3)
     doc.setFillColor(217, 119, 6); doc.rect(x + pad.l + 42, y + h - 6, 8, 4, 'F')
@@ -1727,27 +1732,22 @@ function Reports() {
         logoDataUrl = await new Promise((resolve) => { const fr = new FileReader(); fr.onload = () => resolve(fr.result); fr.readAsDataURL(blob) })
       } catch {}
 
-      // Header
       doc.setFillColor(58, 6, 6); doc.rect(0, 0, pageW, 110, 'F')
       doc.setDrawColor(217, 119, 6); doc.setLineWidth(1.5); doc.line(0, 108, pageW, 108)
       if (logoDataUrl) {
         doc.setFillColor(255, 255, 255); doc.circle(60, 55, 32, 'F')
         doc.addImage(logoDataUrl, 'PNG', 32, 27, 56, 56)
       }
-      // Brand wordmark — single font, single color (white)
       const brandX = 108
       doc.setTextColor(255, 255, 255); doc.setFont('times', 'bold'); doc.setFontSize(22)
       doc.text('C. Krishniah Chetty', brandX, 46)
       const w1 = doc.getTextWidth('C. Krishniah Chetty')
       doc.setFont('helvetica', 'bold'); doc.setFontSize(8)
       doc.text('TM', brandX + w1 + 3, 34)
-      // Sub-line
       doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(252, 211, 77)
       doc.text('G R O U P    O F    J E W E L L E R S', brandX, 62)
-      // Report title
       doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(255, 255, 255)
       doc.text('Fleet Management System — ' + title, brandX, 86)
-      // Meta on right (evenly spaced 14pt apart)
       doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(252, 211, 77)
       doc.text(`Period:  ${rangeStr}`, pageW - 30, 36, { align: 'right' })
       doc.text(`Vehicle: ${selectedVehicle ? selectedVehicle.vehicleNumber : 'All Vehicles'}`, pageW - 30, 50, { align: 'right' })
@@ -1758,7 +1758,6 @@ function Reports() {
       doc.setTextColor(15, 23, 42)
       let y = 135
 
-      // Summary
       doc.setFontSize(13); doc.setFont('helvetica', 'bold')
       doc.text('Summary', 30, y); y += 8
       doc.setDrawColor(217, 119, 6); doc.setLineWidth(2); doc.line(30, y, 90, y); y += 15
@@ -1777,7 +1776,6 @@ function Reports() {
       })
       y = doc.lastAutoTable.finalY + 20
 
-      // Chart: Daily Trips & Fuel Cost
       if (y > 550) { doc.addPage(); y = 40 }
       doc.setFontSize(13); doc.setFont('helvetica', 'bold')
       doc.text('Daily Activity Chart', 30, y); y += 8
@@ -1785,14 +1783,13 @@ function Reports() {
       drawChart(doc, 30, y, pageW - 60, 180, dailySeries())
       y += 190
 
-      // Trips
       if (filteredTrips.length) {
         if (y > 700) { doc.addPage(); y = 40 }
         doc.setFontSize(13); doc.setFont('helvetica', 'bold'); doc.setTextColor(15, 23, 42)
         doc.text('Vehicle Movements', 30, y); y += 12
         autoTable(doc, {
           startY: y,
-                    head: [['Trip ID', 'Type', 'Vehicle', 'Driver/Employee', 'Out', 'In', 'KM', 'Destination']],
+          head: [['Trip ID', 'Type', 'Vehicle', 'Driver/Employee', 'Out', 'In', 'KM', 'Destination']],
           body: filteredTrips.slice(0, 200).map(t => [
             t.tripId, t.vehicleType || '-', t.vehicleNumber, t.driverName || t.employeeName || '-',
             new Date(t.dateOut).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }),
@@ -1805,7 +1802,6 @@ function Reports() {
         y = doc.lastAutoTable.finalY + 25
       }
 
-      // Fuel
       if (filteredFuel.length) {
         if (y > 700) { doc.addPage(); y = 40 }
         doc.setFontSize(13); doc.setFont('helvetica', 'bold')
@@ -1826,7 +1822,6 @@ function Reports() {
         y = doc.lastAutoTable.finalY + 25
       }
 
-      // Low mileage
       if ((preset === 'monthly' || preset === 'annually') && data.alerts.lowMileage.length) {
         if (y > 680) { doc.addPage(); y = 40 }
         doc.setFontSize(13); doc.setFont('helvetica', 'bold'); doc.setTextColor(220, 38, 38)
@@ -1864,14 +1859,13 @@ function Reports() {
   const presets = [
     { id: 'daily', label: 'Daily' }, { id: 'weekly', label: 'Weekly' },
     { id: 'monthly', label: 'Monthly' }, { id: 'annually', label: 'Annually' },
-    { id: 'custom', label: 'Custom' },
   ]
 
   return (
     <div className="p-6 space-y-4">
       <div>
         <h1 className="text-3xl font-bold text-slate-900 relative inline-block">Reports<span className="absolute -bottom-1 left-0 w-16 h-1 bg-gradient-to-r from-[#7a0d0d] to-amber-500 rounded-full" /></h1>
-        <p className="text-slate-500 mt-2">Generate branded PDF & Excel reports for any date range.</p>
+        <p className="text-slate-500 mt-2">Select a date range and generate branded PDF & Excel reports.</p>
       </div>
       <Card>
         <CardContent className="p-6 space-y-5">
@@ -1885,16 +1879,16 @@ function Reports() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
-              <Label className="text-xs text-slate-500 tracking-wider uppercase">From Date</Label>
-              <Input type="date" value={fromDate} onChange={e => { setFromDate(e.target.value); setPreset('custom') }} max={toDate} />
+              <Label className="text-xs text-slate-500 tracking-wider uppercase">From Date *</Label>
+              <Input type="date" value={fromDate} onChange={e => handleFromDate(e.target.value)} max={toDate || today} />
             </div>
             <div>
-              <Label className="text-xs text-slate-500 tracking-wider uppercase">To Date</Label>
-              <Input type="date" value={toDate} onChange={e => { setToDate(e.target.value); setPreset('custom') }} min={fromDate} max={today} />
+              <Label className="text-xs text-slate-500 tracking-wider uppercase">To Date *</Label>
+              <Input type="date" value={toDate} onChange={e => handleToDate(e.target.value)} min={fromDate} max={today} />
             </div>
             <div>
               <Label className="text-xs text-slate-500 tracking-wider uppercase">Vehicle</Label>
-              <Select value={vehicleFilter} onValueChange={setVehicleFilter}>
+              <Select value={vehicleFilter} onValueChange={handleVehicleFilter}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Vehicles</SelectItem>
@@ -1902,29 +1896,50 @@ function Reports() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex items-end gap-2">
-              <Button onClick={generatePDF} disabled={generating} className="flex-1 h-10 bg-gradient-to-r from-[#7a0d0d] to-[#a01414] hover:brightness-110 text-white">
-                <FileText className="w-4 h-4 mr-1" /> {generating ? '...' : 'PDF'}
-              </Button>
-              <Button onClick={exportExcel} className="flex-1 h-10 bg-emerald-600 hover:bg-emerald-700 text-white">
-                <FileSpreadsheet className="w-4 h-4 mr-1" /> Excel
+            <div className="flex items-end">
+              <Button onClick={handleGenerate} className="w-full h-10 bg-gradient-to-r from-[#7a0d0d] to-[#a01414] hover:brightness-110 text-white">
+                <ClipboardList className="w-4 h-4 mr-1" /> Generate Report
               </Button>
             </div>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-3 pt-3 border-t">
-            <div className="p-3 bg-red-50 border border-red-100 rounded-lg"><div className="text-xs text-slate-500">Trips</div><div className="text-xl font-bold text-[#7a0d0d]">{filteredTrips.length}</div></div>
-            <div className="p-3 bg-red-50 border border-red-100 rounded-lg"><div className="text-xs text-slate-500">KM Travelled</div><div className="text-xl font-bold text-[#7a0d0d]">{kmTotal.toLocaleString()}</div></div>
-            <div className="p-3 bg-amber-50 border border-amber-100 rounded-lg"><div className="text-xs text-slate-500">Fuel (L)</div><div className="text-xl font-bold text-amber-700">{litTotal.toFixed(1)}</div></div>
-            <div className="p-3 bg-amber-50 border border-amber-100 rounded-lg"><div className="text-xs text-slate-500">Fuel Cost</div><div className="text-xl font-bold text-amber-700">{fmtINR(costTotal)}</div></div>
-            <div className="p-3 bg-slate-50 rounded-lg"><div className="text-xs text-slate-500">Avg Mileage</div><div className="text-xl font-bold">{avgMileage}<span className="text-sm text-slate-500 ml-1">km/L</span></div></div>
-          </div>
         </CardContent>
       </Card>
+
+      {submitted && (
+        <Card className="border-2 border-amber-300/60">
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <span>Report — {fromDate === toDate ? fmtDate(fromDate) : `${fmtDate(fromDate)} to ${fmtDate(toDate)}`}</span>
+              <span className="text-sm font-normal text-slate-500">{selectedVehicle ? selectedVehicle.vehicleNumber : 'All Vehicles'}</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-5">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+              <div className="p-3 bg-red-50 border border-red-100 rounded-lg"><div className="text-xs text-slate-500">Trips</div><div className="text-xl font-bold text-[#7a0d0d]">{filteredTrips.length}</div></div>
+              <div className="p-3 bg-red-50 border border-red-100 rounded-lg"><div className="text-xs text-slate-500">KM Travelled</div><div className="text-xl font-bold text-[#7a0d0d]">{kmTotal.toLocaleString()}</div></div>
+              <div className="p-3 bg-amber-50 border border-amber-100 rounded-lg"><div className="text-xs text-slate-500">Fuel (L)</div><div className="text-xl font-bold text-amber-700">{litTotal.toFixed(1)}</div></div>
+              <div className="p-3 bg-amber-50 border border-amber-100 rounded-lg"><div className="text-xs text-slate-500">Fuel Cost</div><div className="text-xl font-bold text-amber-700">{fmtINR(costTotal)}</div></div>
+              <div className="p-3 bg-slate-50 rounded-lg"><div className="text-xs text-slate-500">Avg Mileage</div><div className="text-xl font-bold">{avgMileage}<span className="text-sm text-slate-500 ml-1">km/L</span></div></div>
+            </div>
+
+            {filteredTrips.length === 0 && filteredFuel.length === 0 && (
+              <div className="text-sm text-slate-500 text-center py-4">No trips or fuel entries found for this range.</div>
+            )}
+
+            <div className="flex gap-2">
+              <Button onClick={generatePDF} disabled={generating} className="flex-1 h-10 bg-gradient-to-r from-[#7a0d0d] to-[#a01414] hover:brightness-110 text-white">
+                <FileText className="w-4 h-4 mr-1" /> {generating ? 'Generating...' : 'Download PDF'}
+              </Button>
+              <Button onClick={exportExcel} className="flex-1 h-10 bg-emerald-600 hover:bg-emerald-700 text-white">
+                <FileSpreadsheet className="w-4 h-4 mr-1" /> Download Excel
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 }
-
-
 function SecurityHome({ user, onLogout }) {
   const [screen, setScreen] = useState('home')
   const buttons = [
