@@ -15,6 +15,11 @@ async function getDb() {
 }
 
 const json = (data, status = 200) => NextResponse.json(data, { status })
+const clean = (obj) => {
+  if (!obj) return obj
+  const { _id, ...rest } = obj
+  return rest
+}
 
 // --- Seed data ---
 async function seedIfEmpty(db) {
@@ -23,6 +28,7 @@ async function seedIfEmpty(db) {
 
   const now = new Date()
   const daysFromNow = (d) => new Date(now.getTime() + d * 24 * 3600 * 1000).toISOString()
+  const STORES = ['TSS', 'TS', 'TSW']
 
   const drivers = [
     { name: 'Ramesh Kumar', empId: 'DRV001', mobile: '9880012345', licence: 'KA0120220001', licenceExpiry: daysFromNow(200) },
@@ -35,7 +41,14 @@ async function seedIfEmpty(db) {
     { name: 'Ravi Shankar', empId: 'DRV008', mobile: '9880012352', licence: 'KA0120220008', licenceExpiry: daysFromNow(60) },
     { name: 'Kiran Patel', empId: 'DRV009', mobile: '9880012353', licence: 'KA0120220009', licenceExpiry: daysFromNow(500) },
     { name: 'Mohan Das', empId: 'DRV010', mobile: '9880012354', licence: 'KA0120220010', licenceExpiry: daysFromNow(15) },
-  ].map(d => ({ id: uuidv4(), ...d, status: 'Active', createdAt: new Date().toISOString() }))
+  ].map((d, i) => ({
+    id: uuidv4(),
+    ...d,
+    status: 'Active',
+    assignedLocation: STORES[i % STORES.length], // NEW: real store field
+    remarks: '',
+    createdAt: new Date().toISOString(),
+  }))
 
   const vehicleData = [
     { number: 'KA01AB1234', type: 'Sedan', make: 'Honda', model: 'City', fuelType: 'Petrol', capacity: 5, expectedMileage: 15, threshold: 12, odometer: 45200 },
@@ -56,7 +69,7 @@ async function seedIfEmpty(db) {
     type: v.type, make: v.make, model: v.model, fuelType: v.fuelType,
     seatingCapacity: v.capacity,
     assignedDriverId: drivers[i]?.id || null,
-    assignedLocation: 'Head Office - Bangalore',
+    assignedLocation: STORES[i % STORES.length], // NEW: real store code, not address string
     expectedMileage: v.expectedMileage,
     lowMileageThreshold: v.threshold,
     currentOdometer: v.odometer,
@@ -69,13 +82,11 @@ async function seedIfEmpty(db) {
     createdAt: new Date().toISOString(),
   }))
 
-  // Assign drivers back to vehicles
   drivers.forEach((d, i) => { d.assignedVehicleId = vehicles[i]?.id || null })
 
   await db.collection('drivers').insertMany(drivers)
   await db.collection('vehicles').insertMany(vehicles)
 
-  // Trips (past 30 days)
   const destinations = ['Client Site - Whitefield', 'Airport Pickup', 'Bank - MG Road', 'Warehouse - Peenya', 'Showroom - Jayanagar', 'Vendor - Electronic City', 'Courier - Marathahalli']
   const purposes = ['Delivery', 'Client Meeting', 'Pickup', 'Documentation', 'Inventory Transfer']
   const trips = []
@@ -114,7 +125,6 @@ async function seedIfEmpty(db) {
     })
   }
 
-  // Fuel entries
   const stations = ['Indian Oil - Silk Board', 'HP - Koramangala', 'Bharat Petroleum - MG Road', 'Shell - Whitefield']
   for (let i = 0; i < 40; i++) {
     const vIdx = i % vehicles.length
@@ -150,70 +160,75 @@ async function seedIfEmpty(db) {
   })
 }
 
-const clean = (obj) => {
-  if (!obj) return obj
-  const { _id, ...rest } = obj
-  return rest
-}
-
+// --- GET ---
 export async function GET(request, { params }) {
   try {
     const db = await getDb()
+    await seedIfEmpty(db)
+
     const pathArr = (await params).path || []
     const path = pathArr.join('/')
-    const { searchParams } = new URL(request.url)
     const role = request.headers.get('x-user-role')
     const storeId = request.headers.get('x-store-id')
+    const isStoreScoped = role === 'store_admin' && !!storeId
 
-   let storeVehicleIds = null
-let storeDriverIds = null
-if (role === 'store_admin' && storeId) {
-  const storeVehicles = await db.collection('vehicles').find({ assignedLocation: storeId }).toArray()
-  storeVehicleIds = storeVehicles.map(v => v.id)
-  storeDriverIds = storeVehicles.map(v => v.assignedDriverId).filter(Boolean)
-}
+    // Vehicles for this store, used by trips/fuel/dashboard which key off vehicleId
+    let storeVehicleIds = null
+    if (isStoreScoped) {
+      const storeVehicles = await db.collection('vehicles').find({ assignedLocation: storeId }).toArray()
+      storeVehicleIds = storeVehicles.map(v => v.id)
+    }
 
     if (path === 'health') return json({ ok: true })
 
-        if (path === 'vehicles') {
-      const query = storeVehicleIds ? { id: { $in: storeVehicleIds } } : {}
+    if (path === 'vehicles') {
+      const query = isStoreScoped ? { assignedLocation: storeId } : {}
       const items = await db.collection('vehicles').find(query).toArray()
       return json(items.map(clean))
     }
+
     if (path === 'drivers') {
-      const query = storeVehicleIds ? { assignedVehicleId: { $in: storeVehicleIds } } : {}
+      const query = isStoreScoped ? { assignedLocation: storeId } : {}
       const items = await db.collection('drivers').find(query).toArray()
       return json(items.map(clean))
-      
-    }    if (path === 'trips') {
+    }
+
+    if (path === 'trips') {
       const query = storeVehicleIds ? { vehicleId: { $in: storeVehicleIds } } : {}
       const items = await db.collection('trips').find(query).sort({ createdAt: -1 }).limit(500).toArray()
       return json(items.map(clean))
     }
+
     if (path === 'trips/outside') {
       const query = { status: 'Outside', ...(storeVehicleIds ? { vehicleId: { $in: storeVehicleIds } } : {}) }
       const items = await db.collection('trips').find(query).toArray()
       return json(items.map(clean))
     }
+
     if (path === 'fuel') {
       const query = storeVehicleIds ? { vehicleId: { $in: storeVehicleIds } } : {}
       const items = await db.collection('fuel_entries').find(query).sort({ date: -1 }).limit(500).toArray()
       return json(items.map(clean))
     }
+
     if (path === 'maintenance') {
       const query = storeVehicleIds ? { vehicleId: { $in: storeVehicleIds } } : {}
       const items = await db.collection('maintenance').find(query).sort({ serviceDate: -1 }).toArray()
       return json(items.map(clean))
     }
+
     if (path === 'dashboard') {
-      const vehicleFilter = storeVehicleIds ? { id: { $in: storeVehicleIds } } : {}
+      const vehicleFilter = isStoreScoped ? { assignedLocation: storeId } : {}
       const activityFilter = storeVehicleIds ? { vehicleId: { $in: storeVehicleIds } } : {}
+      const driverFilter = isStoreScoped ? { assignedLocation: storeId } : {}
+
       const [vehicles, trips, fuel, drivers] = await Promise.all([
         db.collection('vehicles').find(vehicleFilter).toArray(),
         db.collection('trips').find(activityFilter).toArray(),
         db.collection('fuel_entries').find(activityFilter).toArray(),
-        db.collection('drivers').find({}).toArray(),
+        db.collection('drivers').find(driverFilter).toArray(),
       ])
+
       const now = new Date()
       const todayStr = now.toISOString().slice(0, 10)
       const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
@@ -231,7 +246,6 @@ if (role === 'store_admin' && storeId) {
       const fuelMonthCost = fuelMonth.reduce((s, f) => s + f.amount, 0)
       const avgMileage = fuelMonthLit > 0 ? kmMonth / fuelMonthLit : 0
 
-      // Per-vehicle mileage (last 30 days)
       const perVehicle = vehicles.map(v => {
         const vTrips = trips.filter(t => t.vehicleId === v.id && t.kmRun && new Date(t.dateOut) >= monthStart)
         const vFuel = fuel.filter(f => f.vehicleId === v.id && new Date(f.date) >= monthStart)
@@ -247,7 +261,6 @@ if (role === 'store_admin' && storeId) {
         }
       })
 
-      // Daily trips (last 7 days)
       const daily = []
       for (let i = 6; i >= 0; i--) {
         const d = new Date(now.getTime() - i * 24 * 3600 * 1000)
@@ -262,7 +275,6 @@ if (role === 'store_admin' && storeId) {
         })
       }
 
-      // Alerts
       const in30 = new Date(now.getTime() + 30 * 24 * 3600 * 1000)
       const alerts = {
         insuranceExpiry: vehicles.filter(v => new Date(v.insuranceExpiry) < in30).map(v => ({ vehicleNumber: v.vehicleNumber, date: v.insuranceExpiry })),
@@ -307,6 +319,7 @@ if (role === 'store_admin' && storeId) {
   }
 }
 
+// --- POST ---
 export async function POST(request, { params }) {
   try {
     const db = await getDb()
@@ -314,10 +327,6 @@ export async function POST(request, { params }) {
     const path = pathArr.join('/')
     const body = await request.json()
     const role = request.headers.get('x-user-role')
-
-    if (role === 'store_admin' && path !== 'auth/login') {
-      return json({ error: 'Store admins have read-only access' }, 403)
-    }
 
     if (path === 'auth/login') {
       const users = {
@@ -334,33 +343,49 @@ export async function POST(request, { params }) {
       return json({ error: 'Invalid credentials' }, 401)
     }
 
+    // Everything below here requires write access
+    if (role === 'store_admin') {
+      return json({ error: 'Store admins have read-only access' }, 403)
+    }
+
     if (path === 'vehicles') {
       const item = { id: uuidv4(), ...body, status: body.status || 'Available', createdAt: new Date().toISOString() }
       await db.collection('vehicles').insertOne(item)
       return json(clean(item))
     }
-   if (path === 'drivers') {
-  const query = storeDriverIds ? { id: { $in: storeDriverIds } } : {}
-  const items = await db.collection('drivers').find(query).toArray()
-  return json(items.map(clean))
-}
+
+    if (path === 'drivers') {
+      const item = {
+        id: uuidv4(),
+        name: body.name,
+        empId: body.empId,
+        mobile: body.mobile,
+        licence: body.licence,
+        licenceExpiry: body.licenceExpiry,
+        status: body.status || 'Active',
+        assignedLocation: body.assignedLocation || '',
+        assignedVehicleId: body.assignedVehicleId || null,
+        remarks: body.remarks || '',
+        createdAt: new Date().toISOString(),
+      }
+      await db.collection('drivers').insertOne(item)
+      return json(clean(item))
+    }
+
     if (path === 'trips/out') {
       const vehicle = await db.collection('vehicles').findOne({ id: body.vehicleId })
       if (!vehicle) return json({ error: 'Vehicle not found' }, 404)
       if (vehicle.status === 'Outside') return json({ error: 'Vehicle is already outside' }, 400)
-      
+
       const vehicleType = body.vehicleType || (vehicle.type === 'Two Wheeler' ? 'Two Wheeler' : 'Four Wheeler')
-      
-      // Validation: Two Wheeler requires employeeName
+
       if (vehicleType === 'Two Wheeler' && !body.employeeName) {
         return json({ error: 'Employee Name is required for two-wheelers' }, 400)
       }
-      
-      // Validation: Four Wheeler requires driverId
       if (vehicleType === 'Four Wheeler' && !body.driverId) {
         return json({ error: 'Driver is required for four-wheelers' }, 400)
       }
-      
+
       const driver = body.driverId ? await db.collection('drivers').findOne({ id: body.driverId }) : null
       const trip = {
         id: uuidv4(),
@@ -384,6 +409,7 @@ export async function POST(request, { params }) {
       await db.collection('vehicles').updateOne({ id: vehicle.id }, { $set: { status: 'Outside' } })
       return json(clean(trip))
     }
+
     if (path === 'trips/in') {
       const trip = await db.collection('trips').findOne({ id: body.tripId })
       if (!trip) return json({ error: 'Trip not found' }, 404)
@@ -398,6 +424,7 @@ export async function POST(request, { params }) {
       })
       return json({ ok: true, kmRun })
     }
+
     if (path === 'fuel') {
       const vehicle = await db.collection('vehicles').findOne({ id: body.vehicleId })
       if (!vehicle) return json({ error: 'Vehicle not found' }, 404)
@@ -420,6 +447,7 @@ export async function POST(request, { params }) {
       await db.collection('fuel_entries').insertOne(entry)
       return json(clean(entry))
     }
+
     if (path === 'maintenance') {
       const vehicle = await db.collection('vehicles').findOne({ id: body.vehicleId })
       if (!vehicle) return json({ error: 'Vehicle not found' }, 404)
@@ -443,7 +471,6 @@ export async function POST(request, { params }) {
         createdAt: new Date().toISOString(),
       }
       await db.collection('maintenance').insertOne(entry)
-      // Also update vehicle master
       const update = {}
       if (entry.nextServiceKm) update.serviceDueKm = entry.nextServiceKm
       if (entry.nextServiceDate) update.serviceDueDate = entry.nextServiceDate
@@ -459,6 +486,7 @@ export async function POST(request, { params }) {
   }
 }
 
+// --- PUT ---
 export async function PUT(request, { params }) {
   try {
     const db = await getDb()
@@ -473,7 +501,8 @@ export async function PUT(request, { params }) {
 
     const map = { vehicles: 'vehicles', drivers: 'drivers', maintenance: 'maintenance' }
     if (!map[col]) return json({ error: 'Not found' }, 404)
-    delete body._id; delete body.id
+    delete body._id
+    delete body.id
     await db.collection(map[col]).updateOne({ id }, { $set: body })
     return json({ ok: true })
   } catch (e) {
@@ -481,6 +510,7 @@ export async function PUT(request, { params }) {
   }
 }
 
+// --- DELETE ---
 export async function DELETE(request, { params }) {
   try {
     const db = await getDb()
