@@ -173,15 +173,17 @@ export async function GET(request, { params }) {
 
     if (path === 'health') return json({ ok: true })
 
-    if (path === 'vehicles') {
-      const items = await db.collection('vehicles').find({}).toArray()
+        if (path === 'vehicles') {
+      const query = storeVehicleIds ? { id: { $in: storeVehicleIds } } : {}
+      const items = await db.collection('vehicles').find(query).toArray()
       return json(items.map(clean))
     }
     if (path === 'drivers') {
-      const items = await db.collection('drivers').find({}).toArray()
+      const query = storeVehicleIds ? { assignedVehicleId: { $in: storeVehicleIds } } : {}
+      const items = await db.collection('drivers').find(query).toArray()
       return json(items.map(clean))
-    }
-    if (path === 'trips') {
+      
+    }    if (path === 'trips') {
       const query = storeVehicleIds ? { vehicleId: { $in: storeVehicleIds } } : {}
       const items = await db.collection('trips').find(query).sort({ createdAt: -1 }).limit(500).toArray()
       return json(items.map(clean))
