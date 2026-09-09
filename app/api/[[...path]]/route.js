@@ -177,26 +177,31 @@ export async function GET(request, { params }) {
       const items = await db.collection('vehicles').find({}).toArray()
       return json(items.map(clean))
     }
-       if (path === 'trips') {
+    if (path === 'drivers') {
+      const items = await db.collection('drivers').find({}).toArray()
+      return json(items.map(clean))
+    }
+    if (path === 'trips') {
       const query = storeVehicleIds ? { vehicleId: { $in: storeVehicleIds } } : {}
       const items = await db.collection('trips').find(query).sort({ createdAt: -1 }).limit(500).toArray()
       return json(items.map(clean))
     }
-             if (path === 'trips/outside') {
+    if (path === 'trips/outside') {
       const query = { status: 'Outside', ...(storeVehicleIds ? { vehicleId: { $in: storeVehicleIds } } : {}) }
       const items = await db.collection('trips').find(query).toArray()
       return json(items.map(clean))
-    }        if (path === 'fuel') {
+    }
+    if (path === 'fuel') {
       const query = storeVehicleIds ? { vehicleId: { $in: storeVehicleIds } } : {}
       const items = await db.collection('fuel_entries').find(query).sort({ date: -1 }).limit(500).toArray()
       return json(items.map(clean))
     }
-       if (path === 'maintenance') {
+    if (path === 'maintenance') {
       const query = storeVehicleIds ? { vehicleId: { $in: storeVehicleIds } } : {}
       const items = await db.collection('maintenance').find(query).sort({ serviceDate: -1 }).toArray()
       return json(items.map(clean))
-    } 
-       if (path === 'dashboard') {
+    }
+    if (path === 'dashboard') {
       const vehicleFilter = storeVehicleIds ? { id: { $in: storeVehicleIds } } : {}
       const activityFilter = storeVehicleIds ? { vehicleId: { $in: storeVehicleIds } } : {}
       const [vehicles, trips, fuel, drivers] = await Promise.all([
@@ -312,15 +317,15 @@ export async function POST(request, { params }) {
 
     if (path === 'auth/login') {
       const users = {
-  admin:    { password: 'admin123',    role: 'admin',       name: 'Administrator' },
-  security: { password: 'security123', role: 'security',    name: 'Security User' },
-  tss:      { password: 'tss123',      role: 'store_admin', name: 'TSS', storeId: 'TSS' },
-  tsw:      { password: 'tsw123',      role: 'store_admin', name: 'TSW', storeId: 'TSW' },
-  ts:       { password: 'ts123',       role: 'store_admin', name: 'TS',  storeId: 'TS' },
-}
+        admin:    { password: 'admin123',    role: 'admin',       name: 'Administrator' },
+        security: { password: 'security123', role: 'security',    name: 'Security User' },
+        tss:      { password: 'tss123',      role: 'store_admin', name: 'TSS', storeId: 'TSS' },
+        tsw:      { password: 'tsw123',      role: 'store_admin', name: 'TSW', storeId: 'TSW' },
+        ts:       { password: 'ts123',       role: 'store_admin', name: 'TS',  storeId: 'TS' },
+      }
       const u = users[body.username]
       if (u && u.password === body.password) {
-       return json({ token: uuidv4(), user: { username: body.username, role: u.role, name: u.name, storeId: u.storeId || null } })
+        return json({ token: uuidv4(), user: { username: body.username, role: u.role, name: u.name, storeId: u.storeId || null } })
       }
       return json({ error: 'Invalid credentials' }, 401)
     }
