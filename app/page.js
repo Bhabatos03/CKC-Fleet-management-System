@@ -22,6 +22,7 @@ import {
   PieChart, Pie, Cell, Legend
 } from 'recharts'
 
+// Get the currently logged-in user from localStorage
 const getUser = () => { try { return JSON.parse(localStorage.getItem('ckc_user') || '{}') } catch { return {} } }
 
 const api = async (path, opts = {}) => {
@@ -312,7 +313,7 @@ function Login({ onLogin }) {
 
 function AdminShell({ user, onLogout, children, active, setActive }) {
   const [drawerOpen, setDrawerOpen] = useState(false)
-  const nav = [
+  const fullNav = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'vehicles', label: 'Vehicles', icon: Car },
     { id: 'drivers', label: 'Drivers', icon: Users },
@@ -322,6 +323,9 @@ function AdminShell({ user, onLogout, children, active, setActive }) {
     { id: 'mileage', label: 'Mileage', icon: Gauge },
     { id: 'reports', label: 'Reports', icon: Download },
   ]
+  const nav = user.role === 'store_admin'
+    ? fullNav.filter(n => ['dashboard', 'vehicles', 'trips', 'maintenance'].includes(n.id))
+    : fullNav
   const pick = (id) => { setActive(id); setDrawerOpen(false) }
   const SidebarContent = () => (
     <>
@@ -329,7 +333,9 @@ function AdminShell({ user, onLogout, children, active, setActive }) {
         <img src="/ckc-logo.png" alt="CKC" className="w-11 h-11 object-contain" />
         <div className="flex-1 min-w-0">
           <div className="font-semibold text-sm leading-tight truncate text-white" style={{fontFamily: '"Times New Roman", Georgia, serif'}}>C. Krishniah Chetty</div>
-          <div className="text-[10px] text-amber-200/60 tracking-[0.2em] mt-0.5">FLEET · ADMIN</div>
+          <div className="text-[10px] text-amber-200/60 tracking-[0.2em] mt-0.5">
+            FLEET · {user.role === 'store_admin' ? (user.name || 'STORE') : 'ADMIN'}
+          </div>
         </div>
         <button onClick={() => setDrawerOpen(false)} className="md:hidden text-slate-300 hover:text-white p-1"><X className="w-5 h-5" /></button>
       </div>
@@ -517,6 +523,8 @@ function AlertGroup({ title, items }) {
 }
 
 function Vehicles() {
+  const user = getUser()
+  const canEdit = user.role !== 'store_admin'
   const [items, setItems] = useState([])
   const [drivers, setDrivers] = useState([])
   const [search, setSearch] = useState('')
@@ -538,7 +546,9 @@ function Vehicles() {
     <div className="p-6 space-y-4">
       <div className="flex items-center justify-between">
         <div><h1 className="text-3xl font-bold text-slate-900 relative inline-block">Vehicle Master<span className="absolute -bottom-1 left-0 w-16 h-1 bg-gradient-to-r from-[#7a0d0d] to-amber-500 rounded-full" /></h1><p className="text-slate-500 mt-2">Manage fleet vehicles</p></div>
-        <Button onClick={() => { setEditing(null); setOpen(true) }} className="bg-gradient-to-r from-[#7a0d0d] to-[#a01414] hover:brightness-110 text-white shadow-md">+ Add Vehicle</Button>
+        {canEdit && (
+          <Button onClick={() => { setEditing(null); setOpen(true) }} className="bg-gradient-to-r from-[#7a0d0d] to-[#a01414] hover:brightness-110 text-white shadow-md">+ Add Vehicle</Button>
+        )}
       </div>
       <Card><CardContent className="p-4">
         <div className="mb-4 relative max-w-sm">
@@ -563,15 +573,21 @@ function Vehicles() {
                 <TableCell>{v.expectedMileage} km/L</TableCell>
                     <TableCell><Badge variant={v.status === 'Available' ? 'default' : v.status === 'Outside' ? 'secondary' : 'destructive'} className={v.status === 'Available' ? 'bg-[#7a0d0d] hover:bg-[#5c0a0a]' : ''}>{v.status}</Badge></TableCell>
                 <TableCell className="text-right space-x-2">
-                  <Button size="sm" variant="outline" onClick={() => { setEditing(v); setOpen(true) }}>Edit</Button>
-                  <Button size="sm" variant="destructive" onClick={() => remove(v.id)}>Delete</Button>
+                  {canEdit && (
+                    <>
+                      <Button size="sm" variant="outline" onClick={() => { setEditing(v); setOpen(true) }}>Edit</Button>
+                      <Button size="sm" variant="destructive" onClick={() => remove(v.id)}>Delete</Button>
+                    </>
+                  )}
                 </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table></div>
       </CardContent></Card>
-      <VehicleDialog open={open} onOpenChange={setOpen} onSubmit={submit} initial={editing} drivers={drivers} />
+      {canEdit && (
+        <VehicleDialog open={open} onOpenChange={setOpen} onSubmit={submit} initial={editing} drivers={drivers} />
+      )}
     </div>
   )
 }
@@ -635,6 +651,8 @@ function VehicleDialog({ open, onOpenChange, onSubmit, initial, drivers }) {
 }
 
 function Drivers() {
+  const user = getUser()
+  const canEdit = user.role !== 'store_admin'
   const [items, setItems] = useState([])
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState(null)
@@ -652,7 +670,9 @@ function Drivers() {
     <div className="p-6 space-y-4">
       <div className="flex items-center justify-between">
         <div><h1 className="text-3xl font-bold text-slate-900 relative inline-block">Driver Master<span className="absolute -bottom-1 left-0 w-16 h-1 bg-gradient-to-r from-[#7a0d0d] to-amber-500 rounded-full" /></h1><p className="text-slate-500 mt-2">Manage drivers</p></div>
-        <Button onClick={() => { setEditing(null); setOpen(true) }} className="bg-gradient-to-r from-[#7a0d0d] to-[#a01414] hover:brightness-110 text-white shadow-md">+ Add Driver</Button>
+        {canEdit && (
+          <Button onClick={() => { setEditing(null); setOpen(true) }} className="bg-gradient-to-r from-[#7a0d0d] to-[#a01414] hover:brightness-110 text-white shadow-md">+ Add Driver</Button>
+        )}
       </div>
       <Card><CardContent className="p-4"><div className="overflow-x-auto"><Table>
         <TableHeader><TableRow>
@@ -669,15 +689,21 @@ function Drivers() {
                 <TableCell className={expiring ? 'text-rose-600 font-semibold' : ''}>{fmtDate(d.licenceExpiry)}</TableCell>
                 <TableCell><Badge className="bg-[#7a0d0d] hover:bg-[#5c0a0a]">{d.status}</Badge></TableCell>
                 <TableCell className="text-right space-x-2">
-                  <Button size="sm" variant="outline" onClick={() => { setEditing(d); setOpen(true) }}>Edit</Button>
-                  <Button size="sm" variant="destructive" onClick={() => remove(d.id)}>Delete</Button>
+                  {canEdit && (
+                    <>
+                      <Button size="sm" variant="outline" onClick={() => { setEditing(d); setOpen(true) }}>Edit</Button>
+                      <Button size="sm" variant="destructive" onClick={() => remove(d.id)}>Delete</Button>
+                    </>
+                  )}
                 </TableCell>
               </TableRow>
             )
           })}
         </TableBody>
       </Table></div></CardContent></Card>
-      <DriverDialog open={open} onOpenChange={setOpen} onSubmit={submit} initial={editing} />
+      {canEdit && (
+        <DriverDialog open={open} onOpenChange={setOpen} onSubmit={submit} initial={editing} />
+      )}
     </div>
   )
 }
@@ -930,6 +956,8 @@ function FuelRegister() {
 }
 
 function Maintenance() {
+  const user = getUser()
+  const canEdit = user.role !== 'store_admin'
   const [items, setItems] = useState([])
   const [vehicles, setVehicles] = useState([])
   const [open, setOpen] = useState(false)
@@ -970,7 +998,9 @@ function Maintenance() {
     <div className="p-6 space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div><h1 className="text-3xl font-bold text-slate-900 relative inline-block">Maintenance<span className="absolute -bottom-1 left-0 w-16 h-1 bg-gradient-to-r from-[#7a0d0d] to-amber-500 rounded-full" /></h1><p className="text-slate-500 mt-2">Service history · parts · workshops · next-service reminders</p></div>
-        <Button onClick={() => { setEditing(null); setOpen(true) }} className="bg-gradient-to-r from-[#7a0d0d] to-[#a01414] text-white"><Plus className="w-4 h-4 mr-1" /> Add Service Record</Button>
+        {canEdit && (
+          <Button onClick={() => { setEditing(null); setOpen(true) }} className="bg-gradient-to-r from-[#7a0d0d] to-[#a01414] text-white"><Plus className="w-4 h-4 mr-1" /> Add Service Record</Button>
+        )}
       </div>
 
       {upcoming.length > 0 && (
@@ -1050,8 +1080,12 @@ function Maintenance() {
                     {m.nextServiceKm ? <div className="text-slate-500">@ {m.nextServiceKm.toLocaleString()} km</div> : null}
                   </TableCell>
                   <TableCell className="text-right space-x-1">
-                    <Button size="sm" variant="outline" onClick={() => { setEditing(m); setOpen(true) }}>Edit</Button>
-                    <Button size="sm" variant="destructive" onClick={() => remove(m.id)}><Trash2 className="w-3 h-3" /></Button>
+                    {canEdit && (
+                      <>
+                        <Button size="sm" variant="outline" onClick={() => { setEditing(m); setOpen(true) }}>Edit</Button>
+                        <Button size="sm" variant="destructive" onClick={() => remove(m.id)}><Trash2 className="w-3 h-3" /></Button>
+                      </>
+                    )}
                   </TableCell>
                 </TableRow>
               ))}
@@ -1063,7 +1097,9 @@ function Maintenance() {
         </CardContent>
       </Card>
 
-      <MaintenanceDialog open={open} onOpenChange={setOpen} onSubmit={submit} initial={editing} vehicles={vehicles} />
+      {canEdit && (
+        <MaintenanceDialog open={open} onOpenChange={setOpen} onSubmit={submit} initial={editing} vehicles={vehicles} />
+      )}
     </div>
   )
 }
@@ -2212,17 +2248,22 @@ function App() {
   if (!loaded) return null
   if (!user) return <><Login onLogin={setUser} /><OfflineBanner /></>
   if (user.role === 'security') return <><SecurityHome user={user} onLogout={logout} /><OfflineBanner /></>
+
+  // Store admins get the same shell, but only a subset of pages/tabs
+  const allowedForStoreAdmin = ['dashboard', 'vehicles', 'trips', 'maintenance']
+  const effectiveActive = user.role === 'store_admin' && !allowedForStoreAdmin.includes(active) ? 'dashboard' : active
+
   return (
     <>
-    <AdminShell user={user} onLogout={logout} active={active} setActive={setActive}>
-      {active === 'dashboard' && <Dashboard />}
-      {active === 'vehicles' && <Vehicles />}
-      {active === 'drivers' && <Drivers />}
-      {active === 'trips' && <Trips />}
-      {active === 'fuel' && <FuelRegister />}
-      {active === 'maintenance' && <Maintenance />}
-      {active === 'mileage' && <Mileage />}
-      {active === 'reports' && <Reports />}
+    <AdminShell user={user} onLogout={logout} active={effectiveActive} setActive={setActive}>
+      {effectiveActive === 'dashboard' && <Dashboard />}
+      {effectiveActive === 'vehicles' && <Vehicles />}
+      {effectiveActive === 'drivers' && <Drivers />}
+      {effectiveActive === 'trips' && <Trips />}
+      {effectiveActive === 'fuel' && <FuelRegister />}
+      {effectiveActive === 'maintenance' && <Maintenance />}
+      {effectiveActive === 'mileage' && <Mileage />}
+      {effectiveActive === 'reports' && <Reports />}
     </AdminShell>
     <OfflineBanner />
     </>
