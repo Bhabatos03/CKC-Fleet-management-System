@@ -339,11 +339,11 @@ export async function POST(request, { params }) {
       await db.collection('vehicles').insertOne(item)
       return json(clean(item))
     }
-    if (path === 'drivers') {
-      const item = { id: uuidv4(), ...body, status: body.status || 'Active', createdAt: new Date().toISOString() }
-      await db.collection('drivers').insertOne(item)
-      return json(clean(item))
-    }
+   if (path === 'drivers') {
+  const query = storeDriverIds ? { id: { $in: storeDriverIds } } : {}
+  const items = await db.collection('drivers').find(query).toArray()
+  return json(items.map(clean))
+}
     if (path === 'trips/out') {
       const vehicle = await db.collection('vehicles').findOne({ id: body.vehicleId })
       if (!vehicle) return json({ error: 'Vehicle not found' }, 404)
