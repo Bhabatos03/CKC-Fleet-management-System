@@ -22,9 +22,6 @@ import {
   PieChart, Pie, Cell, Legend
 } from 'recharts'
 
-// List of stores for assignment dropdowns
-const STORES = ['TSS', 'TSW', 'TS']
-
 // Get the currently logged-in user from localStorage
 const getUser = () => { try { return JSON.parse(localStorage.getItem('ckc_user') || '{}') } catch { return {} } }
 
@@ -644,12 +641,7 @@ function VehicleDialog({ open, onOpenChange, onSubmit, initial, drivers }) {
           <div><Label>Insurance Expiry</Label><Input type="date" value={f.insuranceExpiry?.slice(0, 10) || ''} onChange={e => set('insuranceExpiry', e.target.value)} /></div>
           <div><Label>PUC Expiry</Label><Input type="date" value={f.pucExpiry?.slice(0, 10) || ''} onChange={e => set('pucExpiry', e.target.value)} /></div>
           <div><Label>Service Due Date</Label><Input type="date" value={f.serviceDueDate?.slice(0, 10) || ''} onChange={e => set('serviceDueDate', e.target.value)} /></div>
-          <div><Label>Assigned Location</Label>
-            <Select value={f.assignedLocation || ''} onValueChange={v => set('assignedLocation', v)}>
-              <SelectTrigger><SelectValue placeholder="Select store" /></SelectTrigger>
-              <SelectContent>{STORES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-            </Select>
-          </div>
+          <div><Label>Assigned Location</Label><Input value={f.assignedLocation || ''} onChange={e => set('assignedLocation', e.target.value)} /></div>
           <div className="col-span-2"><Label>Remarks</Label><Textarea value={f.remarks || ''} onChange={e => set('remarks', e.target.value)} /></div>
         </div>
         <DialogFooter><Button onClick={() => onSubmit(f)} className="bg-gradient-to-r from-[#7a0d0d] to-[#a01414] hover:brightness-110 text-white">Save</Button></DialogFooter>
@@ -664,8 +656,6 @@ function Drivers() {
   const [items, setItems] = useState([])
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState(null)
-  const [search, setSearch] = useState('')
-  const [storeFilter, setStoreFilter] = useState('all')
   const load = () => api('drivers').then(setItems)
   useEffect(() => { load() }, [])
   const submit = async (data) => {
@@ -676,11 +666,6 @@ function Drivers() {
     } catch (e) { toast.error(e.message) }
   }
   const remove = async (id) => { if (confirm('Delete?')) { await api(`drivers/${id}`, { method: 'DELETE' }); load() } }
-  const filtered = items.filter(d => {
-    const matchesSearch = !search || d.name?.toLowerCase().includes(search.toLowerCase()) || d.empId?.toLowerCase().includes(search.toLowerCase())
-    const matchesStore = storeFilter === 'all' || d.assignedLocation === storeFilter
-    return matchesSearch && matchesStore
-  })
   return (
     <div className="p-6 space-y-4">
       <div className="flex items-center justify-between">
@@ -689,36 +674,19 @@ function Drivers() {
           <Button onClick={() => { setEditing(null); setOpen(true) }} className="bg-gradient-to-r from-[#7a0d0d] to-[#a01414] hover:brightness-110 text-white shadow-md">+ Add Driver</Button>
         )}
       </div>
-      <Card><CardContent className="p-4 space-y-4">
-        <div className="flex gap-3">
-          <div className="relative flex-1 max-w-sm">
-            <Search className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
-            <Input placeholder="Search driver..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
-          </div>
-          {canEdit && (
-            <Select value={storeFilter} onValueChange={setStoreFilter}>
-              <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Stores</SelectItem>
-                {STORES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          )}
-        </div>
-        <div className="overflow-x-auto"><Table>
+      <Card><CardContent className="p-4"><div className="overflow-x-auto"><Table>
         <TableHeader><TableRow>
           <TableHead>Name</TableHead><TableHead>Emp ID</TableHead><TableHead>Mobile</TableHead>
-          <TableHead>Licence</TableHead><TableHead>Licence Expiry</TableHead><TableHead>Assigned Store</TableHead><TableHead>Status</TableHead><TableHead></TableHead>
+          <TableHead>Licence</TableHead><TableHead>Licence Expiry</TableHead><TableHead>Status</TableHead><TableHead></TableHead>
         </TableRow></TableHeader>
         <TableBody>
-          {filtered.map(d => {
+          {items.map(d => {
             const expiring = new Date(d.licenceExpiry) < new Date(Date.now() + 30 * 24 * 3600 * 1000)
             return (
               <TableRow key={d.id}>
                 <TableCell className="font-semibold">{d.name}</TableCell>
                 <TableCell>{d.empId}</TableCell><TableCell>{d.mobile}</TableCell><TableCell>{d.licence}</TableCell>
                 <TableCell className={expiring ? 'text-rose-600 font-semibold' : ''}>{fmtDate(d.licenceExpiry)}</TableCell>
-                <TableCell>{d.assignedLocation || '-'}</TableCell>
                 <TableCell><Badge className="bg-[#7a0d0d] hover:bg-[#5c0a0a]">{d.status}</Badge></TableCell>
                 <TableCell className="text-right space-x-2">
                   {canEdit && (
@@ -731,9 +699,6 @@ function Drivers() {
               </TableRow>
             )
           })}
-          {filtered.length === 0 && (
-            <TableRow><TableCell colSpan={8} className="text-center text-slate-500 py-8">No drivers found</TableCell></TableRow>
-          )}
         </TableBody>
       </Table></div></CardContent></Card>
       {canEdit && (
@@ -745,7 +710,7 @@ function Drivers() {
 
 function DriverDialog({ open, onOpenChange, onSubmit, initial }) {
   const [f, setF] = useState({})
-  useEffect(() => { setF(initial || { name: '', empId: '', mobile: '', licence: '', licenceExpiry: '', status: 'Active', assignedLocation: '', remarks: '' }) }, [initial, open])
+  useEffect(() => { setF(initial || { name: '', empId: '', mobile: '', licence: '', licenceExpiry: '', status: 'Active', remarks: '' }) }, [initial, open])
   const set = (k, v) => setF(x => ({ ...x, [k]: v }))
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -763,15 +728,9 @@ function DriverDialog({ open, onOpenChange, onSubmit, initial }) {
               <SelectContent>{['Active', 'Inactive', 'On Leave'].map(x => <SelectItem key={x} value={x}>{x}</SelectItem>)}</SelectContent>
             </Select>
           </div>
-          <div><Label>Assigned Store</Label>
-            <Select value={f.assignedLocation || ''} onValueChange={v => set('assignedLocation', v)}>
-              <SelectTrigger><SelectValue placeholder="Select store" /></SelectTrigger>
-              <SelectContent>{STORES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-            </Select>
-          </div>
           <div className="col-span-2"><Label>Remarks</Label><Textarea value={f.remarks || ''} onChange={e => set('remarks', e.target.value)} /></div>
         </div>
-        <DialogFooter><Button onClick={() => onSubmit(f)} disabled={!f.name || !f.assignedLocation} className="bg-gradient-to-r from-[#7a0d0d] to-[#a01414] hover:brightness-110 text-white">Save</Button></DialogFooter>
+        <DialogFooter><Button onClick={() => onSubmit(f)} className="bg-gradient-to-r from-[#7a0d0d] to-[#a01414] hover:brightness-110 text-white">Save</Button></DialogFooter>
       </DialogContent>
     </Dialog>
   )
