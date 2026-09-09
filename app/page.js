@@ -934,18 +934,25 @@ function FuelRegister() {
   const [vehicles, setVehicles] = useState([])
   const [viewImg, setViewImg] = useState(null)
   const [vehicleFilter, setVehicleFilter] = useState('all')
-  const today = new Date().toISOString().slice(0, 10)
-  const monthAgo = new Date(Date.now() - 30 * 864e5).toISOString().slice(0, 10)
-  const [fromDate, setFromDate] = useState(monthAgo)
-  const [toDate, setToDate] = useState(today)
+  const [fromDate, setFromDate] = useState('')
+  const [toDate, setToDate] = useState('')
+  const [submitted, setSubmitted] = useState(null)
+
   useEffect(() => { api('fuel').then(setItems); api('vehicles').then(setVehicles) }, [])
-  const filtered = items.filter(t => {
+
+  const generate = () => {
+    if (!fromDate || !toDate) { toast.error('Please select both From and To dates'); return }
+    if (fromDate > toDate) { toast.error('From date must be before To date'); return }
+    setSubmitted({ fromDate, toDate, vehicleFilter })
+  }
+
+  const filtered = submitted ? items.filter(t => {
     const d = t.date?.slice(0, 10)
-    if (fromDate && d < fromDate) return false
-    if (toDate && d > toDate) return false
-    if (vehicleFilter !== 'all' && t.vehicleId !== vehicleFilter) return false
+    if (d < submitted.fromDate || d > submitted.toDate) return false
+    if (submitted.vehicleFilter !== 'all' && t.vehicleId !== submitted.vehicleFilter) return false
     return true
-  })
+  }) : []
+
   const totalLit = filtered.reduce((s, f) => s + f.quantity, 0)
   const totalCost = filtered.reduce((s, f) => s + f.amount, 0)
   const headers = ['Date', 'Vehicle', 'Odometer', 'Quantity(L)', 'Rate', 'Amount', 'Station', 'Receipt']
@@ -953,30 +960,33 @@ function FuelRegister() {
   const exportCsv = () => {
     const csv = [headers, ...rows()].map(r => r.map(c => `"${c ?? ''}"`).join(',')).join('\n')
     const blob = new Blob([csv], { type: 'text/csv' })
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `fuel-${fromDate}_to_${toDate}.csv`; a.click()
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `fuel-${submitted.fromDate}_to_${submitted.toDate}.csv`; a.click()
   }
   const exportExcel = async () => {
-    await exportXlsx(`CKC-Fuel-${fromDate}_to_${toDate}.xlsx`, [{ name: 'Fuel', headers, rows: rows() }])
+    await exportXlsx(`CKC-Fuel-${submitted.fromDate}_to_${submitted.toDate}.xlsx`, [{ name: 'Fuel', headers, rows: rows() }])
     toast.success('Excel downloaded')
   }
+
   return (
     <div className="p-6 space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <div><h1 className="text-3xl font-bold text-slate-900 relative inline-block">Fuel Register<span className="absolute -bottom-1 left-0 w-16 h-1 bg-gradient-to-r from-[#7a0d0d] to-amber-500 rounded-full" /></h1><p className="text-slate-500 mt-2">All fuel filling entries</p></div>
-        <div className="flex gap-2">
-          <Button onClick={exportCsv} variant="outline"><Download className="w-4 h-4 mr-2" /> CSV</Button>
-          <Button onClick={exportExcel} variant="outline" className="border-emerald-600 text-emerald-700 hover:bg-emerald-50"><FileSpreadsheet className="w-4 h-4 mr-2" /> Excel</Button>
-        </div>
+        <div><h1 className="text-3xl font-bold text-slate-900 relative inline-block">Fuel Register<span className="absolute -bottom-1 left-0 w-16 h-1 bg-gradient-to-r from-[#7a0d0d] to-amber-500 rounded-full" /></h1><p className="text-slate-500 mt-2">Select a date range and generate the fuel register.</p></div>
+        {submitted && (
+          <div className="flex gap-2">
+            <Button onClick={exportCsv} variant="outline"><Download className="w-4 h-4 mr-2" /> CSV</Button>
+            <Button onClick={exportExcel} variant="outline" className="border-emerald-600 text-emerald-700 hover:bg-emerald-50"><FileSpreadsheet className="w-4 h-4 mr-2" /> Excel</Button>
+          </div>
+        )}
       </div>
       <Card><CardContent className="p-4 space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
           <div>
-            <Label className="text-xs text-slate-500">From Date</Label>
-            <Input type="date" value={fromDate} onChange={e => setFromDate(e.target.value)} max={toDate} />
+            <Label className="text-xs text-slate-500">From Date *</Label>
+            <Input type="date" value={fromDate} onChange={e => setFromDate(e.target.value)} max={toDate || undefined} />
           </div>
           <div>
-            <Label className="text-xs text-slate-500">To Date</Label>
-            <Input type="date" value={toDate} onChange={e => setToDate(e.target.value)} min={fromDate} max={today} />
+            <Label className="text-xs text-slate-500">To Date *</Label>
+            <Input type="date" value={toDate} onChange={e => setToDate(e.target.value)} min={fromDate || undefined} />
           </div>
           <div>
             <Label className="text-xs text-slate-500">Vehicle</Label>
@@ -988,47 +998,54 @@ function FuelRegister() {
               </SelectContent>
             </Select>
           </div>
+          <Button onClick={generate} className="bg-gradient-to-r from-[#7a0d0d] to-[#a01414] hover:brightness-110 text-white h-10">
+            <Fuel className="w-4 h-4 mr-2" /> Generate
+          </Button>
         </div>
-        <div className="flex flex-wrap gap-2 text-xs">
-          <button onClick={() => { setFromDate(today); setToDate(today) }} className="px-3 py-1 rounded-full bg-slate-100 hover:bg-red-100 hover:text-red-800 border">Today</button>
-          <button onClick={() => { setFromDate(new Date(Date.now() - 7 * 864e5).toISOString().slice(0, 10)); setToDate(today) }} className="px-3 py-1 rounded-full bg-slate-100 hover:bg-red-100 hover:text-red-800 border">Last 7 days</button>
-          <button onClick={() => { setFromDate(monthAgo); setToDate(today) }} className="px-3 py-1 rounded-full bg-slate-100 hover:bg-red-100 hover:text-red-800 border">Last 30 days</button>
-          <button onClick={() => { const d = new Date(); setFromDate(new Date(d.getFullYear(), d.getMonth(), 1).toISOString().slice(0,10)); setToDate(today) }} className="px-3 py-1 rounded-full bg-slate-100 hover:bg-red-100 hover:text-red-800 border">This Month</button>
-          <button onClick={() => { const d = new Date(); setFromDate(new Date(d.getFullYear(), 0, 1).toISOString().slice(0,10)); setToDate(today) }} className="px-3 py-1 rounded-full bg-slate-100 hover:bg-red-100 hover:text-red-800 border">This Year</button>
-        </div>
-        <div className="flex flex-wrap gap-4 text-sm bg-slate-50 rounded-lg p-3">
-          <div><span className="text-slate-500">Entries: </span><b>{filtered.length}</b></div>
-          <div><span className="text-slate-500">Total Litres: </span><b>{totalLit.toFixed(1)} L</b></div>
-          <div><span className="text-slate-500">Total Cost: </span><b>{fmtINR(totalCost)}</b></div>
-        </div>
-        <div className="overflow-x-auto"><Table>
-        <TableHeader><TableRow>
-          <TableHead>Date</TableHead><TableHead>Vehicle</TableHead><TableHead>Odometer</TableHead>
-          <TableHead>Qty (L)</TableHead><TableHead>Rate</TableHead><TableHead>Amount</TableHead>
-          <TableHead>Station</TableHead><TableHead>Receipt</TableHead><TableHead>Photo</TableHead>
-        </TableRow></TableHeader>
-        <TableBody>
-          {filtered.slice(0, 200).map(t => (
-            <TableRow key={t.id}>
-              <TableCell className="text-xs">{fmtDate(t.date)}</TableCell>
-              <TableCell className="font-semibold">{t.vehicleNumber}</TableCell>
-              <TableCell>{t.odometer?.toLocaleString()}</TableCell>
-              <TableCell>{t.quantity}</TableCell>
-              <TableCell>₹{t.rate}</TableCell>
-              <TableCell className="font-semibold">{fmtINR(t.amount)}</TableCell>
-              <TableCell className="text-xs">{t.station}</TableCell>
-              <TableCell className="text-xs">{t.receiptNumber}</TableCell>
-              <TableCell>
-                {t.receiptImage ? (
-                  <button onClick={() => setViewImg(t.receiptImage)} className="w-10 h-10 rounded border overflow-hidden hover:ring-2 hover:ring-amber-500">
-                    <img src={t.receiptImage} alt="" className="w-full h-full object-cover" />
-                  </button>
-                ) : <span className="text-slate-300 text-xs">—</span>}
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table></div>
+
+        {submitted && (
+          <>
+            <div className="flex flex-wrap gap-4 text-sm bg-slate-50 rounded-lg p-3">
+              <div><span className="text-slate-500">Entries: </span><b>{filtered.length}</b></div>
+              <div><span className="text-slate-500">Total Litres: </span><b>{totalLit.toFixed(1)} L</b></div>
+              <div><span className="text-slate-500">Total Cost: </span><b>{fmtINR(totalCost)}</b></div>
+            </div>
+            <div className="overflow-x-auto"><Table>
+              <TableHeader><TableRow>
+                <TableHead>Date</TableHead><TableHead>Vehicle</TableHead><TableHead>Odometer</TableHead>
+                <TableHead>Qty (L)</TableHead><TableHead>Rate</TableHead><TableHead>Amount</TableHead>
+                <TableHead>Station</TableHead><TableHead>Receipt</TableHead><TableHead>Photo</TableHead>
+              </TableRow></TableHeader>
+              <TableBody>
+                {filtered.slice(0, 200).map(t => (
+                  <TableRow key={t.id}>
+                    <TableCell className="text-xs">{fmtDate(t.date)}</TableCell>
+                    <TableCell className="font-semibold">{t.vehicleNumber}</TableCell>
+                    <TableCell>{t.odometer?.toLocaleString()}</TableCell>
+                    <TableCell>{t.quantity}</TableCell>
+                    <TableCell>₹{t.rate}</TableCell>
+                    <TableCell className="font-semibold">{fmtINR(t.amount)}</TableCell>
+                    <TableCell className="text-xs">{t.station}</TableCell>
+                    <TableCell className="text-xs">{t.receiptNumber}</TableCell>
+                    <TableCell>
+                      {t.receiptImage ? (
+                        <button onClick={() => setViewImg(t.receiptImage)} className="w-10 h-10 rounded border overflow-hidden hover:ring-2 hover:ring-amber-500">
+                          <img src={t.receiptImage} alt="" className="w-full h-full object-cover" />
+                        </button>
+                      ) : <span className="text-slate-300 text-xs">—</span>}
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {filtered.length === 0 && (
+                  <TableRow><TableCell colSpan={9} className="text-center text-slate-500 py-8">No fuel entries found for this range.</TableCell></TableRow>
+                )}
+              </TableBody>
+            </Table></div>
+          </>
+        )}
+        {!submitted && (
+          <div className="text-center text-slate-400 py-10">Select a date range and click Generate to view fuel entries.</div>
+        )}
       </CardContent></Card>
       <Dialog open={!!viewImg} onOpenChange={(v) => !v && setViewImg(null)}>
         <DialogContent className="max-w-3xl">
@@ -1039,7 +1056,6 @@ function FuelRegister() {
     </div>
   )
 }
-
 function Maintenance() {
   const user = getUser()
   const canEdit = user.role !== 'store_admin'
