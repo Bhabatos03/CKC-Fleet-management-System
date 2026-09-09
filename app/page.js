@@ -748,45 +748,123 @@ function Trips() {
   const [vehicles, setVehicles] = useState([])
   const [search, setSearch] = useState('')
   const [vehicleFilter, setVehicleFilter] = useState('all')
-  const today = new Date().toISOString().slice(0, 10)
-  const monthAgo = new Date(Date.now() - 30 * 864e5).toISOString().slice(0, 10)
-  const [fromDate, setFromDate] = useState(monthAgo)
-  const [toDate, setToDate] = useState(today)
+  const [fromDate, setFromDate] = useState('')
+  const [toDate, setToDate] = useState('')
+  const [submitted, setSubmitted] = useState(null)
+
   useEffect(() => { api('trips').then(setItems); api('vehicles').then(setVehicles) }, [])
-  const filtered = items.filter(t => {
+
+  const generate = () => {
+    if (!fromDate || !toDate) { toast.error('Please select both From and To dates'); return }
+    if (fromDate > toDate) { toast.error('From date must be before To date'); return }
+    setSubmitted({ fromDate, toDate, vehicleFilter })
+  }
+
+  const filtered = submitted ? items.filter(t => {
     const d = t.dateOut?.slice(0, 10)
-    if (fromDate && d < fromDate) return false
-    if (toDate && d > toDate) return false
-    if (vehicleFilter !== 'all' && t.vehicleId !== vehicleFilter) return false
+    if (d < submitted.fromDate || d > submitted.toDate) return false
+    if (submitted.vehicleFilter !== 'all' && t.vehicleId !== submitted.vehicleFilter) return false
     if (search) {
       const s = search.toLowerCase()
       if (!(t.vehicleNumber?.toLowerCase().includes(s) || t.driverName?.toLowerCase().includes(s) || t.destination?.toLowerCase().includes(s))) return false
     }
     return true
-  })
-    const headers = ['Trip ID', 'Date', 'Vehicle Type', 'Vehicle', 'Driver/Employee', 'Time Out', 'Time In', 'Odo Out', 'Odo In', 'KM Run', 'Destination', 'Status']
+  }) : []
+
+  const headers = ['Trip ID', 'Date', 'Vehicle Type', 'Vehicle', 'Driver/Employee', 'Time Out', 'Time In', 'Odo Out', 'Odo In', 'KM Run', 'Destination', 'Status']
   const rows = () => filtered.map(t => [t.tripId, fmtDate(t.dateOut), t.vehicleType || '-', t.vehicleNumber, t.driverName || t.employeeName || '-', fmtDT(t.dateOut), fmtDT(t.timeIn), t.odometerOut, t.odometerIn, t.kmRun, t.destination, t.status])
   const exportCsv = () => {
     const csv = [headers, ...rows()].map(r => r.map(c => `"${c ?? ''}"`).join(',')).join('\n')
     const blob = new Blob([csv], { type: 'text/csv' })
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `trips-${fromDate}_to_${toDate}.csv`; a.click()
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `trips-${submitted.fromDate}_to_${submitted.toDate}.csv`; a.click()
   }
   const exportExcel = async () => {
-    await exportXlsx(`CKC-Trips-${fromDate}_to_${toDate}.xlsx`, [{ name: 'Trips', headers, rows: rows() }])
+    await exportXlsx(`CKC-Trips-${submitted.fromDate}_to_${submitted.toDate}.xlsx`, [{ name: 'Trips', headers, rows: rows() }])
     toast.success('Excel downloaded')
   }
   const totalKm = filtered.reduce((s, t) => s + (t.kmRun || 0), 0)
+
   return (
     <div className="p-6 space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <div><h1 className="text-3xl font-bold text-slate-900 relative inline-block">Trip Register<span className="absolute -bottom-1 left-0 w-16 h-1 bg-gradient-to-r from-[#7a0d0d] to-amber-500 rounded-full" /></h1><p className="text-slate-500 mt-2">Vehicle movement history</p></div>
-        <div className="flex gap-2">
-          <Button onClick={exportCsv} variant="outline"><Download className="w-4 h-4 mr-2" /> CSV</Button>
-          <Button onClick={exportExcel} variant="outline" className="border-emerald-600 text-emerald-700 hover:bg-emerald-50"><FileSpreadsheet className="w-4 h-4 mr-2" /> Excel</Button>
-        </div>
+        <div><h1 className="text-3xl font-bold text-slate-900 relative inline-block">Trip Register<span className="absolute -bottom-1 left-0 w-16 h-1 bg-gradient-to-r from-[#7a0d0d] to-amber-500 rounded-full" /></h1><p className="text-slate-500 mt-2">Select a date range and generate the trip register.</p></div>
+        {submitted && (
+          <div className="flex gap-2">
+            <Button onClick={exportCsv} variant="outline"><Download className="w-4 h-4 mr-2" /> CSV</Button>
+            <Button onClick={exportExcel} variant="outline" className="border-emerald-600 text-emerald-700 hover:bg-emerald-50"><FileSpreadsheet className="w-4 h-4 mr-2" /> Excel</Button>
+          </div>
+        )}
       </div>
       <Card><CardContent className="p-4 space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
+          <div>
+            <Label className="text-xs text-slate-500">From Date *</Label>
+            <Input type="date" value={fromDate} onChange={e => setFromDate(e.target.value)} max={toDate || undefined} />
+          </div>
+          <div>
+            <Label className="text-xs text-slate-500">To Date *</Label>
+            <Input type="date" value={toDate} onChange={e => setToDate(e.target.value)} min={fromDate || undefined} />
+          </div>
+          <div>
+            <Label className="text-xs text-slate-500">Vehicle</Label>
+            <Select value={vehicleFilter} onValueChange={setVehicleFilter}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Vehicles</SelectItem>
+                {vehicles.map(v => <SelectItem key={v.id} value={v.id}>{v.vehicleNumber}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <Button onClick={generate} className="bg-gradient-to-r from-[#7a0d0d] to-[#a01414] hover:brightness-110 text-white h-10">
+            <ClipboardList className="w-4 h-4 mr-2" /> Generate
+          </Button>
+        </div>
+
+        {submitted && (
+          <>
+            <div className="relative max-w-sm">
+              <Search className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
+              <Input placeholder="Search within results..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
+            </div>
+            <div className="flex gap-4 text-sm bg-slate-50 rounded-lg p-3">
+              <div><span className="text-slate-500">Trips: </span><b>{filtered.length}</b></div>
+              <div><span className="text-slate-500">Total KM: </span><b>{totalKm.toLocaleString()}</b></div>
+            </div>
+            <div className="overflow-x-auto"><Table>
+              <TableHeader><TableRow>
+                <TableHead>Trip ID</TableHead><TableHead>Type</TableHead><TableHead>Vehicle</TableHead><TableHead>Driver/Employee</TableHead>
+                <TableHead>Out</TableHead><TableHead>In</TableHead><TableHead>KM</TableHead>
+                <TableHead>Destination</TableHead><TableHead>Status</TableHead>
+              </TableRow></TableHeader>
+              <TableBody>
+                {filtered.slice(0, 200).map(t => (
+                  <TableRow key={t.id}>
+                    <TableCell className="font-mono text-xs">{t.tripId}</TableCell>
+                    <TableCell className="text-xs">{t.vehicleType || '-'}</TableCell>
+                    <TableCell className="font-semibold">{t.vehicleNumber}</TableCell>
+                    <TableCell>{t.driverName || t.employeeName || '-'}</TableCell>
+                    <TableCell className="text-xs">{fmtDT(t.dateOut)}</TableCell>
+                    <TableCell className="text-xs">{fmtDT(t.timeIn)}</TableCell>
+                    <TableCell className="font-semibold">{t.kmRun || '-'}</TableCell>
+                    <TableCell className="text-xs">{t.destination}</TableCell>
+                    <TableCell><Badge variant={t.status === 'Outside' ? 'secondary' : 'default'} className={t.status === 'Returned' ? 'bg-[#7a0d0d] hover:bg-[#5c0a0a]' : ''}>{t.status}</Badge></TableCell>
+                  </TableRow>
+                ))}
+                {filtered.length === 0 && (
+                  <TableRow><TableCell colSpan={9} className="text-center text-slate-500 py-8">No trips found for this range.</TableCell></TableRow>
+                )}
+              </TableBody>
+            </Table></div>
+          </>
+        )}
+        {!submitted && (
+          <div className="text-center text-slate-400 py-10">Select a date range and click Generate to view trips.</div>
+        )}
+      </CardContent></Card>
+    </div>
+  )
+}
+    <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
           <div>
             <Label className="text-xs text-slate-500">From Date</Label>
             <Input type="date" value={fromDate} onChange={e => setFromDate(e.target.value)} max={toDate} />
