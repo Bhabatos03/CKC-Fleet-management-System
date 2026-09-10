@@ -410,6 +410,9 @@ export async function POST(request, { params }) {
       }
       const existing = await db.collection('users').findOne({ username: body.username })
       if (existing) return json({ error: 'Username already exists' }, 409)
+      if (body.role === 'store_admin' && !body.storeId) {
+        return json({ error: 'Store admins must be assigned a storeId' }, 400)
+      }
 
       const item = {
         id: uuidv4(),
@@ -581,16 +584,26 @@ export async function PUT(request, { params }) {
 
     if (col === 'users') {
       if (role !== 'admin') return json({ error: 'Admin access required' }, 403)
+
+      // PUT /users/:id/password — dedicated password-reset endpoint
+      if (pathArr[2] === 'password') {
+        if (!body.password || body.password.length < 6) {
+          return json({ error: 'Password must be at least 6 characters' }, 400)
+        }
+        const result = await db.collection('users').updateOne({ id }, { $set: { password: hashPassword(body.password) } })
+        if (result.matchedCount === 0) return json({ error: 'User not found' }, 404)
+        return json({ ok: true })
+      }
+
       delete body._id
       delete body.id
-      if (body.password) {
-        body.password = hashPassword(body.password)
-      } else {
-        delete body.password
-      }
+      delete body.password // password changes go through /users/:id/password only
       if (body.username) {
         const existing = await db.collection('users').findOne({ username: body.username, id: { $ne: id } })
         if (existing) return json({ error: 'Username already exists' }, 409)
+      }
+      if (body.role === 'store_admin' && !body.storeId) {
+        return json({ error: 'Store admins must be assigned a storeId' }, 400)
       }
       await db.collection('users').updateOne({ id }, { $set: body })
       const updated = await db.collection('users').findOne({ id })
