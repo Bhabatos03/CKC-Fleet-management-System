@@ -782,8 +782,99 @@ function Trips() {
     await exportXlsx(`CKC-Trips-${submitted.fromDate}_to_${submitted.toDate}.xlsx`, [{ name: 'Trips', headers, rows: rows() }])
     toast.success('Excel downloaded')
   }
-  const totalKm = filtered.reduce((s, t) => s + (t.kmRun || 0), 0)
+    const totalKm = filtered.reduce((s, t) => s + (t.kmRun || 0), 0)
   const selectedVehicle = vehicles.find(v => v.id === submitted?.vehicleFilter)
+
+  const generatePDF = async () => {
+    setGenerating(true)
+    try {
+      const { jsPDF } = await import('jspdf')
+      const autoTable = (await import('jspdf-autotable')).default
+      const doc = new jsPDF({ unit: 'pt', format: 'a4' })
+      const pageW = doc.internal.pageSize.getWidth()
+      const now = new Date()
+      const rangeStr = submitted.fromDate === submitted.toDate
+        ? new Date(submitted.fromDate).toLocaleDateString('en-IN')
+        : `${new Date(submitted.fromDate).toLocaleDateString('en-IN')} — ${new Date(submitted.toDate).toLocaleDateString('en-IN')}`
+
+      let logoDataUrl = null
+      try {
+        const res = await fetch('/ckc-logo-pdf.png')
+        const blob = await res.blob()
+        logoDataUrl = await new Promise((r) => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(blob) })
+      } catch {}
+
+      doc.setFillColor(58, 6, 6); doc.rect(0, 0, pageW, 110, 'F')
+      doc.setDrawColor(217, 119, 6); doc.setLineWidth(1.5); doc.line(0, 108, pageW, 108)
+      if (logoDataUrl) {
+        doc.setFillColor(255, 255, 255); doc.circle(60, 55, 32, 'F')
+        doc.addImage(logoDataUrl, 'PNG', 32, 27, 56, 56)
+      }
+      const brandX = 108
+      doc.setTextColor(255, 255, 255); doc.setFont('times', 'bold'); doc.setFontSize(22)
+      doc.text('C. Krishniah Chetty', brandX, 46)
+      const w1 = doc.getTextWidth('C. Krishniah Chetty')
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(8)
+      doc.text('TM', brandX + w1 + 3, 34)
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(252, 211, 77)
+      doc.text('G R O U P    O F    J E W E L L E R S', brandX, 62)
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(255, 255, 255)
+      doc.text('Fleet Management System — Trip Register', brandX, 86)
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(252, 211, 77)
+      doc.text(`Period:  ${rangeStr}`, pageW - 30, 36, { align: 'right' })
+      doc.text(`Vehicle: ${selectedVehicle ? selectedVehicle.vehicleNumber : 'All Vehicles'}`, pageW - 30, 50, { align: 'right' })
+      doc.text(`Generated: ${now.toLocaleString('en-IN')}`, pageW - 30, 64, { align: 'right' })
+      doc.setTextColor(255, 255, 255); doc.setFontSize(7)
+      doc.text('EST. 1869  ·  HERITAGE JEWELLERS', pageW - 30, 86, { align: 'right' })
+
+      doc.setTextColor(15, 23, 42)
+      let y = 135
+
+      doc.setFontSize(13); doc.setFont('helvetica', 'bold')
+      doc.text('Summary', 30, y); y += 8
+      doc.setDrawColor(217, 119, 6); doc.setLineWidth(2); doc.line(30, y, 90, y); y += 15
+      autoTable(doc, {
+        startY: y,
+        head: [['Metric', 'Value']],
+        body: [
+          ['Total Trips', filtered.length],
+          ['Total KM Travelled', totalKm.toLocaleString('en-IN') + ' km'],
+        ],
+        theme: 'grid', headStyles: { fillColor: [139, 20, 20], textColor: 255 },
+        styles: { fontSize: 10 }, margin: { left: 30, right: 30 },
+      })
+      y = doc.lastAutoTable.finalY + 20
+
+      if (y > 650) { doc.addPage(); y = 40 }
+      doc.setFontSize(13); doc.setFont('helvetica', 'bold')
+      doc.text('Trip Details', 30, y); y += 12
+      autoTable(doc, {
+        startY: y,
+        head: [['Trip ID', 'Type', 'Vehicle', 'Driver/Employee', 'Out', 'In', 'KM', 'Destination', 'Status']],
+        body: filtered.slice(0, 300).map(t => [
+          t.tripId, t.vehicleType || '-', t.vehicleNumber, t.driverName || t.employeeName || '-',
+          new Date(t.dateOut).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }),
+          t.timeIn ? new Date(t.timeIn).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '-',
+          t.kmRun || '-', t.destination || '-', t.status || '-',
+        ]),
+        theme: 'striped', headStyles: { fillColor: [139, 20, 20] },
+        styles: { fontSize: 8 }, margin: { left: 30, right: 30 },
+      })
+
+      const pageCount = doc.internal.getNumberOfPages()
+      for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i)
+        const pageH = doc.internal.pageSize.getHeight()
+        doc.setDrawColor(217, 119, 6); doc.setLineWidth(0.5); doc.line(30, pageH - 32, pageW - 30, pageH - 32)
+        doc.setFontSize(8); doc.setTextColor(120); doc.setFont('helvetica', 'normal')
+        doc.text('C. Krishniah Chetty (TM) Group of Jewellers  ·  Fleet Management System  ·  Confidential', 30, pageH - 20)
+        doc.text(`Page ${i} of ${pageCount}`, pageW - 30, pageH - 20, { align: 'right' })
+      }
+      doc.save(`CKC-Trip-Register-${submitted.fromDate}_to_${submitted.toDate}.pdf`)
+      toast.success('PDF generated')
+    } catch (e) { console.error(e); toast.error('PDF failed: ' + e.message) }
+    finally { setGenerating(false) }
+  }
 
   return (
     <div className="p-6 space-y-4">
