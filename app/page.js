@@ -750,8 +750,7 @@ function Trips() {
   const [vehicleFilter, setVehicleFilter] = useState('all')
   const [fromDate, setFromDate] = useState('')
   const [toDate, setToDate] = useState('')
-  const [submitted, setSubmitted] = useState(null)
-
+  const [generating, setGenerating] = useState(false)
   useEffect(() => { api('trips').then(setItems); api('vehicles').then(setVehicles) }, [])
 
   const generate = () => {
