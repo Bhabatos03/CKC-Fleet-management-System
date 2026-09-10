@@ -1481,6 +1481,219 @@ function MaintenanceDialog({ open, onOpenChange, onSubmit, initial, vehicles }) 
     </Dialog>
   )
 }
+const ROLES = [
+  { value: 'admin', label: 'Administrator' },
+  { value: 'store_admin', label: 'Store Admin' },
+  { value: 'security', label: 'Security' },
+]
+
+function UserManagement() {
+  const currentUser = getUser()
+  const [items, setItems] = useState([])
+  const [search, setSearch] = useState('')
+  const [open, setOpen] = useState(false)
+  const [editing, setEditing] = useState(null)
+  const [pwdUser, setPwdUser] = useState(null)
+  const [deleteTarget, setDeleteTarget] = useState(null)
+
+  const load = () => api('users').then(setItems).catch(e => toast.error(e.message))
+  useEffect(() => { load() }, [])
+
+  if (currentUser.role !== 'admin') {
+    return (
+      <div className="p-6">
+        <Card><CardContent className="p-10 text-center text-slate-500">
+          You don't have permission to view this page.
+        </CardContent></Card>
+      </div>
+    )
+  }
+
+  const filtered = items.filter(u =>
+    !search ||
+    u.name?.toLowerCase().includes(search.toLowerCase()) ||
+    u.username?.toLowerCase().includes(search.toLowerCase()) ||
+    u.empId?.toLowerCase().includes(search.toLowerCase())
+  )
+
+  const roleLabel = (r) => ROLES.find(x => x.value === r)?.label || r
+
+  const submit = async (data) => {
+    try {
+      if (editing) {
+        const { password, ...rest } = data
+        await api(`users/${editing.id}`, { method: 'PUT', body: rest })
+        toast.success('User updated')
+      } else {
+        await api('users', { method: 'POST', body: data })
+        toast.success('User created')
+      }
+      setOpen(false); setEditing(null); load()
+    } catch (e) { toast.error(e.message) }
+  }
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return
+    try {
+      await api(`users/${deleteTarget.id}`, { method: 'DELETE' })
+      toast.success('User deleted')
+      setDeleteTarget(null); load()
+    } catch (e) { toast.error(e.message) }
+  }
+
+  const submitPassword = async (newPassword) => {
+    try {
+      await api(`users/${pwdUser.id}/password`, { method: 'PUT', body: { password: newPassword } })
+      toast.success(`Password updated for ${pwdUser.name}`)
+      setPwdUser(null)
+    } catch (e) { toast.error(e.message) }
+  }
+
+  return (
+    <div className="p-6 space-y-4">
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900 relative inline-block">User Management<span className="absolute -bottom-1 left-0 w-16 h-1 bg-gradient-to-r from-[#7a0d0d] to-amber-500 rounded-full" /></h1>
+          <p className="text-slate-500 mt-2">Manage administrator, store admin, and security accounts</p>
+        </div>
+        <Button onClick={() => { setEditing(null); setOpen(true) }} className="bg-gradient-to-r from-[#7a0d0d] to-[#a01414] hover:brightness-110 text-white shadow-md">
+          <Plus className="w-4 h-4 mr-1" /> Add User
+        </Button>
+      </div>
+
+      <Card><CardContent className="p-4">
+        <div className="mb-4 relative max-w-sm">
+          <Search className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
+          <Input placeholder="Search name, username, emp ID..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
+        </div>
+        <div className="overflow-x-auto"><Table>
+          <TableHeader><TableRow>
+            <TableHead>Name</TableHead><TableHead>Emp ID</TableHead><TableHead>Mobile</TableHead>
+            <TableHead>Username</TableHead><TableHead>Role</TableHead><TableHead>Status</TableHead><TableHead></TableHead>
+          </TableRow></TableHeader>
+          <TableBody>
+            {filtered.map(u => (
+              <TableRow key={u.id}>
+                <TableCell className="font-semibold">{u.name}</TableCell>
+                <TableCell>{u.empId || '-'}</TableCell>
+                <TableCell>{u.mobile || '-'}</TableCell>
+                <TableCell className="font-mono text-xs">{u.username}</TableCell>
+                <TableCell><Badge variant="outline">{roleLabel(u.role)}</Badge></TableCell>
+                <TableCell>
+                  <Badge className={u.status === 'Active' ? 'bg-[#7a0d0d] hover:bg-[#5c0a0a]' : ''} variant={u.status === 'Active' ? 'default' : 'secondary'}>
+                    {u.status || 'Active'}
+                  </Badge>
+                </TableCell>
+                <TableCell className="text-right space-x-2 whitespace-nowrap">
+                  <Button size="sm" variant="outline" onClick={() => { setEditing(u); setOpen(true) }}>Edit</Button>
+                  <Button size="sm" variant="outline" onClick={() => setPwdUser(u)}><KeyRound className="w-3 h-3 mr-1" /> Password</Button>
+                  <Button size="sm" variant="destructive" onClick={() => setDeleteTarget(u)}>Delete</Button>
+                </TableCell>
+              </TableRow>
+            ))}
+            {filtered.length === 0 && (
+              <TableRow><TableCell colSpan={7} className="text-center text-slate-500 py-8">No users found.</TableCell></TableRow>
+            )}
+          </TableBody>
+        </Table></div>
+      </CardContent></Card>
+
+      <UserDialog open={open} onOpenChange={setOpen} onSubmit={submit} initial={editing} />
+
+      <ChangePasswordDialog user={pwdUser} onClose={() => setPwdUser(null)} onSubmit={submitPassword} />
+
+      <Dialog open={!!deleteTarget} onOpenChange={(v) => !v && setDeleteTarget(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Delete User</DialogTitle></DialogHeader>
+          <p className="text-sm text-slate-600">
+            Are you sure you want to delete <b>{deleteTarget?.name}</b> ({deleteTarget?.username})? This cannot be undone.
+          </p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteTarget(null)}>Cancel</Button>
+            <Button variant="destructive" onClick={confirmDelete}>Delete User</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  )
+}
+
+function UserDialog({ open, onOpenChange, onSubmit, initial }) {
+  const [f, setF] = useState({})
+  useEffect(() => {
+    setF(initial || { name: '', empId: '', mobile: '', username: '', password: '', role: 'security', status: 'Active' })
+  }, [initial, open])
+  const set = (k, v) => setF(x => ({ ...x, [k]: v }))
+
+  const canSave = f.name && f.username && (initial || f.password) && f.role
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader><DialogTitle>{initial ? 'Edit User' : 'Add User'}</DialogTitle></DialogHeader>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="col-span-2"><Label>Name *</Label><Input value={f.name || ''} onChange={e => set('name', e.target.value)} /></div>
+          <div><Label>Employee ID</Label><Input value={f.empId || ''} onChange={e => set('empId', e.target.value)} /></div>
+          <div><Label>Mobile Number</Label><Input value={f.mobile || ''} onChange={e => set('mobile', e.target.value)} /></div>
+          <div><Label>Username *</Label><Input value={f.username || ''} onChange={e => set('username', e.target.value)} disabled={!!initial} /></div>
+          {!initial && (
+            <div><Label>Password *</Label><Input type="password" value={f.password || ''} onChange={e => set('password', e.target.value)} placeholder="Set initial password" /></div>
+          )}
+          <div>
+            <Label>Role *</Label>
+            <Select value={f.role} onValueChange={v => set('role', v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>{ROLES.map(r => <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label>Status</Label>
+            <Select value={f.status} onValueChange={v => set('status', v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Active">Active</SelectItem>
+                <SelectItem value="Inactive">Inactive</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        {initial && <p className="text-xs text-slate-500">Username can't be changed. Use "Password" from the table to reset the login password.</p>}
+        <DialogFooter>
+          <Button onClick={() => onSubmit(f)} disabled={!canSave} className="bg-gradient-to-r from-[#7a0d0d] to-[#a01414] hover:brightness-110 text-white">
+            {initial ? 'Save Changes' : 'Create User'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+function ChangePasswordDialog({ user, onClose, onSubmit }) {
+  const [pwd, setPwd] = useState('')
+  const [confirm, setConfirm] = useState('')
+  useEffect(() => { setPwd(''); setConfirm('') }, [user])
+
+  const canSave = pwd.length >= 6 && pwd === confirm
+
+  return (
+    <Dialog open={!!user} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent>
+        <DialogHeader><DialogTitle>Change Password — {user?.name}</DialogTitle></DialogHeader>
+        <div className="space-y-3">
+          <div><Label>New Password</Label><Input type="password" value={pwd} onChange={e => setPwd(e.target.value)} placeholder="Minimum 6 characters" /></div>
+          <div><Label>Confirm Password</Label><Input type="password" value={confirm} onChange={e => setConfirm(e.target.value)} /></div>
+          {pwd && confirm && pwd !== confirm && <p className="text-xs text-rose-600">Passwords do not match.</p>}
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button onClick={() => onSubmit(pwd)} disabled={!canSave} className="bg-gradient-to-r from-[#7a0d0d] to-[#a01414] hover:brightness-110 text-white">
+            Update Password
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
 
 function Mileage() {
   const [trips, setTrips] = useState([])
