@@ -864,71 +864,7 @@ function Trips() {
     </div>
   )
 }
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-          <div>
-            <Label className="text-xs text-slate-500">From Date</Label>
-            <Input type="date" value={fromDate} onChange={e => setFromDate(e.target.value)} max={toDate} />
-          </div>
-          <div>
-            <Label className="text-xs text-slate-500">To Date</Label>
-            <Input type="date" value={toDate} onChange={e => setToDate(e.target.value)} min={fromDate} max={today} />
-          </div>
-          <div>
-            <Label className="text-xs text-slate-500">Vehicle</Label>
-            <Select value={vehicleFilter} onValueChange={setVehicleFilter}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Vehicles</SelectItem>
-                {vehicles.map(v => <SelectItem key={v.id} value={v.id}>{v.vehicleNumber}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label className="text-xs text-slate-500">Search</Label>
-            <div className="relative">
-              <Search className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
-              <Input placeholder="Driver, destination..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
-            </div>
-          </div>
-        </div>
-        <div className="flex flex-wrap gap-2 text-xs">
-          <button onClick={() => { setFromDate(today); setToDate(today) }} className="px-3 py-1 rounded-full bg-slate-100 hover:bg-red-100 hover:text-red-800 border">Today</button>
-          <button onClick={() => { setFromDate(new Date(Date.now() - 7 * 864e5).toISOString().slice(0, 10)); setToDate(today) }} className="px-3 py-1 rounded-full bg-slate-100 hover:bg-red-100 hover:text-red-800 border">Last 7 days</button>
-          <button onClick={() => { setFromDate(monthAgo); setToDate(today) }} className="px-3 py-1 rounded-full bg-slate-100 hover:bg-red-100 hover:text-red-800 border">Last 30 days</button>
-          <button onClick={() => { const d = new Date(); setFromDate(new Date(d.getFullYear(), d.getMonth(), 1).toISOString().slice(0,10)); setToDate(today) }} className="px-3 py-1 rounded-full bg-slate-100 hover:bg-red-100 hover:text-red-800 border">This Month</button>
-          <button onClick={() => { const d = new Date(); setFromDate(new Date(d.getFullYear(), 0, 1).toISOString().slice(0,10)); setToDate(today) }} className="px-3 py-1 rounded-full bg-slate-100 hover:bg-red-100 hover:text-red-800 border">This Year</button>
-        </div>
-        <div className="flex gap-4 text-sm bg-slate-50 rounded-lg p-3">
-          <div><span className="text-slate-500">Trips: </span><b>{filtered.length}</b></div>
-          <div><span className="text-slate-500">Total KM: </span><b>{totalKm.toLocaleString()}</b></div>
-        </div>
-                <div className="overflow-x-auto"><Table>
-          <TableHeader><TableRow>
-            <TableHead>Trip ID</TableHead><TableHead>Type</TableHead><TableHead>Vehicle</TableHead><TableHead>Driver/Employee</TableHead>
-            <TableHead>Out</TableHead><TableHead>In</TableHead><TableHead>KM</TableHead>
-            <TableHead>Destination</TableHead><TableHead>Status</TableHead>
-          </TableRow></TableHeader>
-          <TableBody>
-            {filtered.slice(0, 200).map(t => (
-              <TableRow key={t.id}>
-                <TableCell className="font-mono text-xs">{t.tripId}</TableCell>
-                <TableCell className="text-xs">{t.vehicleType || '-'}</TableCell>
-                <TableCell className="font-semibold">{t.vehicleNumber}</TableCell>
-                <TableCell>{t.driverName || t.employeeName || '-'}</TableCell>
-                <TableCell className="text-xs">{fmtDT(t.dateOut)}</TableCell>
-                <TableCell className="text-xs">{fmtDT(t.timeIn)}</TableCell>
-                <TableCell className="font-semibold">{t.kmRun || '-'}</TableCell>
-                <TableCell className="text-xs">{t.destination}</TableCell>
-                <TableCell><Badge variant={t.status === 'Outside' ? 'secondary' : 'default'} className={t.status === 'Returned' ? 'bg-[#7a0d0d] hover:bg-[#5c0a0a]' : ''}>{t.status}</Badge></TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table></div>
-      </CardContent></Card>
-    </div>
-  )
-}
-
+          
 function FuelRegister() {
   const [items, setItems] = useState([])
   const [vehicles, setVehicles] = useState([])
@@ -1356,17 +1292,15 @@ function MaintenanceDialog({ open, onOpenChange, onSubmit, initial, vehicles }) 
   )
 }
 
-
 function Mileage() {
   const [trips, setTrips] = useState([])
   const [fuel, setFuel] = useState([])
   const [vehicles, setVehicles] = useState([])
   const [loading, setLoading] = useState(true)
-  const today = new Date().toISOString().slice(0, 10)
-  const monthAgo = new Date(Date.now() - 30 * 864e5).toISOString().slice(0, 10)
-  const [fromDate, setFromDate] = useState(monthAgo)
-  const [toDate, setToDate] = useState(today)
+  const [fromDate, setFromDate] = useState('')
+  const [toDate, setToDate] = useState('')
   const [vehicleFilter, setVehicleFilter] = useState('all')
+  const [submitted, setSubmitted] = useState(null)
   const [generating, setGenerating] = useState(false)
 
   useEffect(() => {
@@ -1377,10 +1311,16 @@ function Mileage() {
 
   if (loading) return <div className="p-8">Loading...</div>
 
-  const inRange = (dstr) => dstr >= fromDate && dstr <= toDate
+  const generate = () => {
+    if (!fromDate || !toDate) { toast.error('Please select both From and To dates'); return }
+    if (fromDate > toDate) { toast.error('From date must be before To date'); return }
+    setSubmitted({ fromDate, toDate, vehicleFilter })
+  }
 
-  const perVehicle = vehicles
-    .filter(v => vehicleFilter === 'all' || v.id === vehicleFilter)
+  const inRange = (dstr) => submitted && dstr >= submitted.fromDate && dstr <= submitted.toDate
+
+  const perVehicle = submitted ? vehicles
+    .filter(v => submitted.vehicleFilter === 'all' || v.id === submitted.vehicleFilter)
     .map(v => {
       const vTrips = trips.filter(t => t.vehicleId === v.id && t.kmRun && inRange(t.dateOut?.slice(0, 10)))
       const vFuel = fuel.filter(f => f.vehicleId === v.id && inRange(f.date?.slice(0, 10)))
@@ -1396,7 +1336,7 @@ function Mileage() {
         lowMileage: mileage !== null && mileage < v.lowMileageThreshold,
         trips: vTrips.length, refuels: vFuel.length,
       }
-    })
+    }) : []
 
   const totalKm = perVehicle.reduce((s, p) => s + p.km, 0)
   const totalLit = perVehicle.reduce((s, p) => s + p.litres, 0)
@@ -1404,19 +1344,10 @@ function Mileage() {
   const avgMileage = totalLit > 0 ? (totalKm / totalLit).toFixed(2) : 'N/A'
   const lowCount = perVehicle.filter(p => p.lowMileage).length
 
-  const applyPreset = (p) => {
-    const now = new Date()
-    if (p === 'today') { setFromDate(today); setToDate(today) }
-    else if (p === '7d') { setFromDate(new Date(Date.now() - 7 * 864e5).toISOString().slice(0, 10)); setToDate(today) }
-    else if (p === '30d') { setFromDate(monthAgo); setToDate(today) }
-    else if (p === 'month') { setFromDate(new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10)); setToDate(today) }
-    else if (p === 'year') { setFromDate(new Date(now.getFullYear(), 0, 1).toISOString().slice(0, 10)); setToDate(today) }
-  }
-
   const exportExcel = async () => {
     const summaryRows = [
-      ['Period', `${fromDate} to ${toDate}`],
-      ['Vehicle Filter', vehicleFilter === 'all' ? 'All Vehicles' : vehicles.find(v => v.id === vehicleFilter)?.vehicleNumber],
+      ['Period', `${submitted.fromDate} to ${submitted.toDate}`],
+      ['Vehicle Filter', submitted.vehicleFilter === 'all' ? 'All Vehicles' : vehicles.find(v => v.id === submitted.vehicleFilter)?.vehicleNumber],
       ['Total KM', totalKm],
       ['Total Fuel (L)', totalLit.toFixed(2)],
       ['Total Fuel Cost', totalCost.toFixed(2)],
@@ -1432,7 +1363,7 @@ function Mileage() {
       p.variance !== null ? p.variance.toFixed(1) + '%' : '-',
       p.lowMileage ? 'LOW MILEAGE' : (p.mileage !== null ? 'OK' : 'N/A'),
     ])
-    await exportXlsx(`CKC-Mileage-Report-${fromDate}_to_${toDate}.xlsx`, [
+    await exportXlsx(`CKC-Mileage-Report-${submitted.fromDate}_to_${submitted.toDate}.xlsx`, [
       { name: 'Summary', headers: ['Metric', 'Value'], rows: summaryRows },
       { name: 'Per-Vehicle Mileage', headers: detailHeaders, rows: detailRows },
     ])
@@ -1447,8 +1378,8 @@ function Mileage() {
       const doc = new jsPDF({ unit: 'pt', format: 'a4' })
       const pageW = doc.internal.pageSize.getWidth()
       const now = new Date()
-      const rangeStr = fromDate === toDate ? new Date(fromDate).toLocaleDateString('en-IN') : `${new Date(fromDate).toLocaleDateString('en-IN')} — ${new Date(toDate).toLocaleDateString('en-IN')}`
-      const vehLabel = vehicleFilter === 'all' ? 'All Vehicles' : vehicles.find(v => v.id === vehicleFilter)?.vehicleNumber
+      const rangeStr = submitted.fromDate === submitted.toDate ? new Date(submitted.fromDate).toLocaleDateString('en-IN') : `${new Date(submitted.fromDate).toLocaleDateString('en-IN')} — ${new Date(submitted.toDate).toLocaleDateString('en-IN')}`
+      const vehLabel = submitted.vehicleFilter === 'all' ? 'All Vehicles' : vehicles.find(v => v.id === submitted.vehicleFilter)?.vehicleNumber
 
       let logoDataUrl = null
       try {
@@ -1457,7 +1388,6 @@ function Mileage() {
         logoDataUrl = await new Promise((r) => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(blob) })
       } catch {}
 
-      // Header (same style as Reports page)
       doc.setFillColor(58, 6, 6); doc.rect(0, 0, pageW, 110, 'F')
       doc.setDrawColor(217, 119, 6); doc.setLineWidth(1.5); doc.line(0, 108, pageW, 108)
       if (logoDataUrl) {
@@ -1484,7 +1414,6 @@ function Mileage() {
       doc.setTextColor(15, 23, 42)
       let y = 135
 
-      // Summary
       doc.setFontSize(13); doc.setFont('helvetica', 'bold')
       doc.text('Fleet Mileage Summary', 30, y); y += 8
       doc.setDrawColor(217, 119, 6); doc.setLineWidth(2); doc.line(30, y, 130, y); y += 15
@@ -1503,7 +1432,6 @@ function Mileage() {
       })
       y = doc.lastAutoTable.finalY + 20
 
-      // Per-vehicle table
       if (y > 620) { doc.addPage(); y = 40 }
       doc.setFontSize(13); doc.setFont('helvetica', 'bold')
       doc.text('Per-Vehicle Mileage', 30, y); y += 12
@@ -1528,7 +1456,6 @@ function Mileage() {
       })
       y = doc.lastAutoTable.finalY + 20
 
-      // Low mileage detail (if any)
       const lowVehicles = perVehicle.filter(p => p.lowMileage)
       if (lowVehicles.length > 0) {
         if (y > 680) { doc.addPage(); y = 40 }
@@ -1562,7 +1489,7 @@ function Mileage() {
         doc.text(`Page ${i} of ${pageCount}`, pageW - 30, pageH - 20, { align: 'right' })
       }
 
-      doc.save(`CKC-Mileage-Report-${fromDate}_to_${toDate}.pdf`)
+      doc.save(`CKC-Mileage-Report-${submitted.fromDate}_to_${submitted.toDate}.pdf`)
       toast.success('PDF generated')
     } catch (e) { console.error(e); toast.error('PDF failed: ' + e.message) }
     finally { setGenerating(false) }
@@ -1571,19 +1498,19 @@ function Mileage() {
   return (
     <div className="p-6 space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <div><h1 className="text-3xl font-bold text-slate-900 relative inline-block">Mileage Analytics<span className="absolute -bottom-1 left-0 w-16 h-1 bg-gradient-to-r from-[#7a0d0d] to-amber-500 rounded-full" /></h1><p className="text-slate-500 mt-2">Per-vehicle mileage for any date range</p></div>
+        <div><h1 className="text-3xl font-bold text-slate-900 relative inline-block">Mileage Analytics<span className="absolute -bottom-1 left-0 w-16 h-1 bg-gradient-to-r from-[#7a0d0d] to-amber-500 rounded-full" /></h1><p className="text-slate-500 mt-2">Select a date range and generate the mileage analysis.</p></div>
       </div>
 
       <Card>
         <CardContent className="p-6 space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
             <div>
-              <Label className="text-xs text-slate-500 tracking-wider uppercase">From Date</Label>
-              <Input type="date" value={fromDate} onChange={e => setFromDate(e.target.value)} max={toDate} />
+              <Label className="text-xs text-slate-500 tracking-wider uppercase">From Date *</Label>
+              <Input type="date" value={fromDate} onChange={e => setFromDate(e.target.value)} max={toDate || undefined} />
             </div>
             <div>
-              <Label className="text-xs text-slate-500 tracking-wider uppercase">To Date</Label>
-              <Input type="date" value={toDate} onChange={e => setToDate(e.target.value)} min={fromDate} max={today} />
+              <Label className="text-xs text-slate-500 tracking-wider uppercase">To Date *</Label>
+              <Input type="date" value={toDate} onChange={e => setToDate(e.target.value)} min={fromDate || undefined} />
             </div>
             <div>
               <Label className="text-xs text-slate-500 tracking-wider uppercase">Vehicle</Label>
@@ -1595,66 +1522,72 @@ function Mileage() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex items-end gap-2">
-              <Button onClick={generatePDF} disabled={generating} className="flex-1 h-10 bg-gradient-to-r from-[#7a0d0d] to-[#a01414] hover:brightness-110 text-white">
-                <FileText className="w-4 h-4 mr-1" /> {generating ? '...' : 'PDF'}
-              </Button>
-              <Button onClick={exportExcel} className="flex-1 h-10 bg-emerald-600 hover:bg-emerald-700 text-white">
-                <FileSpreadsheet className="w-4 h-4 mr-1" /> Excel
-              </Button>
-            </div>
+            <Button onClick={generate} className="h-10 bg-gradient-to-r from-[#7a0d0d] to-[#a01414] hover:brightness-110 text-white">
+              <Gauge className="w-4 h-4 mr-2" /> Generate
+            </Button>
           </div>
-          <div className="flex flex-wrap gap-2 text-xs">
-            <button onClick={() => applyPreset('today')} className="px-3 py-1 rounded-full bg-slate-100 hover:bg-red-100 hover:text-red-800 border">Today</button>
-            <button onClick={() => applyPreset('7d')} className="px-3 py-1 rounded-full bg-slate-100 hover:bg-red-100 hover:text-red-800 border">Last 7 days</button>
-            <button onClick={() => applyPreset('30d')} className="px-3 py-1 rounded-full bg-slate-100 hover:bg-red-100 hover:text-red-800 border">Last 30 days</button>
-            <button onClick={() => applyPreset('month')} className="px-3 py-1 rounded-full bg-slate-100 hover:bg-red-100 hover:text-red-800 border">This Month</button>
-            <button onClick={() => applyPreset('year')} className="px-3 py-1 rounded-full bg-slate-100 hover:bg-red-100 hover:text-red-800 border">This Year</button>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-3 pt-3 border-t">
-            <div className="p-3 bg-red-50 border border-red-100 rounded-lg"><div className="text-xs text-slate-500">Total KM</div><div className="text-xl font-bold text-[#7a0d0d]">{totalKm.toLocaleString()}</div></div>
-            <div className="p-3 bg-amber-50 border border-amber-100 rounded-lg"><div className="text-xs text-slate-500">Fuel (L)</div><div className="text-xl font-bold text-amber-700">{totalLit.toFixed(1)}</div></div>
-            <div className="p-3 bg-amber-50 border border-amber-100 rounded-lg"><div className="text-xs text-slate-500">Fuel Cost</div><div className="text-xl font-bold text-amber-700">{fmtINR(totalCost)}</div></div>
-            <div className="p-3 bg-slate-50 rounded-lg"><div className="text-xs text-slate-500">Avg Mileage</div><div className="text-xl font-bold">{avgMileage}<span className="text-sm text-slate-500 ml-1">km/L</span></div></div>
-            <div className={`p-3 rounded-lg border ${lowCount > 0 ? 'bg-rose-50 border-rose-200' : 'bg-slate-50 border-slate-100'}`}><div className="text-xs text-slate-500">Low Mileage</div><div className={`text-xl font-bold ${lowCount > 0 ? 'text-rose-600' : ''}`}>{lowCount}</div></div>
-          </div>
+
+          {submitted && (
+            <>
+              <div className="flex gap-2">
+                <Button onClick={generatePDF} disabled={generating} className="h-10 bg-gradient-to-r from-[#7a0d0d] to-[#a01414] hover:brightness-110 text-white">
+                  <FileText className="w-4 h-4 mr-1" /> {generating ? '...' : 'PDF'}
+                </Button>
+                <Button onClick={exportExcel} className="h-10 bg-emerald-600 hover:bg-emerald-700 text-white">
+                  <FileSpreadsheet className="w-4 h-4 mr-1" /> Excel
+                </Button>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-3 pt-3 border-t">
+                <div className="p-3 bg-red-50 border border-red-100 rounded-lg"><div className="text-xs text-slate-500">Total KM</div><div className="text-xl font-bold text-[#7a0d0d]">{totalKm.toLocaleString()}</div></div>
+                <div className="p-3 bg-amber-50 border border-amber-100 rounded-lg"><div className="text-xs text-slate-500">Fuel (L)</div><div className="text-xl font-bold text-amber-700">{totalLit.toFixed(1)}</div></div>
+                <div className="p-3 bg-amber-50 border border-amber-100 rounded-lg"><div className="text-xs text-slate-500">Fuel Cost</div><div className="text-xl font-bold text-amber-700">{fmtINR(totalCost)}</div></div>
+                <div className="p-3 bg-slate-50 rounded-lg"><div className="text-xs text-slate-500">Avg Mileage</div><div className="text-xl font-bold">{avgMileage}<span className="text-sm text-slate-500 ml-1">km/L</span></div></div>
+                <div className={`p-3 rounded-lg border ${lowCount > 0 ? 'bg-rose-50 border-rose-200' : 'bg-slate-50 border-slate-100'}`}><div className="text-xs text-slate-500">Low Mileage</div><div className={`text-xl font-bold ${lowCount > 0 ? 'text-rose-600' : ''}`}>{lowCount}</div></div>
+              </div>
+            </>
+          )}
         </CardContent>
       </Card>
 
-      <Card><CardContent className="p-4"><div className="overflow-x-auto"><Table>
-        <TableHeader><TableRow>
-          <TableHead>Vehicle</TableHead><TableHead>Trips</TableHead><TableHead>KM</TableHead>
-          <TableHead>Litres</TableHead><TableHead>Fuel Cost</TableHead>
-          <TableHead>Actual km/L</TableHead><TableHead>Expected</TableHead><TableHead>Variance</TableHead>
-          <TableHead>Status</TableHead>
-        </TableRow></TableHeader>
-        <TableBody>
-          {perVehicle.map(v => (
-            <TableRow key={v.id}>
-              <TableCell className="font-semibold">{v.vehicleNumber}</TableCell>
-              <TableCell>{v.trips}</TableCell>
-              <TableCell>{v.km.toLocaleString()}</TableCell>
-              <TableCell>{v.litres.toFixed(1)}</TableCell>
-              <TableCell>{fmtINR(v.cost)}</TableCell>
-              <TableCell className={v.lowMileage ? 'text-rose-600 font-bold' : 'font-semibold'}>
-                {v.mileage !== null ? v.mileage.toFixed(2) : <span className="text-slate-400 text-xs italic">Insufficient Data</span>}
-              </TableCell>
-              <TableCell>{v.expectedMileage}</TableCell>
-              <TableCell className={v.variance !== null ? (v.variance < 0 ? 'text-rose-600' : 'text-emerald-600') : ''}>
-                {v.variance !== null ? `${v.variance.toFixed(1)}%` : '-'}
-              </TableCell>
-              <TableCell>
-                {v.lowMileage ? <Badge variant="destructive">Low Mileage</Badge> :
-                  v.mileage !== null ? <Badge className="bg-emerald-500 hover:bg-emerald-600">OK</Badge> :
-                  <Badge variant="secondary">N/A</Badge>}
-              </TableCell>
-            </TableRow>
-          ))}
-          {perVehicle.length === 0 && (
-            <TableRow><TableCell colSpan={9} className="text-center text-slate-500 py-8">No data for selected filters.</TableCell></TableRow>
-          )}
-        </TableBody>
-      </Table></div></CardContent></Card>
+      {submitted && (
+        <Card><CardContent className="p-4"><div className="overflow-x-auto"><Table>
+          <TableHeader><TableRow>
+            <TableHead>Vehicle</TableHead><TableHead>Trips</TableHead><TableHead>KM</TableHead>
+            <TableHead>Litres</TableHead><TableHead>Fuel Cost</TableHead>
+            <TableHead>Actual km/L</TableHead><TableHead>Expected</TableHead><TableHead>Variance</TableHead>
+            <TableHead>Status</TableHead>
+          </TableRow></TableHeader>
+          <TableBody>
+            {perVehicle.map(v => (
+              <TableRow key={v.id}>
+                <TableCell className="font-semibold">{v.vehicleNumber}</TableCell>
+                <TableCell>{v.trips}</TableCell>
+                <TableCell>{v.km.toLocaleString()}</TableCell>
+                <TableCell>{v.litres.toFixed(1)}</TableCell>
+                <TableCell>{fmtINR(v.cost)}</TableCell>
+                <TableCell className={v.lowMileage ? 'text-rose-600 font-bold' : 'font-semibold'}>
+                  {v.mileage !== null ? v.mileage.toFixed(2) : <span className="text-slate-400 text-xs italic">Insufficient Data</span>}
+                </TableCell>
+                <TableCell>{v.expectedMileage}</TableCell>
+                <TableCell className={v.variance !== null ? (v.variance < 0 ? 'text-rose-600' : 'text-emerald-600') : ''}>
+                  {v.variance !== null ? `${v.variance.toFixed(1)}%` : '-'}
+                </TableCell>
+                <TableCell>
+                  {v.lowMileage ? <Badge variant="destructive">Low Mileage</Badge> :
+                    v.mileage !== null ? <Badge className="bg-emerald-500 hover:bg-emerald-600">OK</Badge> :
+                    <Badge variant="secondary">N/A</Badge>}
+                </TableCell>
+              </TableRow>
+            ))}
+            {perVehicle.length === 0 && (
+              <TableRow><TableCell colSpan={9} className="text-center text-slate-500 py-8">No data for selected filters.</TableCell></TableRow>
+            )}
+          </TableBody>
+        </Table></div></CardContent></Card>
+      )}
+      {!submitted && (
+        <Card><CardContent className="p-10 text-center text-slate-400">Select a date range and click Generate to view mileage analytics.</CardContent></Card>
+      )}
     </div>
   )
 }
