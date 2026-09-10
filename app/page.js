@@ -1621,11 +1621,12 @@ function UserManagement() {
 function UserDialog({ open, onOpenChange, onSubmit, initial }) {
   const [f, setF] = useState({})
   useEffect(() => {
-    setF(initial || { name: '', empId: '', mobile: '', username: '', password: '', role: 'security', status: 'Active' })
+    setF(initial || { name: '', empId: '', mobile: '', username: '', password: '', role: 'security', status: 'Active', storeId: '' })
   }, [initial, open])
   const set = (k, v) => setF(x => ({ ...x, [k]: v }))
 
-  const canSave = f.name && f.username && (initial || f.password) && f.role
+  const needsStore = f.role === 'store_admin'
+  const canSave = f.name && f.username && (initial || f.password) && f.role && (!needsStore || f.storeId)
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -1656,6 +1657,16 @@ function UserDialog({ open, onOpenChange, onSubmit, initial }) {
               </SelectContent>
             </Select>
           </div>
+          {needsStore && (
+            <div className="col-span-2">
+              <Label>Store *</Label>
+              <Select value={f.storeId || ''} onValueChange={v => set('storeId', v)}>
+                <SelectTrigger><SelectValue placeholder="Select store" /></SelectTrigger>
+                <SelectContent>{STORES.map(x => <SelectItem key={x} value={x}>{x}</SelectItem>)}</SelectContent>
+              </Select>
+              <p className="text-xs text-slate-500 mt-1">Store admins only see data for their assigned store.</p>
+            </div>
+          )}
         </div>
         {initial && <p className="text-xs text-slate-500">Username can't be changed. Use "Password" from the table to reset the login password.</p>}
         <DialogFooter>
@@ -1667,6 +1678,7 @@ function UserDialog({ open, onOpenChange, onSubmit, initial }) {
     </Dialog>
   )
 }
+
 
 function ChangePasswordDialog({ user, onClose, onSubmit }) {
   const [pwd, setPwd] = useState('')
