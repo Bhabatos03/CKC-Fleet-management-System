@@ -313,7 +313,7 @@ function Login({ onLogin }) {
 
 function AdminShell({ user, onLogout, children, active, setActive }) {
   const [drawerOpen, setDrawerOpen] = useState(false)
-  const fullNav = [
+    const fullNav = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'vehicles', label: 'Vehicles', icon: Car },
     { id: 'drivers', label: 'Drivers', icon: Users },
@@ -322,6 +322,7 @@ function AdminShell({ user, onLogout, children, active, setActive }) {
     { id: 'maintenance', label: 'Maintenance', icon: Wrench },
     { id: 'mileage', label: 'Mileage', icon: Gauge },
     { id: 'reports', label: 'Reports', icon: Download },
+    { id: 'users', label: 'User Management', icon: UserCog },
   ]
   const nav = user.role === 'store_admin'
     ? fullNav.filter(n => ['dashboard', 'vehicles', 'trips', 'maintenance'].includes(n.id))
