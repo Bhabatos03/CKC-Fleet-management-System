@@ -1625,8 +1625,9 @@ function UserDialog({ open, onOpenChange, onSubmit, initial }) {
   }, [initial, open])
   const set = (k, v) => setF(x => ({ ...x, [k]: v }))
 
-  const needsStore = f.role === 'store_admin'
-  const canSave = f.name && f.username && (initial || f.password) && f.role && (!needsStore || f.storeId)
+  const showStore = f.role === 'store_admin' || f.role === 'security'
+  const requiresStore = f.role === 'store_admin' // security's store is optional — a security user with no store stays global/unrestricted
+  const canSave = f.name && f.username && (initial || f.password) && f.role && (!requiresStore || f.storeId)
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -1657,14 +1658,21 @@ function UserDialog({ open, onOpenChange, onSubmit, initial }) {
               </SelectContent>
             </Select>
           </div>
-          {needsStore && (
+          {showStore && (
             <div className="col-span-2">
-              <Label>Store *</Label>
-              <Select value={f.storeId || ''} onValueChange={v => set('storeId', v)}>
+              <Label>Store{requiresStore ? ' *' : ' (optional)'}</Label>
+              <Select value={f.storeId || 'none'} onValueChange={v => set('storeId', v === 'none' ? '' : v)}>
                 <SelectTrigger><SelectValue placeholder="Select store" /></SelectTrigger>
-                <SelectContent>{STORES.map(x => <SelectItem key={x} value={x}>{x}</SelectItem>)}</SelectContent>
+                <SelectContent>
+                  {!requiresStore && <SelectItem value="none">— No store (sees all locations) —</SelectItem>}
+                  {STORES.map(x => <SelectItem key={x} value={x}>{x}</SelectItem>)}
+                </SelectContent>
               </Select>
-              <p className="text-xs text-slate-500 mt-1">Store admins only see data for their assigned store.</p>
+              <p className="text-xs text-slate-500 mt-1">
+                {requiresStore
+                  ? 'Store admins only see data for their assigned store.'
+                  : 'If set, this security user can only view and process vehicles/drivers/trips for this store. Leave unset for a global security account.'}
+              </p>
             </div>
           )}
         </div>
