@@ -2715,7 +2715,8 @@ function App() {
       {effectiveActive === 'fuel' && <FuelRegister />}
       {effectiveActive === 'maintenance' && <Maintenance />}
       {effectiveActive === 'mileage' && <Mileage />}
-      {effectiveActive === 'reports' && <Reports />}
+           {effectiveActive === 'reports' && <Reports />}
+      {effectiveActive === 'users' && <UserManagement />}
     </AdminShell>
     <OfflineBanner />
     </>
