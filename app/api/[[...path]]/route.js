@@ -229,7 +229,7 @@ export async function GET(request, { params }) {
     const path = pathArr.join('/')
     const role = request.headers.get('x-user-role')
     const storeId = request.headers.get('x-store-id')
-    const isStoreScoped = role === 'store_admin' && !!storeId
+    const isStoreScoped = (role === 'store_admin' || role === 'security') && !!storeId
 
     // Vehicles for this store, used by trips/fuel/dashboard which key off vehicleId
     let storeVehicleIds = null
@@ -394,6 +394,11 @@ export async function POST(request, { params }) {
     const path = pathArr.join('/')
     const body = await request.json()
     const role = request.headers.get('x-user-role')
+    const storeId = request.headers.get('x-store-id')
+    // Security users with a storeId are scoped to that location's vehicles only;
+    // a security user with no storeId (e.g. the original global "Security" account)
+    // stays unrestricted, same as before.
+    const isStoreScopedSecurity = role === 'security' && !!storeId
 
     if (path === 'auth/login') {
       const u = await db.collection('users').findOne({ username: body.username })
@@ -462,6 +467,9 @@ export async function POST(request, { params }) {
     if (path === 'trips/out') {
       const vehicle = await db.collection('vehicles').findOne({ id: body.vehicleId })
       if (!vehicle) return json({ error: 'Vehicle not found' }, 404)
+      if (isStoreScopedSecurity && vehicle.assignedLocation !== storeId) {
+        return json({ error: 'This vehicle is not assigned to your location' }, 403)
+      }
       if (vehicle.status === 'Outside') return json({ error: 'Vehicle is already outside' }, 400)
 
       const vehicleType = body.vehicleType || (vehicle.type === 'Two Wheeler' ? 'Two Wheeler' : 'Four Wheeler')
@@ -500,6 +508,12 @@ export async function POST(request, { params }) {
     if (path === 'trips/in') {
       const trip = await db.collection('trips').findOne({ id: body.tripId })
       if (!trip) return json({ error: 'Trip not found' }, 404)
+      if (isStoreScopedSecurity) {
+        const tripVehicle = await db.collection('vehicles').findOne({ id: trip.vehicleId })
+        if (tripVehicle && tripVehicle.assignedLocation !== storeId) {
+          return json({ error: 'This vehicle is not assigned to your location' }, 403)
+        }
+      }
       const odoIn = Number(body.odometerIn)
       const kmRun = odoIn - trip.odometerOut
       const timeIn = new Date().toISOString()
@@ -515,6 +529,9 @@ export async function POST(request, { params }) {
     if (path === 'fuel') {
       const vehicle = await db.collection('vehicles').findOne({ id: body.vehicleId })
       if (!vehicle) return json({ error: 'Vehicle not found' }, 404)
+      if (isStoreScopedSecurity && vehicle.assignedLocation !== storeId) {
+        return json({ error: 'This vehicle is not assigned to your location' }, 403)
+      }
       const quantity = Number(body.quantity)
       const rate = Number(body.rate)
       const entry = {
