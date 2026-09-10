@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "app.vercel.ckc_fleet_management_system.twa",
+        "sha256_cert_fingerprints": ["96:0A:EC:22:1E:B8:3F:7A:95:6F:B7:4E:B9:D0:A3:B8:2F:31:EE:32:71:09:A3:53:79:A2:6D:A0:D2:3B:6B:1B"]
+      }
+    }]
