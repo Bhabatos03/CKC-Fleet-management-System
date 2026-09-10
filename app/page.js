@@ -1095,9 +1095,10 @@ function FuelRegister() {
     <div className="p-6 space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div><h1 className="text-3xl font-bold text-slate-900 relative inline-block">Fuel Register<span className="absolute -bottom-1 left-0 w-16 h-1 bg-gradient-to-r from-[#7a0d0d] to-amber-500 rounded-full" /></h1><p className="text-slate-500 mt-2">Select a date range and generate the fuel register.</p></div>
-        {submitted && (
+                {submitted && (
           <div className="flex gap-2">
             <Button onClick={exportCsv} variant="outline"><Download className="w-4 h-4 mr-2" /> CSV</Button>
+            <Button onClick={generatePDF} disabled={generating} className="bg-gradient-to-r from-[#7a0d0d] to-[#a01414] hover:brightness-110 text-white"><FileText className="w-4 h-4 mr-2" /> {generating ? '...' : 'PDF'}</Button>
             <Button onClick={exportExcel} variant="outline" className="border-emerald-600 text-emerald-700 hover:bg-emerald-50"><FileSpreadsheet className="w-4 h-4 mr-2" /> Excel</Button>
           </div>
         )}
