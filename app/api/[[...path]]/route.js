@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { MongoClient } from 'mongodb'
 import { v4 as uuidv4 } from 'uuid'
+import crypto from 'crypto'
 
 const MONGO_URL = process.env.MONGO_URL
 const DB_NAME = process.env.DB_NAME || 'ckc_fleet'
@@ -19,6 +20,63 @@ const clean = (obj) => {
   if (!obj) return obj
   const { _id, ...rest } = obj
   return rest
+}
+// Same as clean(), but also strips the password hash before anything
+// touches the network. Always use this for /users responses.
+const cleanUser = (obj) => {
+  if (!obj) return obj
+  const { _id, password, ...rest } = obj
+  return rest
+}
+
+// --- Password hashing (Node's built-in crypto, no external dependency) ---
+function hashPassword(password) {
+  const salt = crypto.randomBytes(16).toString('hex')
+  const hash = crypto.scryptSync(password, salt, 64).toString('hex')
+  return `${salt}:${hash}`
+}
+
+function verifyPassword(password, stored) {
+  if (!stored || typeof stored !== 'string' || !stored.includes(':')) return false
+  const [salt, hash] = stored.split(':')
+  const hashBuffer = Buffer.from(hash, 'hex')
+  const suppliedBuffer = crypto.scryptSync(password, salt, 64)
+  if (hashBuffer.length !== suppliedBuffer.length) return false
+  return crypto.timingSafeEqual(hashBuffer, suppliedBuffer)
+}
+
+// --- Seed the users collection the first time the app runs ---
+// This replaces the old hardcoded `users` object in auth/login with real,
+// hashed-password documents in Mongo, using the same credentials so nobody
+// gets locked out on cutover. Change these passwords via User Management
+// once you've confirmed login works.
+async function seedUsersIfEmpty(db) {
+  const count = await db.collection('users').countDocuments()
+  if (count > 0) return
+
+  const seedUsers = [
+    { username: 'admin', password: 'admin123', role: 'admin', name: 'Administrator' },
+    { username: 'security', password: 'security123', role: 'security', name: 'Security User' },
+    { username: 'tss', password: 'tss123', role: 'store_admin', name: 'TSS', storeId: 'TSS' },
+    { username: 'tsw', password: 'tsw123', role: 'store_admin', name: 'TSW', storeId: 'TSW' },
+    { username: 'ts', password: 'ts123', role: 'store_admin', name: 'TS', storeId: 'TS' },
+  ]
+
+  const now = new Date().toISOString()
+  const docs = seedUsers.map((u) => ({
+    id: uuidv4(),
+    name: u.name,
+    empId: u.empId || '',
+    mobile: u.mobile || '',
+    username: u.username,
+    password: hashPassword(u.password),
+    role: u.role,
+    storeId: u.storeId || null,
+    status: 'Active',
+    createdAt: now,
+  }))
+
+  await db.collection('users').insertMany(docs)
 }
 
 // --- Seed data ---
@@ -165,6 +223,7 @@ export async function GET(request, { params }) {
   try {
     const db = await getDb()
     await seedIfEmpty(db)
+    await seedUsersIfEmpty(db)
 
     const pathArr = (await params).path || []
     const path = pathArr.join('/')
@@ -180,6 +239,12 @@ export async function GET(request, { params }) {
     }
 
     if (path === 'health') return json({ ok: true })
+
+    if (path === 'users') {
+      if (role !== 'admin') return json({ error: 'Admin access required' }, 403)
+      const items = await db.collection('users').find({}).toArray()
+      return json(items.map(cleanUser))
+    }
 
     if (path === 'vehicles') {
       const query = isStoreScoped ? { assignedLocation: storeId } : {}
@@ -323,24 +388,43 @@ export async function GET(request, { params }) {
 export async function POST(request, { params }) {
   try {
     const db = await getDb()
+    await seedUsersIfEmpty(db)
+
     const pathArr = (await params).path || []
     const path = pathArr.join('/')
     const body = await request.json()
     const role = request.headers.get('x-user-role')
 
     if (path === 'auth/login') {
-      const users = {
-        admin:    { password: 'admin123',    role: 'admin',       name: 'Administrator' },
-        security: { password: 'security123', role: 'security',    name: 'Security User' },
-        tss:      { password: 'tss123',      role: 'store_admin', name: 'TSS', storeId: 'TSS' },
-        tsw:      { password: 'tsw123',      role: 'store_admin', name: 'TSW', storeId: 'TSW' },
-        ts:       { password: 'ts123',       role: 'store_admin', name: 'TS',  storeId: 'TS' },
-      }
-      const u = users[body.username]
-      if (u && u.password === body.password) {
-        return json({ token: uuidv4(), user: { username: body.username, role: u.role, name: u.name, storeId: u.storeId || null } })
+      const u = await db.collection('users').findOne({ username: body.username })
+      if (u && u.status === 'Active' && verifyPassword(body.password, u.password)) {
+        return json({ token: uuidv4(), user: { username: u.username, role: u.role, name: u.name, storeId: u.storeId || null } })
       }
       return json({ error: 'Invalid credentials' }, 401)
+    }
+
+    if (path === 'users') {
+      if (role !== 'admin') return json({ error: 'Admin access required' }, 403)
+      if (!body.name || !body.username || !body.password || !body.role) {
+        return json({ error: 'Name, username, password, and role are required' }, 400)
+      }
+      const existing = await db.collection('users').findOne({ username: body.username })
+      if (existing) return json({ error: 'Username already exists' }, 409)
+
+      const item = {
+        id: uuidv4(),
+        name: body.name,
+        empId: body.empId || '',
+        mobile: body.mobile || '',
+        username: body.username,
+        password: hashPassword(body.password),
+        role: body.role,
+        storeId: body.storeId || null,
+        status: body.status || 'Active',
+        createdAt: new Date().toISOString(),
+      }
+      await db.collection('users').insertOne(item)
+      return json(cleanUser(item))
     }
 
     // Everything below here requires write access
@@ -495,6 +579,24 @@ export async function PUT(request, { params }) {
     const body = await request.json()
     const role = request.headers.get('x-user-role')
 
+    if (col === 'users') {
+      if (role !== 'admin') return json({ error: 'Admin access required' }, 403)
+      delete body._id
+      delete body.id
+      if (body.password) {
+        body.password = hashPassword(body.password)
+      } else {
+        delete body.password
+      }
+      if (body.username) {
+        const existing = await db.collection('users').findOne({ username: body.username, id: { $ne: id } })
+        if (existing) return json({ error: 'Username already exists' }, 409)
+      }
+      await db.collection('users').updateOne({ id }, { $set: body })
+      const updated = await db.collection('users').findOne({ id })
+      return json(cleanUser(updated))
+    }
+
     if (role === 'store_admin') {
       return json({ error: 'Store admins have read-only access' }, 403)
     }
@@ -517,6 +619,12 @@ export async function DELETE(request, { params }) {
     const pathArr = (await params).path || []
     const [col, id] = pathArr
     const role = request.headers.get('x-user-role')
+
+    if (col === 'users') {
+      if (role !== 'admin') return json({ error: 'Admin access required' }, 403)
+      await db.collection('users').deleteOne({ id })
+      return json({ ok: true })
+    }
 
     if (role === 'store_admin') {
       return json({ error: 'Store admins have read-only access' }, 403)
