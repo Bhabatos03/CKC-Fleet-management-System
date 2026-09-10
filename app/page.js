@@ -782,6 +782,7 @@ function Trips() {
     toast.success('Excel downloaded')
   }
   const totalKm = filtered.reduce((s, t) => s + (t.kmRun || 0), 0)
+  const selectedVehicle = vehicles.find(v => v.id === submitted?.vehicleFilter)
 
   return (
     <div className="p-6 space-y-4">
