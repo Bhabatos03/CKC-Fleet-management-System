@@ -571,11 +571,10 @@ function Vehicles() {
         </div>
         <div className="overflow-x-auto"><Table>
           <TableHeader><TableRow>
-        <TableHead>Assigned Store</TableHead><TableHead>Status</TableHead><TableHead>Pairing</TableHead><TableHead></TableHead>
-            <TableHead>Vehicle No.</TableHead><TableHead>Type</TableHead><TableHead>Make/Model</TableHead>
-            <TableHead>Fuel</TableHead><TableHead>Driver</TableHead><TableHead>Odometer</TableHead>
-            <TableHead>Exp. Mileage</TableHead><TableHead>Status</TableHead><TableHead></TableHead>
-          </TableRow></TableHeader>
+    <TableHead>Vehicle No.</TableHead><TableHead>Type</TableHead><TableHead>Make/Model</TableHead>
+    <TableHead>Fuel</TableHead><TableHead>Driver</TableHead><TableHead>Odometer</TableHead>
+    <TableHead>Exp. Mileage</TableHead><TableHead>Status</TableHead><TableHead></TableHead>
+</TableRow></TableHeader>
           <TableBody>
             {filtered.map(v => (
               <TableRow key={v.id}>
@@ -692,35 +691,42 @@ function Drivers() {
       </div>
       <Card><CardContent className="p-4"><div className="overflow-x-auto"><Table>
         <TableHeader><TableRow>
-          <TableHead>Name</TableHead><TableHead>Emp ID</TableHead><TableHead>Mobile</TableHead>
-          <TableHead>Licence</TableHead><TableHead>Licence Expiry</TableHead><TableHead>Assigned Store</TableHead><TableHead>Status</TableHead><TableHead></TableHead>
-        </TableRow></TableHeader>
-        <TableBody>
-          {items.map(d => {
-            const expiring = new Date(d.licenceExpiry) < new Date(Date.now() + 30 * 24 * 3600 * 1000)
-            return (
-              <TableRow key={d.id}>
-                <TableCell className="font-semibold">{d.name}</TableCell>
-                <TableCell>{d.empId}</TableCell><TableCell>{d.mobile}</TableCell><TableCell>{d.licence}</TableCell>
-                <TableCell className={expiring ? 'text-rose-600 font-semibold' : ''}>{fmtDate(d.licenceExpiry)}</TableCell>
-                <TableCell>{d.assignedLocation || '-'}</TableCell>
-                <TableCell><Badge className="bg-[#7a0d0d] hover:bg-[#5c0a0a]">{d.status}</Badge></TableCell>
-                <TableCell className="text-right space-x-2">
-                  {canEdit && (
-                    <>
-                      <Button size="sm" variant="outline" onClick={() => { setEditing(d); setOpen(true) }}>Edit</Button>
-                      <Button size="sm" variant="destructive" onClick={() => remove(d.id)}>Delete</Button>
-                    </>
-                  )}
-                </TableCell>
-              </TableRow>
-            )
-          })}
-        </TableBody>
+  <TableHead>Name</TableHead><TableHead>Emp ID</TableHead><TableHead>Mobile</TableHead>
+  <TableHead>Licence</TableHead><TableHead>Licence Expiry</TableHead><TableHead>Assigned Store</TableHead><TableHead>Status</TableHead><TableHead>Pairing</TableHead><TableHead></TableHead>
+</TableRow></TableHeader>
+       <TableBody>
+  {items.map(d => {
+    const expiring = new Date(d.licenceExpiry) < new Date(Date.now() + 30 * 24 * 3600 * 1000)
+    return (
+      <TableRow key={d.id}>
+        <TableCell className="font-semibold">{d.name}</TableCell>
+        <TableCell>{d.empId}</TableCell><TableCell>{d.mobile}</TableCell><TableCell>{d.licence}</TableCell>
+        <TableCell className={expiring ? 'text-rose-600 font-semibold' : ''}>{fmtDate(d.licenceExpiry)}</TableCell>
+        <TableCell>{d.assignedLocation || '-'}</TableCell>
+        <TableCell><Badge className="bg-[#7a0d0d] hover:bg-[#5c0a0a]">{d.status}</Badge></TableCell>
+        <TableCell>
+          <Button size="sm" variant="outline" onClick={() => setPairingDriver(d)}>
+            <QrCode className="w-3 h-3 mr-1" /> Get Code
+          </Button>
+        </TableCell>
+        <TableCell className="text-right space-x-2">
+          {canEdit && (
+            <>
+              <Button size="sm" variant="outline" onClick={() => { setEditing(d); setOpen(true) }}>Edit</Button>
+              <Button size="sm" variant="destructive" onClick={() => remove(d.id)}>Delete</Button>
+            </>
+          )}
+        </TableCell>
+      </TableRow>
+    )
+  })}
+</TableBody>
       </Table></div></CardContent></Card>
       {canEdit && (
-        <DriverDialog open={open} onOpenChange={setOpen} onSubmit={submit} initial={editing} />
-      )}
+  <DriverDialog open={open} onOpenChange={setOpen} onSubmit={submit} initial={editing} />
+)}
+<PairingCodeDialog driver={pairingDriver} onClose={() => setPairingDriver(null)} />
+    
     </div>
   )
 }
