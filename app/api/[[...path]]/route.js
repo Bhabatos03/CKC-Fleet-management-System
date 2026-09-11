@@ -533,6 +533,17 @@ export async function POST(request, { params }) {
       })
       return json({ ok: true })
     }
+    if (path === 'drivers/location') {
+  const trip = await db.collection('trips').findOne(
+    { driverId: body.driverId, status: 'Outside' },
+    { sort: { dateOut: -1 } }
+  )
+  if (!trip) return json({ ok: true, ignored: true }) // driver not on an active trip right now
+  await db.collection('trips').updateOne({ id: trip.id }, {
+    $set: { lastLat: Number(body.lat), lastLng: Number(body.lng), lastLocationAt: new Date().toISOString() }
+  })
+  return json({ ok: true })
+}
 
     if (path === 'fuel') {
       const vehicle = await db.collection('vehicles').findOne({ id: body.vehicleId })
