@@ -2448,6 +2448,141 @@ function Reports() {
     </div>
   )
 }
+function LiveTracking() {
+  const [trips, setTrips] = useState([])
+  const [selectedTrip, setSelectedTrip] = useState(null)
+  const mapRef = useRef(null)
+  const leafletMapRef = useRef(null)
+  const markersRef = useRef({})
+
+  const load = () => api('trips/outside').then(setTrips).catch(() => {})
+
+  useEffect(() => {
+    load()
+    const iv = setInterval(load, 12000)
+    return () => clearInterval(iv)
+  }, [])
+
+  const initMap = () => {
+    if (leafletMapRef.current || !mapRef.current || !window.L) return
+    const L = window.L
+    const map = L.map(mapRef.current).setView([12.9716, 77.5946], 11)
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map)
+    leafletMapRef.current = map
+  }
+
+  useEffect(() => {
+    if (window.L) { initMap(); return }
+    const link = document.createElement('link')
+    link.rel = 'stylesheet'
+    link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'
+    document.head.appendChild(link)
+    const script = document.createElement('script')
+    script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
+    script.onload = initMap
+    document.body.appendChild(script)
+    return () => { leafletMapRef.current?.remove(); leafletMapRef.current = null }
+  }, [])
+
+  useEffect(() => {
+    if (!leafletMapRef.current || !window.L) return
+    const L = window.L
+    const map = leafletMapRef.current
+    const tracked = trips.filter(t => t.lastLat && t.lastLng)
+
+    Object.keys(markersRef.current).forEach(id => {
+      if (!tracked.find(t => t.id === id)) {
+        map.removeLayer(markersRef.current[id])
+        delete markersRef.current[id]
+      }
+    })
+
+    tracked.forEach(t => {
+      const pos = [t.lastLat, t.lastLng]
+      if (markersRef.current[t.id]) {
+        markersRef.current[t.id].setLatLng(pos)
+      } else {
+        const icon = L.divIcon({
+          className: '',
+          html: `<div style="background:#7a0d0d;color:white;padding:4px 8px;border-radius:6px;font-size:11px;font-weight:600;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,0.3)">${t.vehicleNumber}</div>`,
+          iconSize: [0, 0],
+        })
+        markersRef.current[t.id] = L.marker(pos, { icon }).addTo(map)
+          .on('click', () => setSelectedTrip(t))
+      }
+    })
+
+    if (tracked.length > 0) {
+      const bounds = L.latLngBounds(tracked.map(t => [t.lastLat, t.lastLng]))
+      map.fitBounds(bounds, { padding: [50, 50], maxZoom: 14 })
+    }
+  }, [trips])
+
+  const trackedCount = trips.filter(t => t.lastLat && t.lastLng).length
+
+  return (
+    <div className="p-6 space-y-4">
+      <div>
+        <h1 className="text-3xl font-bold text-slate-900 relative inline-block">Track Vehicle
+          <span className="absolute -bottom-1 left-0 w-16 h-1 bg-gradient-to-r from-[#7a0d0d] to-amber-500 rounded-full" />
+        </h1>
+        <p className="text-slate-500 mt-2">Vehicles currently outside, sharing location from the security app.</p>
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+        <Card><CardContent className="p-4"><div className="text-xs text-slate-500">Outside Now</div><div className="text-2xl font-bold text-[#7a0d0d]">{trips.length}</div></CardContent></Card>
+        <Card><CardContent className="p-4"><div className="text-xs text-slate-500">Sharing Location</div><div className="text-2xl font-bold text-emerald-600">{trackedCount}</div></CardContent></Card>
+        <Card><CardContent className="p-4"><div className="text-xs text-slate-500">Not Sharing</div><div className="text-2xl font-bold text-slate-400">{trips.length - trackedCount}</div></CardContent></Card>
+      </div>
+
+      <Card><CardContent className="p-0 overflow-hidden rounded-lg">
+        <div ref={mapRef} style={{ height: '480px', width: '100%' }} />
+      </CardContent></Card>
+
+      <Card>
+        <CardHeader><CardTitle>Outside Vehicles</CardTitle></CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto"><Table>
+            <TableHeader><TableRow>
+              <TableHead>Vehicle</TableHead><TableHead>Driver</TableHead><TableHead>Destination</TableHead>
+              <TableHead>Out Since</TableHead><TableHead>Location Status</TableHead><TableHead></TableHead>
+            </TableRow></TableHeader>
+            <TableBody>
+              {trips.map(t => (
+                <TableRow key={t.id} className={selectedTrip?.id === t.id ? 'bg-amber-50' : ''}>
+                  <TableCell className="font-semibold">{t.vehicleNumber}</TableCell>
+                  <TableCell>{t.driverName || t.employeeName || '-'}</TableCell>
+                  <TableCell>{t.destination}</TableCell>
+                  <TableCell className="text-xs">{fmtDT(t.dateOut)}</TableCell>
+                  <TableCell>
+                    {t.lastLat ? (
+                      <Badge className="bg-emerald-500 hover:bg-emerald-600">
+                        Live · {t.lastLocationAt ? new Date(t.lastLocationAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : ''}
+                      </Badge>
+                    ) : <Badge variant="secondary">Not sharing</Badge>}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {t.lastLat && (
+                      <Button size="sm" variant="outline" onClick={() => {
+                        setSelectedTrip(t)
+                        leafletMapRef.current?.setView([t.lastLat, t.lastLng], 15)
+                      }}>Locate</Button>
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))}
+              {trips.length === 0 && (
+                <TableRow><TableCell colSpan={6} className="text-center text-slate-500 py-8">No vehicles currently outside.</TableCell></TableRow>
+              )}
+            </TableBody>
+          </Table></div>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
 function SecurityHome({ user, onLogout }) {
   const [screen, setScreen] = useState('home')
   const buttons = [
