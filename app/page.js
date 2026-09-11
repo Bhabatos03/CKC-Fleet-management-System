@@ -756,6 +756,42 @@ function DriverDialog({ open, onOpenChange, onSubmit, initial }) {
     </Dialog>
   )
 }
+function PairingCodeDialog({ driver, onClose }) {
+  const [copied, setCopied] = useState(false)
+  if (!driver) return null
+  const code = pairingPayload(driver.id)
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(code)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch { toast.error('Could not copy') }
+  }
+
+  return (
+    <Dialog open={!!driver} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="max-w-sm">
+        <DialogHeader><DialogTitle>Pairing Code — {driver.name}</DialogTitle></DialogHeader>
+        <div className="flex flex-col items-center gap-4 py-2">
+          <img src={qrImageUrl(code)} alt="Pairing QR" className="rounded-lg border" width={220} height={220} />
+          <div className="w-full">
+            <Label className="text-xs text-slate-500">Manual code (if QR scan fails)</Label>
+            <div className="flex gap-2 mt-1">
+              <Input readOnly value={code} className="font-mono text-xs" />
+              <Button size="sm" variant="outline" onClick={copy}>{copied ? 'Copied' : 'Copy'}</Button>
+            </div>
+          </div>
+          <p className="text-xs text-slate-500 text-center leading-relaxed">
+            Open the CKC Fleet driver app on {driver.name}'s phone and scan this code once during setup.
+            The phone will remember this driver — no login needed afterward.
+          </p>
+        </div>
+        <DialogFooter><Button variant="outline" onClick={onClose}>Close</Button></DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
 
 function Trips() {
   const [items, setItems] = useState([])
