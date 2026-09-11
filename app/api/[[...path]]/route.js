@@ -525,6 +525,14 @@ export async function POST(request, { params }) {
       })
       return json({ ok: true, kmRun })
     }
+        if (path === 'trips/location') {
+      const trip = await db.collection('trips').findOne({ id: body.tripId })
+      if (!trip) return json({ error: 'Trip not found' }, 404)
+      await db.collection('trips').updateOne({ id: body.tripId }, {
+        $set: { lastLat: Number(body.lat), lastLng: Number(body.lng), lastLocationAt: new Date().toISOString() }
+      })
+      return json({ ok: true })
+    }
 
     if (path === 'fuel') {
       const vehicle = await db.collection('vehicles').findOne({ id: body.vehicleId })
