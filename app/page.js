@@ -571,6 +571,7 @@ function Vehicles() {
         </div>
         <div className="overflow-x-auto"><Table>
           <TableHeader><TableRow>
+        <TableHead>Assigned Store</TableHead><TableHead>Status</TableHead><TableHead>Pairing</TableHead><TableHead></TableHead>
             <TableHead>Vehicle No.</TableHead><TableHead>Type</TableHead><TableHead>Make/Model</TableHead>
             <TableHead>Fuel</TableHead><TableHead>Driver</TableHead><TableHead>Odometer</TableHead>
             <TableHead>Exp. Mileage</TableHead><TableHead>Status</TableHead><TableHead></TableHead>
