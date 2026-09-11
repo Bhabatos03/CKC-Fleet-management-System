@@ -91,6 +91,7 @@ const fmtINR = (n) => `₹${Number(n || 0).toLocaleString('en-IN', { maximumFrac
 function Login({ onLogin }) {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [tick, setTick] = useState(0)
   useEffect(() => {
