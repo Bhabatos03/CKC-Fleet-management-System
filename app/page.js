@@ -670,6 +670,7 @@ function Drivers() {
   const [items, setItems] = useState([])
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState(null)
+  const [pairingDriver, setPairingDriver] = useState(null)
   const load = () => api('drivers').then(setItems)
   useEffect(() => { load() }, [])
   const submit = async (data) => {
