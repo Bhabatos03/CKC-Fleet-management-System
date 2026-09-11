@@ -2959,6 +2959,7 @@ function App() {
     <AdminShell user={user} onLogout={logout} active={effectiveActive} setActive={setActive}>
       {effectiveActive === 'dashboard' && <Dashboard />}
       {effectiveActive === 'vehicles' && <Vehicles />}
+      {effectiveActive === 'tracking' && <LiveTracking />}
       {effectiveActive === 'drivers' && <Drivers />}
       {effectiveActive === 'trips' && <Trips />}
       {effectiveActive === 'fuel' && <FuelRegister />}
