@@ -15,7 +15,7 @@ import {
   ArrowLeftCircle, AlertTriangle, ClipboardList, Search,
   Download, Gauge, ShieldAlert, Building2, ArrowLeft, Menu, X,
   Camera, FileText, Image as ImageIcon, FileSpreadsheet, WifiOff, Wifi,
-  Wrench, Plus, Trash2, UserCog, KeyRound
+  Wrench, Plus, Trash2, Eye, EyeOff
 } from 'lucide-react'
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid,
