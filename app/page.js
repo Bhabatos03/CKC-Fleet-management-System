@@ -267,18 +267,26 @@ function Login({ onLogin }) {
                       <Users className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
                     </div>
                   </div>
-                  <div className="space-y-1.5">
+                                   <div className="space-y-1.5">
                     <Label className="text-xs tracking-[0.15em] text-slate-600 font-semibold uppercase">Password</Label>
                     <div className="relative">
                       <Input
-                        type="password"
+                        type={showPassword ? 'text' : 'password'}
                         value={password}
                         onChange={e => setPassword(e.target.value)}
                         required
                         placeholder="Enter your password"
-                        className="h-11 pl-10 border-slate-200 focus:border-red-800 focus:ring-red-800/20 rounded-lg"
+                        className="h-11 pl-10 pr-10 border-slate-200 focus:border-red-800 focus:ring-red-800/20 rounded-lg"
                       />
                       <ShieldAlert className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(x => !x)}
+                        className="absolute right-3 top-3 text-slate-400 hover:text-slate-600"
+                        tabIndex={-1}
+                      >
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
                     </div>
                   </div>
                   <Button
