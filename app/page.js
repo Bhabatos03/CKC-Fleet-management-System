@@ -15,7 +15,7 @@ import {
   ArrowLeftCircle, AlertTriangle, ClipboardList, Search,
   Download, Gauge, ShieldAlert, Building2, ArrowLeft, Menu, X,
   Camera, FileText, Image as ImageIcon, FileSpreadsheet, WifiOff, Wifi,
-  Wrench, Plus, Trash2, Eye, EyeOff, UserCog, KeyRound
+  Wrench, Plus, Trash2, Eye, EyeOff, UserCog, KeyRound, MapPin, QrCode
 } from 'lucide-react'
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid,
@@ -69,6 +69,10 @@ const flushQueue = async () => {
   if (remaining.length === 0 && q.length > 0) toast.success(`Synced ${q.length} offline entries`)
   return q.length - remaining.length
 }
+const PAIRING_PREFIX = 'CKCFLEET'
+const pairingPayload = (driverId) => `${PAIRING_PREFIX}:${driverId}`
+const qrImageUrl = (text, size = 240) =>
+  `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(text)}`
 
 // Excel export helper
 const exportXlsx = async (filename, sheets) => {
