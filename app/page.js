@@ -2951,7 +2951,7 @@ function App() {
   if (user.role === 'security') return <><SecurityHome user={user} onLogout={logout} /><OfflineBanner /></>
 
   // Store admins get the same shell, but only a subset of pages/tabs
-  const allowedForStoreAdmin = ['dashboard', 'vehicles', 'trips', 'maintenance']
+  const allowedForStoreAdmin = ['dashboard', 'vehicles', 'trips', 'maintenance', 'tracking']
   const effectiveActive = user.role === 'store_admin' && !allowedForStoreAdmin.includes(active) ? 'dashboard' : active
 
   return (
