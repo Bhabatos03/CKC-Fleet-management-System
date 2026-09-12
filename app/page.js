@@ -112,7 +112,7 @@ function Login({ onLogin }) {
   }
   const rotating = [
     { icon: Truck, label: 'Vehicles Tracked', value: '250+' },
-    { icon: Fuel, label: 'Fuel Efficiency', value: '18.4 km/L' },
+    { icon: Fuel, label: 'Fuel Efficiency', value: '13.4 km/L' },
     { icon: Gauge, label: 'Trips This Month', value: '1,240' },
   ]
   const Rot = rotating[tick].icon
