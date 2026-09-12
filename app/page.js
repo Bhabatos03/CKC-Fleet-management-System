@@ -1,4 +1,4 @@
-        doc.text('C. Krishniah Chetty (TM) Group of Jewellers  ·  FleetPulse  ·  Confidential', 30, pageH - 20)'use client'
+'use client'
 import { useState, useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
