@@ -3,13 +3,13 @@ import { Providers } from './providers'
 import { Toaster } from 'sonner'
 
 export const metadata = {
-  title: 'CKC Fleet Management System',
-  description: 'C Krishniah Chetty Jewellers Pvt. Ltd. - Fleet Management',
+  title: 'FleetPulse | C. Krishniah Chetty Jewellers',
+  description: 'FleetPulse — Fleet Management System for C Krishniah Chetty Jewellers Pvt. Ltd.',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'CKC Fleet',
+    title: 'FleetPulse',
   },
 }
 
