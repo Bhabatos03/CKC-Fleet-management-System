@@ -348,8 +348,8 @@ function AdminShell({ user, onLogout, children, active, setActive }) {
         <img src="/ckc-logo.png" alt="CKC" className="w-11 h-11 object-contain" />
         <div className="flex-1 min-w-0">
           <div className="font-semibold text-sm leading-tight truncate text-white" style={{fontFamily: '"Times New Roman", Georgia, serif'}}>C. Krishniah Chetty</div>
-          <div className="text-[10px] text-amber-200/60 tracking-[0.2em] mt-0.5">
-            FLEET · {user.role === 'store_admin' ? (user.name || 'STORE') : 'ADMIN'}
+                   <div className="text-[10px] text-amber-200/60 tracking-[0.2em] mt-0.5">
+            FLEETPULSE · {user.role === 'store_admin' ? (user.name || 'STORE') : 'ADMIN'}
           </div>
         </div>
         <button onClick={() => setDrawerOpen(false)} className="md:hidden text-slate-300 hover:text-white p-1"><X className="w-5 h-5" /></button>
