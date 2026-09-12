@@ -2861,34 +2861,8 @@ function FuelEntry({ onDone }) {
 
 function CurrentlyOutside() {
   const [trips, setTrips] = useState([])
-  const [trackingId, setTrackingId] = useState(null)
-  const [watchId, setWatchId] = useState(null)
 
   useEffect(() => { api('trips/outside').then(setTrips) }, [])
-
-  const startTracking = (tripId) => {
-    if (!navigator.geolocation) return toast.error('Location not supported on this device')
-    const id = navigator.geolocation.watchPosition(
-      (pos) => {
-        api('trips/location', { method: 'POST', body: { tripId, lat: pos.coords.latitude, lng: pos.coords.longitude } }).catch(() => {})
-      },
-      (err) => toast.error('Location error: ' + err.message),
-      { enableHighAccuracy: true, maximumAge: 10000, timeout: 20000 }
-    )
-    setWatchId(id)
-    setTrackingId(tripId)
-    toast.success('Sharing location — keep this screen open')
-  }
-
-  const stopTracking = () => {
-    if (watchId !== null) navigator.geolocation.clearWatch(watchId)
-    setWatchId(null)
-    setTrackingId(null)
-  }
-
-  useEffect(() => {
-    return () => { if (watchId !== null) navigator.geolocation.clearWatch(watchId) }
-  }, [watchId])
 
   return (
     <div className="p-4 max-w-md mx-auto space-y-3 text-slate-900">
@@ -2899,20 +2873,12 @@ function CurrentlyOutside() {
           {trips.map(t => {
             const hrs = (Date.now() - new Date(t.dateOut).getTime()) / 3600000
             const overdue = hrs > 8
-            const isTracking = trackingId === t.id
             return (
               <div key={t.id} className={`p-3 rounded-lg border ${overdue ? 'bg-rose-50 border-rose-300' : 'bg-slate-50'}`}>
                 <div className="flex justify-between items-start"><div className="font-bold">{t.vehicleNumber}</div>{overdue && <Badge variant="destructive">OVERDUE</Badge>}</div>
                 <div className="text-sm">{t.driverName}</div>
                 <div className="text-xs text-slate-600">{t.destination}</div>
                 <div className="text-xs text-slate-500">Out {hrs.toFixed(1)}h ago · {fmtDT(t.dateOut)}</div>
-                <Button
-                  size="sm"
-                  onClick={() => isTracking ? stopTracking() : startTracking(t.id)}
-                  className={`w-full mt-2 ${isTracking ? 'bg-rose-600 hover:bg-rose-700' : 'bg-blue-600 hover:bg-blue-700'} text-white`}
-                >
-                  {isTracking ? 'Stop Sharing Location' : 'Share My Location'}
-                </Button>
               </div>
             )
           })}
@@ -2921,7 +2887,6 @@ function CurrentlyOutside() {
     </div>
   )
 }
-
 function OfflineBanner() {
   const [online, setOnline] = useState(true)
   const [pending, setPending] = useState(0)
