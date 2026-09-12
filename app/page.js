@@ -2355,7 +2355,7 @@ function Reports() {
         doc.setDrawColor(217, 119, 6); doc.setLineWidth(0.5)
         doc.line(30, pageH - 32, pageW - 30, pageH - 32)
         doc.setFontSize(8); doc.setTextColor(120); doc.setFont('helvetica', 'normal')
-        doc.text('C. Krishniah Chetty (TM) Group of Jewellers  ·  Fleet Management System  ·  Confidential', 30, pageH - 20)
+        doc.text('C. Krishniah Chetty (TM) Group of Jewellers  ·  FleetPulse  ·  Confidential', 30, pageH - 20)
         doc.text(`Page ${i} of ${pageCount}`, pageW - 30, pageH - 20, { align: 'right' })
       }
       doc.save(`CKC-${title.replace(/\s+/g, '-')}-${fromDate}_to_${toDate}.pdf`)
