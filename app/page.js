@@ -21,7 +21,8 @@ import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid,
   PieChart, Pie, Cell, Legend
 } from 'recharts'
-
+import L from 'leaflet'
+import 'leaflet/dist/leaflet.css'
 // Get the currently logged-in user from localStorage
 const getUser = () => { try { return JSON.parse(localStorage.getItem('ckc_user') || '{}') } catch { return {} } }
 
