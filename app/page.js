@@ -229,7 +229,7 @@ function Login({ onLogin }) {
           <div>© 2026 C KRISHNIAH CHETTY JEWELLERS PVT. LTD.</div>
           <div className="flex items-center gap-2">
             <span className="w-1 h-1 rounded-full bg-emerald-400 animate-pulse" />
-            FLEET OPS · v1.0
+            FLEETPULSE · v1.0
           </div>
         </div>
       </div>
