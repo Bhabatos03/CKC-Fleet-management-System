@@ -1091,7 +1091,7 @@ function FuelRegister() {
       doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(252, 211, 77)
       doc.text('G R O U P    O F    J E W E L L E R S', brandX, 62)
       doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(255, 255, 255)
-      doc.text('Fleet Management System — Fuel Register', brandX, 86)
+            doc.text('FleetPulse — Fuel Register', brandX, 86)
       doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(252, 211, 77)
       doc.text(`Period:  ${rangeStr}`, pageW - 30, 36, { align: 'right' })
       doc.text(`Vehicle: ${selectedVehicle ? selectedVehicle.vehicleNumber : 'All Vehicles'}`, pageW - 30, 50, { align: 'right' })
