@@ -2462,6 +2462,7 @@ function LiveTracking() {
   const mapRef = useRef(null)
   const leafletMapRef = useRef(null)
   const markersRef = useRef({})
+  const LRef = useRef(null)
 
   const load = () => api('trips/outside').then(setTrips).catch(() => {})
 
@@ -2471,9 +2472,31 @@ function LiveTracking() {
     return () => clearInterval(iv)
   }, [])
 
-    useEffect(() => {
-    if (!leafletMapRef.current || !window.L) return
-    const L = window.L
+  useEffect(() => {
+    let cancelled = false
+    import('leaflet').then((Lmod) => {
+      if (cancelled) return
+      const L = Lmod.default
+      LRef.current = L
+      require('leaflet/dist/leaflet.css')
+      if (leafletMapRef.current || !mapRef.current) return
+      const map = L.map(mapRef.current).setView([12.9716, 77.5946], 11)
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+      }).addTo(map)
+      leafletMapRef.current = map
+      renderMarkers()
+    })
+    return () => {
+      cancelled = true
+      leafletMapRef.current?.remove()
+      leafletMapRef.current = null
+    }
+  }, [])
+
+  const renderMarkers = () => {
+    const L = LRef.current
+    if (!leafletMapRef.current || !L) return
     const map = leafletMapRef.current
     const tracked = trips.filter(t => t.lastLat && t.lastLng)
 
@@ -2503,6 +2526,10 @@ function LiveTracking() {
       const bounds = L.latLngBounds(tracked.map(t => [t.lastLat, t.lastLng]))
       map.fitBounds(bounds, { padding: [50, 50], maxZoom: 14 })
     }
+  }
+
+  useEffect(() => {
+    renderMarkers()
   }, [trips])
 
   const trackedCount = trips.filter(t => t.lastLat && t.lastLng).length
