@@ -2514,7 +2514,20 @@ function LiveTracking() {
       } else {
         const icon = L.divIcon({
           className: '',
-          html: `<div style="background:#7a0d0d;color:white;padding:4px 8px;border-radius:6px;font-size:11px;font-weight:600;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,0.3)">${t.vehicleNumber}</div>`,
+tracked.forEach(t => {
+  const pos = [t.lastLat, t.lastLng]
+  if (markersRef.current[t.id]) {
+    markersRef.current[t.id].setLatLng(pos)
+  } else {
+    const icon = L.divIcon({
+      className: '',
+      html: `<div style="background:#7a0d0d;color:#ffffff;padding:5px 10px;border-radius:8px;font-size:12px;font-weight:700;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,0.5);border:2px solid #ffffff;letter-spacing:0.3px;">${t.vehicleNumber}</div>`,
+      iconSize: [0, 0],
+    })
+    markersRef.current[t.id] = L.marker(pos, { icon }).addTo(map)
+      .on('click', () => setSelectedTrip(t))
+  }
+})
           iconSize: [0, 0],
         })
         markersRef.current[t.id] = L.marker(pos, { icon }).addTo(map)
