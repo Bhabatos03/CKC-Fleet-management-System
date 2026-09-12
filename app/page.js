@@ -265,7 +265,7 @@ function Login({ onLogin }) {
                         value={username}
                         onChange={e => setUsername(e.target.value)}
                         required
-                        placeholder=""
+                        placeholder="Enter your username"
                         className="h-11 pl-10 border-slate-200 focus:border-red-800 focus:ring-red-800/20 rounded-lg"
                       />
                       <Users className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
