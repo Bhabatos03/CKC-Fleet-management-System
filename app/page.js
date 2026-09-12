@@ -234,7 +234,7 @@ function Login({ onLogin }) {
               </div>
             </div>
             <div className="text-right text-amber-100/30 tracking-[0.15em] normal-case">
-              Design &amp; Development by <span className="text-amber-200/60 font-semibold">Bhabatos Mohanty</span>
+              Design &amp; Developed by <span className="text-amber-200/60 font-semibold">Bhabatos Mohanty</span>
             </div>
           </div>
       </div>
