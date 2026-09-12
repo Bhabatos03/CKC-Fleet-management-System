@@ -245,7 +245,7 @@ function Login({ onLogin }) {
               {/* Ribbon */}
               <div className="bg-gradient-to-r from-[#5c0a0a] via-[#7a0d0d] to-[#5c0a0a] px-6 py-3 flex items-center gap-2">
                 <Truck className="w-3.5 h-3.5 text-amber-300" />
-                <span className="text-[10px] tracking-[0.3em] text-amber-100 font-bold">FLEET MANAGEMENT SYSTEM</span>
+                               <span className="text-[10px] tracking-[0.3em] text-amber-100 font-bold">FLEETPULSE</span>
                 <div className="ml-auto flex items-center gap-1.5 text-[9px] tracking-widest text-emerald-300">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> LIVE
                 </div>
