@@ -2514,7 +2514,7 @@ function LiveTracking() {
       } else {
         const icon = L.divIcon({
           className: '',
-          html: `<div style="background:#7a0d0d;color:#ffffff;padding:5px 10px;border-radius:8px;font-size:12px;font-weight:700;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,0.5);border:2px solid #ffffff;letter-spacing:0.3px;">${t.vehicleNumber}</div>`,
+          html: `<div style="background:#7a0d0d;color:#ffffff;padding:5px 10px;border-radius:8px;font-size:12px;font-weight:700;black-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,0.5);border:2px solid #ffffff;letter-spacing:0.3px;">${t.vehicleNumber}</div>`,
           iconSize: [0, 0],
         })
         markersRef.current[t.id] = L.marker(pos, { icon }).addTo(map)
