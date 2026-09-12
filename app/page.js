@@ -2471,30 +2471,7 @@ function LiveTracking() {
     return () => clearInterval(iv)
   }, [])
 
-  const initMap = () => {
-    if (leafletMapRef.current || !mapRef.current || !window.L) return
-    const L = window.L
-    const map = L.map(mapRef.current).setView([12.9716, 77.5946], 11)
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map)
-    leafletMapRef.current = map
-  }
-
-  useEffect(() => {
-    if (window.L) { initMap(); return }
-    const link = document.createElement('link')
-    link.rel = 'stylesheet'
-    link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'
-    document.head.appendChild(link)
-    const script = document.createElement('script')
-    script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
-    script.onload = initMap
-    document.body.appendChild(script)
-    return () => { leafletMapRef.current?.remove(); leafletMapRef.current = null }
-  }, [])
-
-  useEffect(() => {
+    useEffect(() => {
     if (!leafletMapRef.current || !window.L) return
     const L = window.L
     const map = leafletMapRef.current
@@ -2514,20 +2491,7 @@ function LiveTracking() {
       } else {
         const icon = L.divIcon({
           className: '',
-tracked.forEach(t => {
-  const pos = [t.lastLat, t.lastLng]
-  if (markersRef.current[t.id]) {
-    markersRef.current[t.id].setLatLng(pos)
-  } else {
-    const icon = L.divIcon({
-      className: '',
-      html: `<div style="background:#7a0d0d;color:#ffffff;padding:5px 10px;border-radius:8px;font-size:12px;font-weight:700;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,0.5);border:2px solid #ffffff;letter-spacing:0.3px;">${t.vehicleNumber}</div>`,
-      iconSize: [0, 0],
-    })
-    markersRef.current[t.id] = L.marker(pos, { icon }).addTo(map)
-      .on('click', () => setSelectedTrip(t))
-  }
-})
+          html: `<div style="background:#7a0d0d;color:#ffffff;padding:5px 10px;border-radius:8px;font-size:12px;font-weight:700;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,0.5);border:2px solid #ffffff;letter-spacing:0.3px;">${t.vehicleNumber}</div>`,
           iconSize: [0, 0],
         })
         markersRef.current[t.id] = L.marker(pos, { icon }).addTo(map)
