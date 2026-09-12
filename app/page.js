@@ -254,7 +254,7 @@ function Login({ onLogin }) {
               <div className="p-8 space-y-6">
                 <div>
                   <h2 className="text-2xl font-bold text-[#2d0505]" style={{fontFamily: 'Georgia, serif'}}>Welcome Back</h2>
-                  <p className="text-sm text-slate-500 mt-1">Sign in to access the fleet control centre.</p>
+                  <p className="text-sm text-slate-500 mt-1">Sign in to access the Fleet Pulse.</p>
                 </div>
 
                 <form onSubmit={submit} className="space-y-5">
