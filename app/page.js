@@ -174,6 +174,7 @@ function Login({ onLogin }) {
     <div className="text-[11px] lg:text-xs tracking-[0.4em] text-amber-100/70 font-medium">GROUP OF JEWELLERS</div>
   </div>
 </div>
+</div>
 
         {/* Middle: Fleet-focused tagline */}
         <div className="hidden lg:block space-y-8 my-10">
