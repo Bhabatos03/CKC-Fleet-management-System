@@ -157,9 +157,13 @@ function Login({ onLogin }) {
           </div>
 
           <div className="space-y-3">
-                       <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-400/25 text-amber-200 text-[10px] tracking-[0.3em] font-semibold uppercase backdrop-blur-sm">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399] animate-pulse" /> FleetPulse · Live
-            </div>
+  <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-amber-500/10 border border-amber-400/25 backdrop-blur-sm">
+    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399] animate-pulse" />
+    <span className="text-amber-200 text-sm tracking-wide font-bold">FleetPulse</span>
+    <span className="text-amber-200/30">·</span>
+    <span className="text-emerald-300 text-[10px] tracking-[0.2em] font-semibold uppercase">Live</span>
+  </div>
+</div>
             <h1 className="text-3xl lg:text-4xl xl:text-5xl font-semibold leading-tight tracking-wide whitespace-nowrap text-white" style={{fontFamily: '"Times New Roman", Georgia, serif'}}>
               C. Krishniah Chetty
               <span className="text-base lg:text-lg text-white/70 align-super ml-1">™</span>
