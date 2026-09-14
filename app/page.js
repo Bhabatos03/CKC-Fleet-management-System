@@ -357,7 +357,7 @@ function AdminShell({ user, onLogout, children, active, setActive }) {
         <div className="flex-1 min-w-0">
           <div className="font-semibold text-sm leading-tight truncate text-white" style={{fontFamily: '"Times New Roman", Georgia, serif'}}>C. Krishniah Chetty</div>
                    <div className="text-[10px] text-amber-200/60 tracking-[0.2em] mt-0.5">
-            FLEETPULSE · {user.role === 'store_admin' ? (user.name || 'STORE') : 'ADMIN'}
+            FleetPulse · {user.role === 'store_admin' ? (user.name || 'STORE') : 'ADMIN'}
           </div>
         </div>
         <button onClick={() => setDrawerOpen(false)} className="md:hidden text-slate-300 hover:text-white p-1"><X className="w-5 h-5" /></button>
@@ -2611,7 +2611,7 @@ function SecurityHome({ user, onLogout }) {
           <img src="/ckc-logo.png" alt="CKC" className="w-9 h-9 object-contain" />
           <div>
             <div className="font-semibold text-sm leading-none whitespace-nowrap text-white" style={{fontFamily: '"Times New Roman", Georgia, serif'}}>C. Krishniah Chetty</div>
-            <div className="text-[9px] tracking-[0.25em] text-amber-200/60 mt-0.5">FLEETPULSE · SECURITY</div>
+            <div className="text-[9px] tracking-[0.25em] text-amber-200/60 mt-0.5">FleetPulse · SECURITY</div>
           </div>
         </div>
         <Button variant="ghost" size="sm" onClick={onLogout} className="text-white hover:bg-white/10"><LogOut className="w-4 h-4" /></Button>
