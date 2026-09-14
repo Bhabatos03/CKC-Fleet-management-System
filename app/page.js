@@ -327,7 +327,7 @@ function Login({ onLogin }) {
                     <div className="lg:hidden text-center mt-6 space-y-1">
             <div className="text-[10px] tracking-[0.2em] text-amber-100/50">© 2026 CKC JEWELLERS · FleetPulse</div>
             <div className="text-[9px] tracking-[0.15em] text-amber-100/30">
-              Design &amp; Development by <span className="text-amber-200/60 font-semibold">Bhabatos Mohanty</span>
+              Design &amp; Developed by <span className="text-amber-200/60 font-semibold">Bhabatos Mohanty</span>
             </div>
           </div>
         </div>
