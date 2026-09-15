@@ -2468,12 +2468,13 @@ function LiveTracking() {
   const leafletMapRef = useRef(null)
   const markersRef = useRef({})
   const LRef = useRef(null)
+  const animFramesRef = useRef({})
 
   const load = () => api('trips/outside').then(setTrips).catch(() => {})
 
   useEffect(() => {
     load()
-    const iv = setInterval(load, 12000)
+    const iv = setInterval(load, 8000)
     return () => clearInterval(iv)
   }, [])
 
@@ -2494,10 +2495,29 @@ function LiveTracking() {
     })
     return () => {
       cancelled = true
+      Object.values(animFramesRef.current).forEach(id => cancelAnimationFrame(id))
       leafletMapRef.current?.remove()
       leafletMapRef.current = null
     }
   }, [])
+
+  // Smoothly animates a marker from its current position to a new one
+  const animateMarkerTo = (marker, fromLatLng, toLatLng, duration = 1500) => {
+    const start = performance.now()
+    const animate = (now) => {
+      const t = Math.min((now - start) / duration, 1)
+      // easeInOutQuad for a natural glide
+      const eased = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2
+      const lat = fromLatLng[0] + (toLatLng[0] - fromLatLng[0]) * eased
+      const lng = fromLatLng[1] + (toLatLng[1] - fromLatLng[1]) * eased
+      marker.setLatLng([lat, lng])
+      if (t < 1) {
+        marker._animFrame = requestAnimationFrame(animate)
+      }
+    }
+    if (marker._animFrame) cancelAnimationFrame(marker._animFrame)
+    marker._animFrame = requestAnimationFrame(animate)
+  }
 
   const renderMarkers = () => {
     const L = LRef.current
@@ -2507,34 +2527,49 @@ function LiveTracking() {
 
     Object.keys(markersRef.current).forEach(id => {
       if (!tracked.find(t => t.id === id)) {
+        if (markersRef.current[id]._animFrame) cancelAnimationFrame(markersRef.current[id]._animFrame)
         map.removeLayer(markersRef.current[id])
         delete markersRef.current[id]
       }
     })
 
     tracked.forEach(t => {
-      const pos = [t.lastLat, t.lastLng]
+      const newPos = [t.lastLat, t.lastLng]
       if (markersRef.current[t.id]) {
-        markersRef.current[t.id].setLatLng(pos)
+        const marker = markersRef.current[t.id]
+        const currentPos = marker.getLatLng()
+        const fromPos = [currentPos.lat, currentPos.lng]
+        // Only animate if it actually moved (avoids pointless animation on identical pings)
+        if (fromPos[0] !== newPos[0] || fromPos[1] !== newPos[1]) {
+          animateMarkerTo(marker, fromPos, newPos)
+        }
       } else {
         const icon = L.divIcon({
           className: '',
-          html: `<div style="background:#7a0d0d;color:#000000;padding:5px 10px;border-radius:8px;font-size:12px;font-weight:700;black-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,0.5);border:2px solid #ffffff;letter-spacing:0.3px;">${t.vehicleNumber}</div>`,
+          html: `<div style="background:#7a0d0d;color:#ffffff;padding:5px 10px;border-radius:8px;font-size:12px;font-weight:700;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,0.5);border:2px solid #ffffff;letter-spacing:0.3px;">${t.vehicleNumber}</div>`,
           iconSize: [0, 0],
         })
-        markersRef.current[t.id] = L.marker(pos, { icon }).addTo(map)
+        markersRef.current[t.id] = L.marker(newPos, { icon }).addTo(map)
           .on('click', () => setSelectedTrip(t))
       }
     })
 
-    if (tracked.length > 0) {
-      const bounds = L.latLngBounds(tracked.map(t => [t.lastLat, t.lastLng]))
-      map.fitBounds(bounds, { padding: [50, 50], maxZoom: 14 })
+    if (tracked.length > 0 && Object.keys(markersRef.current).length === tracked.length) {
+      // Only auto-fit bounds on first load, not every poll (otherwise the map keeps re-centering and interrupts the user)
     }
   }
 
+  const isFirstRender = useRef(true)
   useEffect(() => {
     renderMarkers()
+    if (isFirstRender.current && leafletMapRef.current && LRef.current) {
+      const tracked = trips.filter(t => t.lastLat && t.lastLng)
+      if (tracked.length > 0) {
+        const bounds = LRef.current.latLngBounds(tracked.map(t => [t.lastLat, t.lastLng]))
+        leafletMapRef.current.fitBounds(bounds, { padding: [50, 50], maxZoom: 14 })
+        isFirstRender.current = false
+      }
+    }
   }, [trips])
 
   const trackedCount = trips.filter(t => t.lastLat && t.lastLng).length
