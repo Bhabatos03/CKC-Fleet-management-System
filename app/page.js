@@ -2759,7 +2759,7 @@ function VehicleOut({ onDone }) {
         <div><Label>Purpose</Label><Input value={f.purpose} onChange={e => set('purpose', e.target.value)} /></div>
         <div><Label>Passenger Count</Label><Input type="number" value={f.passengerCount} onChange={e => set('passengerCount', e.target.value)} /></div>
         <div><Label>Remarks</Label><Textarea value={f.remarks} onChange={e => set('remarks', e.target.value)} /></div>
-        <Button onClick={submit} className="w-full bg-emerald-600 hover:bg-emerald-700 h-12 text-lg">Record OUT</Button>
+                <Button onClick={submit} disabled={submitting} className="w-full bg-emerald-600 hover:bg-emerald-700 h-12 text-lg">{submitting ? 'Saving...' : 'Record OUT'}</Button>
       </div>
     </div>
   )
