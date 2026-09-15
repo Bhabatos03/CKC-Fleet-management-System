@@ -2703,15 +2703,18 @@ function VehicleOut({ onDone }) {
 
   const set = (k, v) => setF(x => ({ ...x, [k]: v }))
 
+    const [submitting, setSubmitting] = useState(false)
   const submit = async () => {
+    if (submitting) return
     if (!f.vehicleId || !f.odometerOut || !f.destination) return toast.error('Fill required fields')
     if (f.vehicleType === 'Two Wheeler' && !f.employeeName) return toast.error('Employee Name is required for two-wheelers')
     if (f.vehicleType === 'Four Wheeler' && !f.driverId) return toast.error('Driver is required for four-wheelers')
+    setSubmitting(true)
     try {
       const r = await apiOffline('trips/out', f)
       toast.success(r.queued ? 'Saved offline — will sync' : 'Vehicle OUT recorded')
       onDone()
-    } catch (e) { toast.error(e.message) }
+    } catch (e) { toast.error(e.message) } finally { setSubmitting(false) }
   }
 
   return (
