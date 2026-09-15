@@ -2544,10 +2544,22 @@ function LiveTracking() {
           animateMarkerTo(marker, fromPos, newPos)
         }
       } else {
-        const icon = L.divIcon({
+                const icon = L.divIcon({
           className: '',
-          html: `<div style="background:#7a0d0d;color:#000000;padding:5px 10px;border-radius:8px;font-size:12px;font-weight:700;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,0.5);border:2px solid #ffffff;letter-spacing:0.3px;">${t.vehicleNumber}</div>`,
-          iconSize: [0, 0],
+          html: `
+            <div style="display:flex;flex-direction:column;align-items:center;">
+              <div style="width:34px;height:34px;background:#7a0d0d;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,0.45);border:2px solid #ffffff;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M4 16v-3.2a1 1 0 0 1 .1-.44l1.6-3.6A2 2 0 0 1 7.5 7.5h9a2 2 0 0 1 1.8 1.26l1.6 3.6a1 1 0 0 1 .1.44V16a1 1 0 0 1-1 1h-1a1 1 0 0 1-1-1v-.5H7v.5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1Z" fill="#ffffff"/>
+                  <circle cx="7.5" cy="14.5" r="1.5" fill="#7a0d0d"/>
+                  <circle cx="16.5" cy="14.5" r="1.5" fill="#7a0d0d"/>
+                </svg>
+              </div>
+              <div style="margin-top:2px;background:#ffffff;color:#1e293b;padding:1px 6px;border-radius:6px;font-size:10px;font-weight:700;white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,0.3);">${t.vehicleNumber}</div>
+            </div>
+          `,
+          iconSize: [34, 52],
+          iconAnchor: [17, 17],
         })
         markersRef.current[t.id] = L.marker(newPos, { icon }).addTo(map)
           .on('click', () => setSelectedTrip(t))
