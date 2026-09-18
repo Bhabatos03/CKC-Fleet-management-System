@@ -45,6 +45,15 @@ function verifyPassword(password, stored) {
   return crypto.timingSafeEqual(hashBuffer, suppliedBuffer)
 }
 
+// --- Gate Pass numbering: CKC/FAC/2026/0001, resets each calendar year ---
+async function nextGatePassNumber(db) {
+  const year = new Date().getFullYear()
+  const prefix = `CKC/FAC/${year}/`
+  const count = await db.collection('gatepasses').countDocuments({ gatePassNo: { $regex: `^${prefix.replace(/\//g, '\\/')}` } })
+  const seq = String(count + 1).padStart(4, '0')
+  return `${prefix}${seq}`
+}
+
 // --- Seed the users collection the first time the app runs ---
 // This replaces the old hardcoded `users` object in auth/login with real,
 // hashed-password documents in Mongo, using the same credentials so nobody
