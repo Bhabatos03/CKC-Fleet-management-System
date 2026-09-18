@@ -285,9 +285,15 @@ export async function GET(request, { params }) {
       return json(items.map(clean))
     }
 
-    if (path === 'maintenance') {
+        if (path === 'maintenance') {
       const query = storeVehicleIds ? { vehicleId: { $in: storeVehicleIds } } : {}
       const items = await db.collection('maintenance').find(query).sort({ serviceDate: -1 }).toArray()
+      return json(items.map(clean))
+    }
+
+    if (path === 'gatepasses') {
+      if (role !== 'admin' && role !== 'security') return json({ error: 'Not authorized' }, 403)
+      const items = await db.collection('gatepasses').find({}).sort({ createdAt: -1 }).toArray()
       return json(items.map(clean))
     }
 
