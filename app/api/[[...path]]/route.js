@@ -613,8 +613,72 @@ export async function POST(request, { params }) {
       if (entry.nextServiceKm) update.serviceDueKm = entry.nextServiceKm
       if (entry.nextServiceDate) update.serviceDueDate = entry.nextServiceDate
       if (entry.odometer) update.currentOdometer = Math.max(vehicle.currentOdometer || 0, entry.odometer)
-      if (Object.keys(update).length) await db.collection('vehicles').updateOne({ id: vehicle.id }, { $set: update })
+           if (Object.keys(update).length) await db.collection('vehicles').updateOne({ id: vehicle.id }, { $set: update })
       return json(clean(entry))
+    }
+
+    if (path === 'gatepass') {
+      if (role !== 'admin') return json({ error: 'Only Admin can create a Gate Pass request' }, 403)
+      if (!body.purposeOfMovement || !Array.isArray(body.items) || body.items.length === 0) {
+        return json({ error: 'Purpose of movement and at least one item are required' }, 400)
+      }
+      const gatePassNo = await nextGatePassNumber(db)
+      const now = new Date().toISOString()
+      const entry = {
+        id: uuidv4(),
+        gatePassNo,
+        type: body.type || 'Outward',
+        returnable: body.returnable || 'Non-Returnable',
+        vendorName: body.vendorName || '',
+        contactNo: body.contactNo || '',
+        address: body.address || '',
+        vehicleNo: body.vehicleNo || '',
+        department: body.department || '',
+        purposeOfMovement: body.purposeOfMovement,
+        items: body.items,
+        requestedBy: body.requestedBy || '',
+        date: body.date || now.slice(0, 10),
+        time: body.time || now.slice(11, 16),
+        status: 'Draft',
+        signedCopyImage: null,
+        auditLog: [{ action: 'Created', by: body.requestedBy || 'admin', role, at: now }],
+        createdAt: now,
+      }
+      await db.collection('gatepasses').insertOne(entry)
+      return json(clean(entry))
+    }
+
+    if (path === 'gatepass/status') {
+      const gp = await db.collection('gatepasses').findOne({ id: body.id })
+      if (!gp) return json({ error: 'Gate pass not found' }, 404)
+      const allowed = ['Printed', 'Awaiting Signatures', 'Verified by Security']
+      if (!allowed.includes(body.status)) return json({ error: 'Invalid status' }, 400)
+      await db.collection('gatepasses').updateOne({ id: body.id }, {
+        $set: { status: body.status },
+        $push: { auditLog: { action: body.status, by: body.by || role, role, at: new Date().toISOString() } }
+      })
+      return json({ ok: true })
+    }
+
+    if (path === 'gatepass/upload') {
+      const gp = await db.collection('gatepasses').findOne({ id: body.id })
+      if (!gp) return json({ error: 'Gate pass not found' }, 404)
+      if (!body.signedCopyImage) return json({ error: 'Signed copy image is required' }, 400)
+      await db.collection('gatepasses').updateOne({ id: body.id }, {
+        $set: { signedCopyImage: body.signedCopyImage, status: 'Uploaded' },
+        $push: { auditLog: { action: 'Uploaded signed copy', by: body.by || role, role, at: new Date().toISOString() } }
+      })
+      return json({ ok: true })
+    }
+
+    if (path === 'gatepass/complete') {
+      const gp = await db.collection('gatepasses').findOne({ id: body.id })
+      if (!gp) return json({ error: 'Gate pass not found' }, 404)
+      await db.collection('gatepasses').updateOne({ id: body.id }, {
+        $set: { status: 'Completed' },
+        $push: { auditLog: { action: 'Marked Completed', by: body.by || role, role, at: new Date().toISOString() } }
+      })
+      return json({ ok: true })
     }
 
     return json({ error: 'Not found' }, 404)
