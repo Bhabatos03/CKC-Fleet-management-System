@@ -643,11 +643,13 @@ export async function POST(request, { params }) {
       return json(clean(entry))
     }
 
-    if (path === 'gatepass') {
-      if (role !== 'admin') return json({ error: 'Only Admin can create a Gate Pass request' }, 403)
-      if (!body.purposeOfMovement || !Array.isArray(body.items) || body.items.length === 0) {
-        return json({ error: 'Purpose of movement and at least one item are required' }, 400)
-      }
+    if (path === 'gatepasses') {
+  if (!['admin', 'store_admin', 'security'].includes(role)) return json({ error: 'Not authorized' }, 403)
+  if (role === 'store_admin' && !storeId) return json({ error: 'No store assigned to this user' }, 403)
+  const query = (role === 'admin' || (role === 'security' && !storeId)) ? {} : { storeId }
+  const items = await db.collection('gatepasses').find(query).sort({ createdAt: -1 }).toArray()
+  return json(items.map(clean))
+}
       const gatePassNo = await nextGatePassNumber(db)
       const now = new Date().toISOString()
       const entry = {
