@@ -2769,7 +2769,7 @@ const generateGatePassPDF = async (gp) => {
   )
 }
 
-unction GatePassRegister() {
+function GatePassRegister() {
   const user = getUser()
   const isAdmin = user.role === 'admin'
   const isStoreAdmin = user.role === 'store_admin'
