@@ -2618,12 +2618,10 @@ doc.text('C. Krishniah Chetty', 80, y + 18)
 doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(80)
 
 const storeInfo = STORE_ADDRESSES[gp.storeId] || STORE_ADDRESSES.TS
-doc.text(`${storeInfo.label}:`, 80, y + 32)
-doc.text(storeInfo.lines[0], 80, y + 42)
-doc.text(storeInfo.lines[1] || '', 80, y + 52)
+doc.text(storeInfo.lines[0], 80, y + 32)
+doc.text(storeInfo.lines[1] || '', 80, y + 42)
 
-y += 70
-
+y += 60
   doc.setDrawColor(217, 119, 6); doc.setLineWidth(1); doc.line(30, y, pageW - 30, y); y += 18
 
   doc.setFont('helvetica', 'bold'); doc.setFontSize(13); doc.setTextColor(15, 23, 42)
