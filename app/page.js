@@ -2733,12 +2733,12 @@ const generateGatePassPDF = async (gp) => {
 
           <div className="border-t pt-3 space-y-2">
             <Label className="text-xs text-slate-500 uppercase tracking-wide">Workflow Actions</Label>
-            {gp.status === 'Draft' && isAdmin && (
-              <Button size="sm" onClick={async () => { await generateGatePassPDF(gp); setStatus('Printed') }}>Generate &amp; Print PDF</Button>
-            )}
-            {gp.status === 'Printed' && isAdmin && (
-              <Button size="sm" onClick={() => setStatus('Awaiting Signatures')}>Mark Awaiting Signatures</Button>
-            )}
+           {gp.status === 'Draft' && canPrepare && (
+  <Button size="sm" onClick={async () => { await generateGatePassPDF(gp); setStatus('Printed') }}>Generate &amp; Print PDF</Button>
+)}
+{gp.status === 'Printed' && canPrepare && (
+  <Button size="sm" onClick={() => setStatus('Awaiting Signatures')}>Mark Awaiting Signatures</Button>
+)}
             {gp.status === 'Awaiting Signatures' && isSecurity && (
               <Button size="sm" onClick={() => setStatus('Verified by Security')}>Mark Verified by Security</Button>
             )}
