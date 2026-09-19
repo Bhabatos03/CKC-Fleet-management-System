@@ -747,6 +747,29 @@ function Drivers() {
   )
 }
 const STORES = ['TS', 'TSS', 'TSW']
+const STORE_ADDRESSES = {
+  TS: {
+    label: 'TS — Head Office',
+    lines: [
+      "The Touchstone (Red Facade), 'A' Block, 3rd Floor, No. 3A-3,",
+      'Main Guard Cross Road, Off. Cubbon Road, Bengaluru - 560 001',
+    ],
+  },
+  TSS: {
+    label: 'TSS Showroom',
+    lines: [
+      'The Touchstone South, 517/41, 47th Cross Rd, next to Angadi Silks, 5th,',
+      'TMC Layout, 5th Block, Jayanagar Bengaluru - 560041',
+    ],
+  },
+  TSW: {
+    label: 'TSW Showroom',
+    lines: [
+      'The Touchstone West, 25, 9th Cross,',
+      'Margosa Rd, Malleshwaram, Bengaluru - 560003',
+    ],
+  },
+}
 function DriverDialog({ open, onOpenChange, onSubmit, initial }) {
   const [f, setF] = useState({})
      useEffect(() => { setF(initial || { name: '', empId: '', mobile: '', licence: '', licenceExpiry: '', status: 'Active', assignedLocation: '', remarks: '' }) }, [initial, open])
