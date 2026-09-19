@@ -2858,8 +2858,8 @@ function GatePassRegister() {
         </div>
         <div className="overflow-x-auto"><Table>
           <TableHeader><TableRow>
-            <TableHead>Gate Pass No.<TableCell className="text-xs font-semibold">{g.storeId || '-'}</TableCell></TableHead><TableHead>Date</TableHead><TableHead>Type</TableHead>
-            <TableHead>Vendor / Dept</TableHead><TableHead>Purpose</TableHead><TableHead>Status</TableHead><TableHead></TableHead>
+          <TableHead>Gate Pass No.</TableHead><TableHead>Store</TableHead><TableHead>Date</TableHead><TableHead>Type</TableHead>
+          <TableHead>Vendor / Dept</TableHead><TableHead>Purpose</TableHead><TableHead>Status</TableHead><TableHead></TableHead>
           </TableRow></TableHeader>
           <TableBody>
             {filtered.map(g => (
