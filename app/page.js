@@ -2544,6 +2544,12 @@ function GatePassFormDialog({ open, onOpenChange, onCreated }) {
                 <SelectContent><SelectItem value="Returnable">Returnable</SelectItem><SelectItem value="Non-Returnable">Non-Returnable</SelectItem></SelectContent>
               </Select>
             </div>
+    <div><Label>Store *</Label>
+  <Select value={f.storeId} onValueChange={v => set('storeId', v)}>
+    <SelectTrigger><SelectValue placeholder="Select store" /></SelectTrigger>
+    <SelectContent>{STORES.map(x => <SelectItem key={x} value={x}>{x}</SelectItem>)}</SelectContent>
+  </Select>
+</div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div><Label>Vendor Name</Label><Input value={f.vendorName} onChange={e => set('vendorName', e.target.value)} /></div>
