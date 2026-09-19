@@ -2463,6 +2463,392 @@ function Reports() {
     </div>
   )
 }
+function GatePassFormDialog({ open, onOpenChange, onCreated }) {
+  const emptyItem = () => ({ description: '', itemCode: '', qty: '', unit: '', remarks: '' })
+  const [f, setF] = useState({
+    type: 'Outward', returnable: 'Non-Returnable',
+    vendorName: '', contactNo: '', address: '', vehicleNo: '', department: '',
+    purposeOfMovement: '', requestedBy: '',
+    date: new Date().toISOString().slice(0, 10),
+    time: new Date().toTimeString().slice(0, 5),
+    items: [emptyItem()],
+  })
+  useEffect(() => {
+    if (open) {
+      setF({
+        type: 'Outward', returnable: 'Non-Returnable',
+        vendorName: '', contactNo: '', address: '', vehicleNo: '', department: '',
+        purposeOfMovement: '', requestedBy: '',
+        date: new Date().toISOString().slice(0, 10),
+        time: new Date().toTimeString().slice(0, 5),
+        items: [emptyItem()],
+      })
+    }
+  }, [open])
+  const set = (k, v) => setF(x => ({ ...x, [k]: v }))
+  const setItem = (i, k, v) => setF(x => ({ ...x, items: x.items.map((it, idx) => idx === i ? { ...it, [k]: v } : it) }))
+  const addItem = () => setF(x => ({ ...x, items: [...x.items, emptyItem()] }))
+  const removeItem = (i) => setF(x => ({ ...x, items: x.items.filter((_, idx) => idx !== i) }))
+
+  const canSave = f.purposeOfMovement && f.items.some(it => it.description)
+
+  const submit = async () => {
+    try {
+      const cleanItems = f.items.filter(it => it.description).map((it, idx) => ({ slNo: idx + 1, ...it }))
+      const created = await api('gatepass', { method: 'POST', body: { ...f, items: cleanItems } })
+      toast.success(`Gate Pass ${created.gatePassNo} created`)
+      onOpenChange(false)
+      onCreated(created)
+    } catch (e) { toast.error(e.message) }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-3xl max-h-[92vh] overflow-y-auto">
+        <DialogHeader><DialogTitle>New Material / Asset Gate Pass</DialogTitle></DialogHeader>
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-3">
+            <div><Label>Type</Label>
+              <Select value={f.type} onValueChange={v => set('type', v)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent><SelectItem value="Outward">Outward</SelectItem><SelectItem value="Inward">Inward</SelectItem></SelectContent>
+              </Select>
+            </div>
+            <div><Label>Returnable</Label>
+              <Select value={f.returnable} onValueChange={v => set('returnable', v)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent><SelectItem value="Returnable">Returnable</SelectItem><SelectItem value="Non-Returnable">Non-Returnable</SelectItem></SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div><Label>Vendor Name</Label><Input value={f.vendorName} onChange={e => set('vendorName', e.target.value)} /></div>
+            <div><Label>Contact No.</Label><Input value={f.contactNo} onChange={e => set('contactNo', e.target.value)} /></div>
+            <div className="col-span-2"><Label>Address</Label><Input value={f.address} onChange={e => set('address', e.target.value)} /></div>
+            <div><Label>Vehicle No.</Label><Input value={f.vehicleNo} onChange={e => set('vehicleNo', e.target.value)} /></div>
+            <div><Label>Department</Label><Input value={f.department} onChange={e => set('department', e.target.value)} /></div>
+          </div>
+          <div><Label>Purpose of Movement *</Label><Textarea value={f.purposeOfMovement} onChange={e => set('purposeOfMovement', e.target.value)} rows={2} /></div>
+
+          <div className="border rounded-lg p-3 bg-slate-50">
+            <div className="flex items-center justify-between mb-2">
+              <Label className="font-semibold">Material / Asset Details *</Label>
+              <Button type="button" size="sm" onClick={addItem}><Plus className="w-4 h-4 mr-1" /> Add Item</Button>
+            </div>
+            <div className="space-y-2">
+              {f.items.map((it, i) => (
+                <div key={i} className="grid grid-cols-12 gap-2 items-end bg-white p-2 rounded border">
+                  <div className="col-span-1 text-xs text-slate-500 pt-2">{i + 1}.</div>
+                  <div className="col-span-4"><Label className="text-xs">Description</Label><Input value={it.description} onChange={e => setItem(i, 'description', e.target.value)} /></div>
+                  <div className="col-span-2"><Label className="text-xs">Item Code/Ser No.</Label><Input value={it.itemCode} onChange={e => setItem(i, 'itemCode', e.target.value)} /></div>
+                  <div className="col-span-1"><Label className="text-xs">Qty</Label><Input value={it.qty} onChange={e => setItem(i, 'qty', e.target.value)} /></div>
+                  <div className="col-span-1"><Label className="text-xs">Unit</Label><Input value={it.unit} onChange={e => setItem(i, 'unit', e.target.value)} /></div>
+                  <div className="col-span-2"><Label className="text-xs">Remarks</Label><Input value={it.remarks} onChange={e => setItem(i, 'remarks', e.target.value)} /></div>
+                  <div className="col-span-1">
+                    {f.items.length > 1 && <button onClick={() => removeItem(i)} className="text-rose-500 hover:text-rose-700"><X className="w-4 h-4" /></button>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-3">
+            <div><Label>Requested By</Label><Input value={f.requestedBy} onChange={e => set('requestedBy', e.target.value)} /></div>
+            <div><Label>Date</Label><Input type="date" value={f.date} onChange={e => set('date', e.target.value)} /></div>
+            <div><Label>Time</Label><Input type="time" value={f.time} onChange={e => set('time', e.target.value)} /></div>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button onClick={submit} disabled={!canSave} className="bg-gradient-to-r from-[#7a0d0d] to-[#a01414] hover:brightness-110 text-white">Save Gate Pass (Draft)</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+const generateGatePassPDF = async (gp) => {
+  const { jsPDF } = await import('jspdf')
+  const autoTable = (await import('jspdf-autotable')).default
+  const doc = new jsPDF({ unit: 'pt', format: 'a4' })
+  const pageW = doc.internal.pageSize.getWidth()
+
+  let logoDataUrl = null
+  try {
+    const res = await fetch('/ckc-logo-pdf.png')
+    const blob = await res.blob()
+    logoDataUrl = await new Promise((r) => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(blob) })
+  } catch {}
+
+  let y = 30
+  if (logoDataUrl) doc.addImage(logoDataUrl, 'PNG', 30, y, 40, 40)
+  doc.setFont('times', 'bold'); doc.setFontSize(14); doc.setTextColor(122, 13, 13)
+  doc.text('C. Krishniah Chetty', 80, y + 18)
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(80)
+  doc.text("Corporate Office: The Touchstone (Red Facade), 'A' Block, 3rd Floor, No. 3A-3,", 80, y + 32)
+  doc.text('Main Guard Cross Road, Off. Cubbon Road, Bengaluru - 560 001', 80, y + 42)
+  doc.text('Regd. Office: 36 Commercial Street, Bengaluru - 560 001, India', 80, y + 52)
+  y += 70
+
+  doc.setDrawColor(217, 119, 6); doc.setLineWidth(1); doc.line(30, y, pageW - 30, y); y += 18
+
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(13); doc.setTextColor(15, 23, 42)
+  doc.text('MATERIAL / ASSET GATE PASS', pageW / 2, y, { align: 'center' }); y += 20
+
+  doc.setFontSize(9); doc.setFont('helvetica', 'normal')
+  doc.text(`Gate Pass No.: ${gp.gatePassNo}`, 30, y)
+  doc.text(`Date: ${gp.date}`, pageW - 200, y)
+  doc.text(`Time: ${gp.time}`, pageW - 100, y)
+  y += 16
+
+  const checkbox = (label, checked, x, yy) => {
+    doc.rect(x, yy - 8, 8, 8)
+    if (checked) { doc.setFont('helvetica', 'bold'); doc.text('X', x + 1.5, yy - 1); doc.setFont('helvetica', 'normal') }
+    doc.text(label, x + 12, yy)
+  }
+  checkbox('Outward', gp.type === 'Outward', 30, y)
+  checkbox('Inward', gp.type === 'Inward', 120, y)
+  checkbox('Returnable', gp.returnable === 'Returnable', 200, y)
+  checkbox('Non-Returnable', gp.returnable === 'Non-Returnable', 300, y)
+  y += 20
+
+  doc.setDrawColor(200); doc.line(30, y, pageW - 30, y); y += 16
+
+  doc.setFont('helvetica', 'bold'); doc.text('MATERIAL / ASSET DETAILS', 30, y); y += 4
+  autoTable(doc, {
+    startY: y,
+    head: [['Vendor Name', 'Contact No.', 'Address', 'Vehicle No.', 'Department']],
+    body: [[gp.vendorName || '-', gp.contactNo || '-', gp.address || '-', gp.vehicleNo || '-', gp.department || '-']],
+    theme: 'grid', headStyles: { fillColor: [139, 20, 20] }, styles: { fontSize: 8 }, margin: { left: 30, right: 30 },
+  })
+  y = doc.lastAutoTable.finalY + 12
+
+  doc.setFontSize(9); doc.text(`Purpose of Movement: ${gp.purposeOfMovement}`, 30, y); y += 14
+
+  autoTable(doc, {
+    startY: y,
+    head: [['Sl. No.', 'Description of Material / Asset', 'Item Code / Ser No.', 'Qty.', 'Unit', 'Remarks']],
+    body: gp.items.map(it => [it.slNo, it.description, it.itemCode || '-', it.qty || '-', it.unit || '-', it.remarks || '-']),
+    theme: 'grid', headStyles: { fillColor: [139, 20, 20] }, styles: { fontSize: 8 }, margin: { left: 30, right: 30 },
+  })
+  y = doc.lastAutoTable.finalY + 30
+
+  if (y > 650) { doc.addPage(); y = 60 }
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(9)
+  doc.text('AUTHORIZATION / SECURITY VERIFICATION', 30, y); y += 30
+
+  const sigCols = ['Requested by\n(Name & Signature)', 'Department Head\n(Name & Signature)', 'Facility /Admin\n(Name & Signature)', 'Security Supervisor\n(Name & Signature)']
+  const colW = (pageW - 60) / 4
+  sigCols.forEach((label, i) => {
+    const x = 30 + i * colW
+    doc.setDrawColor(150); doc.line(x, y, x + colW - 10, y)
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(7)
+    label.split('\n').forEach((line, li) => doc.text(line, x, y + 12 + li * 9))
+  })
+  y += 50
+  doc.setFontSize(8); doc.text('Time Out / Time In: ______________________', 30, y)
+
+  y += 30
+  doc.setFontSize(7); doc.setTextColor(120)
+  doc.text('THIS PASS IS VALID FOR THE DATE OF PURPOSE STATED ABOVE. SECURITY RESERVE THE RIGHT TO INSPECT ALL ITEMS OF THE GATE.', 30, y, { maxWidth: pageW - 60 })
+  y += 14
+  doc.text('White Copy : Security  I  Pink Copy : Stores  I  Yellow Copy : Accounts', 30, y)
+  doc.text('Ver. : 1 - 2026', pageW - 90, y)
+
+  doc.save(`${gp.gatePassNo.replace(/\//g, '-')}.pdf`)
+}
+
+function GatePassDetailDialog({ gp, onClose, onChanged, isSecurity, isAdmin }) {
+  const [uploading, setUploading] = useState(false)
+  if (!gp) return null
+  const user = getUser()
+
+  const setStatus = async (status) => {
+    try {
+      await api('gatepass/status', { method: 'POST', body: { id: gp.id, status, by: user.name } })
+      toast.success(`Marked ${status}`)
+      onChanged()
+    } catch (e) { toast.error(e.message) }
+  }
+
+  const complete = async () => {
+    try {
+      await api('gatepass/complete', { method: 'POST', body: { id: gp.id, by: user.name } })
+      toast.success('Gate Pass completed')
+      onChanged()
+    } catch (e) { toast.error(e.message) }
+  }
+
+  const handleUpload = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploading(true)
+    try {
+      const img = await new Promise((res, rej) => {
+        const i = new Image()
+        i.onload = () => res(i)
+        i.onerror = rej
+        i.src = URL.createObjectURL(file)
+      })
+      const maxW = 1200
+      const scale = Math.min(1, maxW / img.width)
+      const canvas = document.createElement('canvas')
+      canvas.width = img.width * scale
+      canvas.height = img.height * scale
+      canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height)
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.8)
+      await api('gatepass/upload', { method: 'POST', body: { id: gp.id, signedCopyImage: dataUrl, by: user.name } })
+      toast.success('Signed copy uploaded')
+      onChanged()
+    } catch (err) { toast.error('Upload failed') }
+    finally { setUploading(false) }
+  }
+
+  return (
+    <Dialog open={!!gp} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader><DialogTitle>{gp.gatePassNo} — {gp.status}</DialogTitle></DialogHeader>
+        <div className="space-y-3 text-sm">
+          <div className="grid grid-cols-2 gap-2">
+            <div><span className="text-slate-500">Type: </span>{gp.type} · {gp.returnable}</div>
+            <div><span className="text-slate-500">Date: </span>{gp.date} {gp.time}</div>
+            <div><span className="text-slate-500">Vendor: </span>{gp.vendorName || '-'}</div>
+            <div><span className="text-slate-500">Department: </span>{gp.department || '-'}</div>
+            <div className="col-span-2"><span className="text-slate-500">Purpose: </span>{gp.purposeOfMovement}</div>
+          </div>
+          <div className="border rounded-lg overflow-hidden">
+            <table className="w-full text-xs">
+              <thead className="bg-slate-100"><tr><th className="p-2 text-left">#</th><th className="p-2 text-left">Description</th><th className="p-2 text-left">Qty</th><th className="p-2 text-left">Unit</th></tr></thead>
+              <tbody>{gp.items.map((it, i) => (<tr key={i} className="border-t"><td className="p-2">{it.slNo}</td><td className="p-2">{it.description}</td><td className="p-2">{it.qty}</td><td className="p-2">{it.unit}</td></tr>))}</tbody>
+            </table>
+          </div>
+
+          <Button size="sm" variant="outline" onClick={() => generateGatePassPDF(gp)}><FileText className="w-4 h-4 mr-1" /> Download / Print PDF</Button>
+
+          {gp.signedCopyImage && (
+            <div>
+              <Label className="text-xs text-slate-500">Signed & Stamped Copy</Label>
+              <img src={gp.signedCopyImage} alt="Signed copy" className="w-full rounded border mt-1" />
+            </div>
+          )}
+
+          <div className="border-t pt-3 space-y-2">
+            <Label className="text-xs text-slate-500 uppercase tracking-wide">Workflow Actions</Label>
+            {gp.status === 'Draft' && isAdmin && (
+              <Button size="sm" onClick={async () => { await generateGatePassPDF(gp); setStatus('Printed') }}>Generate &amp; Print PDF</Button>
+            )}
+            {gp.status === 'Printed' && isAdmin && (
+              <Button size="sm" onClick={() => setStatus('Awaiting Signatures')}>Mark Awaiting Signatures</Button>
+            )}
+            {gp.status === 'Awaiting Signatures' && isSecurity && (
+              <Button size="sm" onClick={() => setStatus('Verified by Security')}>Mark Verified by Security</Button>
+            )}
+            {gp.status === 'Verified by Security' && isSecurity && (
+              <label className="inline-flex items-center gap-2 px-3 py-2 border rounded-lg cursor-pointer hover:bg-slate-50 text-sm">
+                <Upload className="w-4 h-4" /> {uploading ? 'Uploading...' : 'Upload Signed & Stamped Copy'}
+                <input type="file" accept="image/*" capture="environment" className="hidden" onChange={handleUpload} />
+              </label>
+            )}
+            {gp.status === 'Uploaded' && isSecurity && (
+              <Button size="sm" onClick={complete}><CheckCircle2 className="w-4 h-4 mr-1" /> Mark Completed</Button>
+            )}
+            {gp.status === 'Completed' && <div className="text-emerald-600 text-sm font-medium">✓ This Gate Pass is complete.</div>}
+          </div>
+
+          <div className="border-t pt-3">
+            <Label className="text-xs text-slate-500 uppercase tracking-wide">Audit Trail</Label>
+            <div className="text-xs text-slate-600 space-y-1 mt-1">
+              {(gp.auditLog || []).map((a, i) => (
+                <div key={i}>{fmtDT(a.at)} — <b>{a.action}</b> by {a.by} ({a.role})</div>
+              ))}
+            </div>
+          </div>
+        </div>
+        <DialogFooter><Button variant="outline" onClick={onClose}>Close</Button></DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+function GatePassRegister() {
+  const user = getUser()
+  const isAdmin = user.role === 'admin'
+  const isSecurity = user.role === 'security'
+  const [items, setItems] = useState([])
+  const [search, setSearch] = useState('')
+  const [open, setOpen] = useState(false)
+  const [viewing, setViewing] = useState(null)
+
+  const load = () => api('gatepasses').then(setItems).catch(e => toast.error(e.message))
+  useEffect(() => { load() }, [])
+
+  const filtered = items.filter(g =>
+    !search ||
+    g.gatePassNo?.toLowerCase().includes(search.toLowerCase()) ||
+    g.vendorName?.toLowerCase().includes(search.toLowerCase()) ||
+    g.department?.toLowerCase().includes(search.toLowerCase())
+  )
+
+  const statusColor = (s) => ({
+    'Draft': 'bg-slate-400', 'Printed': 'bg-amber-500', 'Awaiting Signatures': 'bg-amber-600',
+    'Verified by Security': 'bg-blue-500', 'Uploaded': 'bg-indigo-500', 'Completed': 'bg-emerald-500',
+  }[s] || 'bg-slate-400')
+
+  const pendingCount = items.filter(g => g.status !== 'Completed').length
+
+  return (
+    <div className="p-6 space-y-4">
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900 relative inline-block">Gate Pass Register<span className="absolute -bottom-1 left-0 w-16 h-1 bg-gradient-to-r from-[#7a0d0d] to-amber-500 rounded-full" /></h1>
+          <p className="text-slate-500 mt-2">Material / Asset movement tracking</p>
+        </div>
+        {isAdmin && (
+          <Button onClick={() => setOpen(true)} className="bg-gradient-to-r from-[#7a0d0d] to-[#a01414] hover:brightness-110 text-white shadow-md">
+            <Plus className="w-4 h-4 mr-1" /> New Gate Pass
+          </Button>
+        )}
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+        <Card><CardContent className="p-4"><div className="text-xs text-slate-500">Total Gate Passes</div><div className="text-2xl font-bold text-[#7a0d0d]">{items.length}</div></CardContent></Card>
+        <Card><CardContent className="p-4"><div className="text-xs text-slate-500">Pending</div><div className="text-2xl font-bold text-amber-600">{pendingCount}</div></CardContent></Card>
+        <Card><CardContent className="p-4"><div className="text-xs text-slate-500">Completed</div><div className="text-2xl font-bold text-emerald-600">{items.length - pendingCount}</div></CardContent></Card>
+      </div>
+
+      <Card><CardContent className="p-4">
+        <div className="mb-4 relative max-w-sm">
+          <Search className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
+          <Input placeholder="Search Gate Pass No., vendor, department..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
+        </div>
+        <div className="overflow-x-auto"><Table>
+          <TableHeader><TableRow>
+            <TableHead>Gate Pass No.</TableHead><TableHead>Date</TableHead><TableHead>Type</TableHead>
+            <TableHead>Vendor / Dept</TableHead><TableHead>Purpose</TableHead><TableHead>Status</TableHead><TableHead></TableHead>
+          </TableRow></TableHeader>
+          <TableBody>
+            {filtered.map(g => (
+              <TableRow key={g.id}>
+                <TableCell className="font-mono text-xs font-semibold">{g.gatePassNo}</TableCell>
+                <TableCell className="text-xs">{g.date}</TableCell>
+                <TableCell className="text-xs">{g.type} · {g.returnable}</TableCell>
+                <TableCell className="text-xs">{g.vendorName || g.department || '-'}</TableCell>
+                <TableCell className="text-xs max-w-[200px] truncate">{g.purposeOfMovement}</TableCell>
+                <TableCell><Badge className={`${statusColor(g.status)} text-white hover:${statusColor(g.status)}`}>{g.status}</Badge></TableCell>
+                <TableCell className="text-right"><Button size="sm" variant="outline" onClick={() => setViewing(g)}>Open</Button></TableCell>
+              </TableRow>
+            ))}
+            {filtered.length === 0 && (
+              <TableRow><TableCell colSpan={7} className="text-center text-slate-500 py-8">No gate passes yet.</TableCell></TableRow>
+            )}
+          </TableBody>
+        </Table></div>
+      </CardContent></Card>
+
+      <GatePassFormDialog open={open} onOpenChange={setOpen} onCreated={() => load()} />
+      <GatePassDetailDialog gp={viewing} onClose={() => setViewing(null)} onChanged={() => { load(); setViewing(null) }} isSecurity={isSecurity} isAdmin={isAdmin} />
+    </div>
+  )
+}
 function LiveTracking() {
   const [trips, setTrips] = useState([])
   const [selectedTrip, setSelectedTrip] = useState(null)
