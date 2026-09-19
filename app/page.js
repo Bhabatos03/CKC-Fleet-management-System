@@ -2844,8 +2844,19 @@ function GatePassRegister() {
       </CardContent></Card>
 
       <GatePassFormDialog open={open} onOpenChange={setOpen} onCreated={() => load()} />
-      <GatePassDetailDialog gp={viewing} onClose={() => setViewing(null)} onChanged={() => { load(); setViewing(null) }} isSecurity={isSecurity} isAdmin={isAdmin} />
-    </div>
+      <GatePassDetailDialog
+  gp={viewing}
+  onClose={() => setViewing(null)}
+  onChanged={async () => {
+    try {
+      const fresh = await api('gatepasses')
+      setItems(fresh)
+      setViewing(v => v ? (fresh.find(g => g.id === v.id) || null) : null)
+    } catch (e) { toast.error(e.message) }
+  }}
+  isSecurity={isSecurity}
+  canPrepare={canPrepare}
+/>
   )
 }
 function LiveTracking() {
