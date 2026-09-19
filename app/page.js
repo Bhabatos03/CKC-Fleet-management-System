@@ -3044,6 +3044,7 @@ function SecurityHome({ user, onLogout }) {
     { id: 'in', label: 'Vehicle IN', icon: ArrowLeftCircle, color: 'from-blue-500 to-blue-600' },
     { id: 'fuel', label: 'Fuel Entry', icon: Fuel, color: 'from-amber-500 to-amber-600' },
     { id: 'outside', label: 'Currently Outside', icon: Truck, color: 'from-slate-600 to-slate-700' },
+    { id: 'gatepass', label: 'Gate Pass', icon: ClipboardCheck, color: 'from-indigo-500 to-indigo-600' },
   ]
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#3d0808] via-[#5c0a0a] to-[#2d0505] text-white">
@@ -3077,10 +3078,10 @@ function SecurityHome({ user, onLogout }) {
       {screen === 'in' && <VehicleIn onDone={() => setScreen('home')} />}
       {screen === 'fuel' && <FuelEntry onDone={() => setScreen('home')} />}
       {screen === 'outside' && <CurrentlyOutside />}
+      {screen === 'gatepass' && <GatePassRegister />}
     </div>
   )
 }
-
 function VehicleOut({ onDone }) {
   const [vehicles, setVehicles] = useState([])
   const [drivers, setDrivers] = useState([])
