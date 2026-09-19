@@ -2657,7 +2657,7 @@ const generateGatePassPDF = async (gp) => {
   doc.save(`${gp.gatePassNo.replace(/\//g, '-')}.pdf`)
 }
 
-function GatePassDetailDialog({ gp, onClose, onChanged, isSecurity, isAdmin }) {
+   function GatePassDetailDialog({ gp, onClose, onChanged, isSecurity, canPrepare }) {
   const [uploading, setUploading] = useState(false)
   if (!gp) return null
   const user = getUser()
