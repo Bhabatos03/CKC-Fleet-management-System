@@ -2489,13 +2489,14 @@ function Reports() {
 function GatePassFormDialog({ open, onOpenChange, onCreated }) {
   const emptyItem = () => ({ description: '', itemCode: '', qty: '', unit: '', remarks: '' })
   const [f, setF] = useState({
-    type: 'Outward', returnable: 'Non-Returnable',
-    vendorName: '', contactNo: '', address: '', vehicleNo: '', department: '',
-    purposeOfMovement: '', requestedBy: '',
-    date: new Date().toISOString().slice(0, 10),
-    time: new Date().toTimeString().slice(0, 5),
-    items: [emptyItem()],
-  })
+  type: 'Outward', returnable: 'Non-Returnable',
+  storeId: '',                                    // ← new
+  vendorName: '', contactNo: '', address: '', vehicleNo: '', department: '',
+  purposeOfMovement: '', requestedBy: '',
+  date: new Date().toISOString().slice(0, 10),
+  time: new Date().toTimeString().slice(0, 5),
+  items: [emptyItem()],
+})
   useEffect(() => {
     if (open) {
       setF({
