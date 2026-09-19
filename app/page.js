@@ -2803,12 +2803,12 @@ function GatePassRegister() {
           <h1 className="text-3xl font-bold text-slate-900 relative inline-block">Gate Pass Register<span className="absolute -bottom-1 left-0 w-16 h-1 bg-gradient-to-r from-[#7a0d0d] to-amber-500 rounded-full" /></h1>
           <p className="text-slate-500 mt-2">Material / Asset movement tracking</p>
         </div>
-        {isAdmin && (
-          <Button onClick={() => setOpen(true)} className="bg-gradient-to-r from-[#7a0d0d] to-[#a01414] hover:brightness-110 text-white shadow-md">
-            <Plus className="w-4 h-4 mr-1" /> New Gate Pass
-          </Button>
-        )}
-      </div>
+        {canPrepare && (
+  <Button onClick={() => setOpen(true)} className="bg-gradient-to-r from-[#7a0d0d] to-[#a01414] hover:brightness-110 text-white shadow-md">
+    <Plus className="w-4 h-4 mr-1" /> New Gate Pass
+  </Button>
+)} 
+  </div>
 
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         <Card><CardContent className="p-4"><div className="text-xs text-slate-500">Total Gate Passes</div><div className="text-2xl font-bold text-[#7a0d0d]">{items.length}</div></CardContent></Card>
