@@ -340,13 +340,14 @@ function Login({ onLogin }) {
 
 function AdminShell({ user, onLogout, children, active, setActive }) {
   const [drawerOpen, setDrawerOpen] = useState(false)
-    const fullNav = [
+        const fullNav = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { id: 'vehicles', label: 'Vehicles', icon: Car },
   { id: 'drivers', label: 'Drivers', icon: Users },
   { id: 'trips', label: 'Trip Register', icon: ClipboardList },
   { id: 'fuel', label: 'Fuel Register', icon: Fuel },
   { id: 'maintenance', label: 'Maintenance', icon: Wrench },
+  { id: 'gatepass', label: 'Gate Pass', icon: ClipboardCheck },
   { id: 'mileage', label: 'Mileage', icon: Gauge },
   { id: 'reports', label: 'Reports', icon: Download },
   { id: 'tracking', label: 'Track Vehicle', icon: MapPin },
