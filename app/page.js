@@ -2498,17 +2498,19 @@ function GatePassFormDialog({ open, onOpenChange, onCreated }) {
   items: [emptyItem()],
 })
   useEffect(() => {
-    if (open) {
-      setF({
-        type: 'Outward', returnable: 'Non-Returnable',
-        vendorName: '', contactNo: '', address: '', vehicleNo: '', department: '',
-        purposeOfMovement: '', requestedBy: '',
-        date: new Date().toISOString().slice(0, 10),
-        time: new Date().toTimeString().slice(0, 5),
-        items: [emptyItem()],
-      })
-    }
-  }, [open])
+  if (open) {
+    const user = getUser()
+    setF({
+      type: 'Outward', returnable: 'Non-Returnable',
+      storeId: user.role === 'store_admin' ? user.storeId : '',
+      vendorName: '', contactNo: '', address: '', vehicleNo: '', department: '',
+      purposeOfMovement: '', requestedBy: '',
+      date: new Date().toISOString().slice(0, 10),
+      time: new Date().toTimeString().slice(0, 5),
+      items: [emptyItem()],
+    })
+  }
+}, [open])
   const set = (k, v) => setF(x => ({ ...x, [k]: v }))
   const setItem = (i, k, v) => setF(x => ({ ...x, items: x.items.map((it, idx) => idx === i ? { ...it, [k]: v } : it) }))
   const addItem = () => setF(x => ({ ...x, items: [...x.items, emptyItem()] }))
