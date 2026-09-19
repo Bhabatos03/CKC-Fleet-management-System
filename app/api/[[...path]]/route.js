@@ -697,33 +697,7 @@ if (['gatepass/status', 'gatepass/upload', 'gatepass/complete'].includes(path)) 
   const items = await db.collection('gatepasses').find(query).sort({ createdAt: -1 }).toArray()
   return json(items.map(clean))
 }
-      const gatePassNo = await nextGatePassNumber(db)
-      const now = new Date().toISOString()
-      const entry = {
-        id: uuidv4(),
-        gatePassNo,
-        type: body.type || 'Outward',
-        returnable: body.returnable || 'Non-Returnable',
-        vendorName: body.vendorName || '',
-        contactNo: body.contactNo || '',
-        address: body.address || '',
-        vehicleNo: body.vehicleNo || '',
-        department: body.department || '',
-        purposeOfMovement: body.purposeOfMovement,
-        items: body.items,
-        requestedBy: body.requestedBy || '',
-        date: body.date || now.slice(0, 10),
-        time: body.time || now.slice(11, 16),
-        status: 'Draft',
-        signedCopyImage: null,
-        auditLog: [{ action: 'Created', by: body.requestedBy || 'admin', role, at: now }],
-        createdAt: now,
-      }
-      await db.collection('gatepasses').insertOne(entry)
-      return json(clean(entry))
-    }
-
-    if (path === 'gatepass/status') {
+       if (path === 'gatepass/status') {
       const gp = await db.collection('gatepasses').findOne({ id: body.id })
       if (!gp) return json({ error: 'Gate pass not found' }, 404)
       const allowed = ['Printed', 'Awaiting Signatures', 'Verified by Security']
