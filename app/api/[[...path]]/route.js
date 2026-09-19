@@ -308,9 +308,11 @@ export async function GET(request, { params }) {
       return json(items.map(clean))
     }
 
-    if (path === 'gatepasses') {
-      if (role !== 'admin' && role !== 'security') return json({ error: 'Not authorized' }, 403)
-      const items = await db.collection('gatepasses').find({}).sort({ createdAt: -1 }).toArray()
+       if (path === 'gatepasses') {
+      if (!['admin', 'store_admin', 'security'].includes(role)) return json({ error: 'Not authorized' }, 403)
+      if (role === 'store_admin' && !storeId) return json({ error: 'No store assigned to this user' }, 403)
+      const query = (role === 'admin' || (role === 'security' && !storeId)) ? {} : { storeId }
+      const items = await db.collection('gatepasses').find(query).sort({ createdAt: -1 }).toArray()
       return json(items.map(clean))
     }
 
