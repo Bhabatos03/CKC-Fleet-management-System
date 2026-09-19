@@ -2611,15 +2611,18 @@ const generateGatePassPDF = async (gp) => {
     logoDataUrl = await new Promise((r) => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(blob) })
   } catch {}
 
-  let y = 30
-  if (logoDataUrl) doc.addImage(logoDataUrl, 'PNG', 30, y, 40, 40)
-  doc.setFont('times', 'bold'); doc.setFontSize(14); doc.setTextColor(122, 13, 13)
-  doc.text('C. Krishniah Chetty', 80, y + 18)
-  doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(80)
-  doc.text("Corporate Office: The Touchstone (Red Facade), 'A' Block, 3rd Floor, No. 3A-3,", 80, y + 32)
-  doc.text('Main Guard Cross Road, Off. Cubbon Road, Bengaluru - 560 001', 80, y + 42)
-  doc.text('Regd. Office: 36 Commercial Street, Bengaluru - 560 001, India', 80, y + 52)
-  y += 70
+ let y = 30
+if (logoDataUrl) doc.addImage(logoDataUrl, 'PNG', 30, y, 40, 40)
+doc.setFont('times', 'bold'); doc.setFontSize(14); doc.setTextColor(122, 13, 13)
+doc.text('C. Krishniah Chetty', 80, y + 18)
+doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(80)
+
+const storeInfo = STORE_ADDRESSES[gp.storeId] || STORE_ADDRESSES.TS
+doc.text(`${storeInfo.label}:`, 80, y + 32)
+doc.text(storeInfo.lines[0], 80, y + 42)
+doc.text(storeInfo.lines[1] || '', 80, y + 52)
+
+y += 70
 
   doc.setDrawColor(217, 119, 6); doc.setLineWidth(1); doc.line(30, y, pageW - 30, y); y += 18
 
