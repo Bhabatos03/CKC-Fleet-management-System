@@ -2769,10 +2769,12 @@ function GatePassDetailDialog({ gp, onClose, onChanged, isSecurity, isAdmin }) {
   )
 }
 
-function GatePassRegister() {
+unction GatePassRegister() {
   const user = getUser()
   const isAdmin = user.role === 'admin'
+  const isStoreAdmin = user.role === 'store_admin'
   const isSecurity = user.role === 'security'
+  const canPrepare = isAdmin || isStoreAdmin
   const [items, setItems] = useState([])
   const [search, setSearch] = useState('')
   const [open, setOpen] = useState(false)
