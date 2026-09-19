@@ -2777,9 +2777,6 @@ function GatePassRegister() {
   const [search, setSearch] = useState('')
   const [open, setOpen] = useState(false)
   const [viewing, setViewing] = useState(null)
-{isAdmin && (
-  <Button onClick={() => setOpen(true)} ...>+ New Gate Pass</Button>
-)}
   const load = () => api('gatepasses').then(setItems).catch(e => toast.error(e.message))
   useEffect(() => { load() }, [])
 
