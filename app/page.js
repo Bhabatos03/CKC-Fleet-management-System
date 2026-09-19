@@ -2862,17 +2862,18 @@ function GatePassRegister() {
           <TableHead>Vendor / Dept</TableHead><TableHead>Purpose</TableHead><TableHead>Status</TableHead><TableHead></TableHead>
           </TableRow></TableHeader>
           <TableBody>
-            {filtered.map(g => (
-              <TableRow key={g.id}>
-                <TableCell className="font-mono text-xs font-semibold">{g.gatePassNo}</TableCell>
-                <TableCell className="text-xs">{g.date}</TableCell>
-                <TableCell className="text-xs">{g.type} · {g.returnable}</TableCell>
-                <TableCell className="text-xs">{g.vendorName || g.department || '-'}</TableCell>
-                <TableCell className="text-xs max-w-[200px] truncate">{g.purposeOfMovement}</TableCell>
-                <TableCell><Badge className={`${statusColor(g.status)} text-white hover:${statusColor(g.status)}`}>{g.status}</Badge></TableCell>
-                <TableCell className="text-right"><Button size="sm" variant="outline" onClick={() => setViewing(g)}>Open</Button></TableCell>
-              </TableRow>
-            ))}
+          {filtered.map(g => (
+  <TableRow key={g.id}>
+    <TableCell className="font-mono text-xs font-semibold">{g.gatePassNo}</TableCell>
+    <TableCell className="text-xs font-semibold">{g.storeId || '-'}</TableCell>
+    <TableCell className="text-xs">{g.date}</TableCell>
+    <TableCell className="text-xs">{g.type} · {g.returnable}</TableCell>
+    <TableCell className="text-xs">{g.vendorName || g.department || '-'}</TableCell>
+    <TableCell className="text-xs max-w-[200px] truncate">{g.purposeOfMovement}</TableCell>
+    <TableCell><Badge className={`${statusColor(g.status)} text-white hover:${statusColor(g.status)}`}>{g.status}</Badge></TableCell>
+    <TableCell className="text-right"><Button size="sm" variant="outline" onClick={() => setViewing(g)}>Open</Button></TableCell>
+  </TableRow>
+))}
             {filtered.length === 0 && (
               <TableRow><TableCell colSpan={7} className="text-center text-slate-500 py-8">No gate passes yet.</TableCell></TableRow>
             )}
