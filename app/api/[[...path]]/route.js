@@ -3,6 +3,32 @@ import { MongoClient } from 'mongodb'
 import { v4 as uuidv4 } from 'uuid'
 import crypto from 'crypto'
 
+// who may move a gate pass to which status, and from where
+const GP_FLOW = {
+  print:    { from: ['Draft'],                to: 'Printed',              roles: ['admin', 'store_admin'] },
+  awaiting: { from: ['Printed'],              to: 'Awaiting Signatures',  roles: ['admin', 'store_admin'] },
+  verify:   { from: ['Awaiting Signatures'],  to: 'Verified by Security', roles: ['security'] },
+  upload:   { from: ['Verified by Security'], to: 'Uploaded',             roles: ['security'] },
+  complete: { from: ['Uploaded'],             to: 'Completed',            roles: ['security'] },
+}
+
+const gpVisible = (gp, role, storeId) => {
+  if (role === 'admin') return true
+  if (!storeId) return role === 'security'   // global security user
+  return gp.storeId === storeId
+}
+
+async function nextGatePassNumber(db) {
+  const year = new Date().getFullYear()
+  const r = await db.collection('counters').findOneAndUpdate(
+    { _id: `gatepass-${year}` },
+    { $inc: { seq: 1 } },
+    { upsert: true, returnDocument: 'after' }
+  )
+  const seq = (r?.value ?? r).seq
+  return `CKC/FAC/${year}/${String(seq).padStart(4, '0')}`
+}
+
 const MONGO_URL = process.env.MONGO_URL
 const DB_NAME = process.env.DB_NAME || 'ckc_fleet'
 
