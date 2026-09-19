@@ -2514,7 +2514,7 @@ function GatePassFormDialog({ open, onOpenChange, onCreated }) {
   const addItem = () => setF(x => ({ ...x, items: [...x.items, emptyItem()] }))
   const removeItem = (i) => setF(x => ({ ...x, items: x.items.filter((_, idx) => idx !== i) }))
 
-  const canSave = f.purposeOfMovement && f.items.some(it => it.description)
+  const canSave = f.storeId && f.purposeOfMovement && f.items.some(it => it.description)
 
   const submit = async () => {
     try {
