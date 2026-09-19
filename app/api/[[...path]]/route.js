@@ -476,6 +476,62 @@ export async function POST(request, { params }) {
       return json(cleanUser(item))
     }
 
+    if (path === 'gatepass') {
+  if (!['admin', 'store_admin'].includes(role)) return json({ error: 'Not allowed to create gate passes' }, 403)
+  if (role === 'store_admin' && !storeId) return json({ error: 'No store assigned to this user' }, 403)
+  if (!body.purposeOfMovement || !Array.isArray(body.items) || body.items.length === 0) {
+    return json({ error: 'Purpose of movement and at least one item are required' }, 400)
+  }
+  const now = new Date().toISOString()
+  const entry = {
+    id: uuidv4(),
+    gatePassNo: await nextGatePassNumber(db),
+    storeId: role === 'store_admin' ? storeId : (body.storeId || null), // never trust body for store admins
+    type: body.type || 'Outward',
+    returnable: body.returnable || 'Non-Returnable',
+    vendorName: body.vendorName || '', contactNo: body.contactNo || '', address: body.address || '',
+    vehicleNo: body.vehicleNo || '', department: body.department || '',
+    purposeOfMovement: body.purposeOfMovement,
+    items: body.items,
+    requestedBy: body.requestedBy || '',
+    date: body.date || now.slice(0, 10),
+    time: body.time || now.slice(11, 16),
+    status: 'Draft',
+    signedCopyImage: null,
+    auditLog: [{ action: 'Created', by: body.requestedBy || role, role, at: now }],
+    createdAt: now,
+  }
+  await db.collection('gatepasses').insertOne(entry)
+  return json(clean(entry))
+}
+
+if (['gatepass/status', 'gatepass/upload', 'gatepass/complete'].includes(path)) {
+  const gp = await db.collection('gatepasses').findOne({ id: body.id })
+  if (!gp) return json({ error: 'Gate pass not found' }, 404)
+  if (!gpVisible(gp, role, storeId)) return json({ error: 'Not your store' }, 403)
+
+  const target = path === 'gatepass/upload' ? 'Uploaded'
+               : path === 'gatepass/complete' ? 'Completed' : body.status
+  const step = Object.values(GP_FLOW).find(s => s.to === target)
+  if (!step) return json({ error: 'Invalid status' }, 400)
+  if (!step.roles.includes(role)) return json({ error: `${role} cannot mark this as ${target}` }, 403)
+  if (!step.from.includes(gp.status)) return json({ error: `Cannot move from ${gp.status} to ${target}` }, 409)
+
+  const set = { status: target }
+  let action = target
+  if (path === 'gatepass/upload') {
+    if (!body.signedCopyImage) return json({ error: 'Signed copy image is required' }, 400)
+    set.signedCopyImage = body.signedCopyImage
+    action = 'Uploaded signed copy'
+  }
+  if (path === 'gatepass/complete') action = 'Marked Completed'
+
+  await db.collection('gatepasses').updateOne({ id: gp.id }, {
+    $set: set,
+    $push: { auditLog: { action, by: body.by || role, role, at: new Date().toISOString() } },
+  })
+  return json({ ok: true })
+}
     // Everything below here requires write access
     if (role === 'store_admin') {
       return json({ error: 'Store admins have read-only access' }, 403)
