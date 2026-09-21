@@ -475,6 +475,12 @@ export async function POST(request, { params }) {
   if (!body.purposeOfMovement || !Array.isArray(body.items) || body.items.length === 0) {
     return json({ error: 'Purpose of movement and at least one item are required' }, 400)
   }
+  const returnable = body.returnable || 'Non-Returnable'
+if (returnable === 'Returnable') {
+  if (!body.expectedReturnDate) return json({ error: 'Expected return date is required for returnable items' }, 400)
+  const passDate = body.date || new Date().toISOString().slice(0, 10)
+  if (body.expectedReturnDate < passDate) return json({ error: 'Expected return date cannot be before the pass date' }, 400)
+}
   const now = new Date().toISOString()
   const entry = {
     id: uuidv4(),
