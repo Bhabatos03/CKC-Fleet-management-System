@@ -2523,7 +2523,8 @@ function GatePassFormDialog({ open, onOpenChange, onCreated }) {
         items: [emptyItem()],
       })
     }
-  }, [open])  const set = (k, v) => setF(x => ({ ...x, [k]: v }))
+  }, [open])  
+  const set = (k, v) => setF(x => ({ ...x, [k]: v }))
   const setItem = (i, k, v) => setF(x => ({ ...x, items: x.items.map((it, idx) => idx === i ? { ...it, [k]: v } : it) }))
   const addItem = () => setF(x => ({ ...x, items: [...x.items, emptyItem()] }))
   const removeItem = (i) => setF(x => ({ ...x, items: x.items.filter((_, idx) => idx !== i) }))
