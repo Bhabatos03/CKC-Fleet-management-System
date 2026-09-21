@@ -2621,7 +2621,7 @@ doc.setFont('times', 'bold'); doc.setFontSize(14); doc.setTextColor(122, 13, 13)
 doc.text('C. Krishniah Chetty', 80, y + 18)
 doc.setFont('helvetica', 'normal'); doc.setFontSize(6.5); doc.setTextColor(122, 13, 13)
 doc.text('GROUP OF JEWELLERS', 80, y + 28)
-doc.setFontSize(8); doc.setTextColor(80)
+doc.setFontSize(6.5); doc.setTextColor(80)
 
 const storeInfo = STORE_ADDRESSES[gp.storeId] || STORE_ADDRESSES.TS
 doc.text(storeInfo.lines[0], 80, y + 32)
