@@ -2502,34 +2502,32 @@ const returnInfo = (g) => {
   if (days === 0) return { key: 'due', label: 'Due today', color: 'bg-amber-500' }
   return { key: 'out', label: `Due ${fmtDate(g.expectedReturnDate)}`, color: 'bg-blue-500' }
 }
-function GatePassFormDialog({ open, onOpenChange, onCreated }) {
+function GatePassFormDialog({ open, onOpenChange, onCreated, isAdmin }) {
   const emptyItem = () => ({ description: '', itemCode: '', qty: '', unit: '', remarks: '' })
-  const [f, setF] = useState({
-    type: 'Outward', returnable: 'Non-Returnable', expectedReturnDate: '',
+  const blankForm = () => ({
+    type: 'Outward',
+    returnable: 'Non-Returnable',
+    expectedReturnDate: '',
+    storeId: '',
     vendorName: '', contactNo: '', address: '', vehicleNo: '', department: '',
     purposeOfMovement: '', requestedBy: '',
     date: new Date().toISOString().slice(0, 10),
     time: new Date().toTimeString().slice(0, 5),
     items: [emptyItem()],
   })
-  useEffect(() => {
-    if (open) {
-      setF({
-        type: 'Outward', returnable: 'Non-Returnable', expectedReturnDate: '',
-        vendorName: '', contactNo: '', address: '', vehicleNo: '', department: '',
-        purposeOfMovement: '', requestedBy: '',
-        date: new Date().toISOString().slice(0, 10),
-        time: new Date().toTimeString().slice(0, 5),
-        items: [emptyItem()],
-      })
-    }
-  }, [open])  
+
+  const [f, setF] = useState(blankForm)
+  useEffect(() => { if (open) setF(blankForm()) }, [open])
+
   const set = (k, v) => setF(x => ({ ...x, [k]: v }))
   const setItem = (i, k, v) => setF(x => ({ ...x, items: x.items.map((it, idx) => idx === i ? { ...it, [k]: v } : it) }))
   const addItem = () => setF(x => ({ ...x, items: [...x.items, emptyItem()] }))
   const removeItem = (i) => setF(x => ({ ...x, items: x.items.filter((_, idx) => idx !== i) }))
 
-  const canSave = f.storeId && f.purposeOfMovement && f.items.some(it => it.description)
+  const canSave =
+    f.purposeOfMovement &&
+    f.items.some(it => it.description) &&
+    (f.returnable !== 'Returnable' || f.expectedReturnDate)
 
   const submit = async () => {
     try {
@@ -2559,13 +2557,28 @@ function GatePassFormDialog({ open, onOpenChange, onCreated }) {
                 <SelectContent><SelectItem value="Returnable">Returnable</SelectItem><SelectItem value="Non-Returnable">Non-Returnable</SelectItem></SelectContent>
               </Select>
             </div>
-    <div><Label>Store *</Label>
-  <Select value={f.storeId} onValueChange={v => set('storeId', v)}>
-    <SelectTrigger><SelectValue placeholder="Select store" /></SelectTrigger>
-    <SelectContent>{STORES.map(x => <SelectItem key={x} value={x}>{x}</SelectItem>)}</SelectContent>
-  </Select>
-</div>
           </div>
+
+          {f.returnable === 'Returnable' && (
+            <div>
+              <Label>Expected Return Date *</Label>
+              <Input type="date" value={f.expectedReturnDate} min={f.date} onChange={e => set('expectedReturnDate', e.target.value)} />
+            </div>
+          )}
+
+          {isAdmin && (
+            <div>
+              <Label>Store</Label>
+              <Select value={f.storeId || 'none'} onValueChange={v => set('storeId', v === 'none' ? '' : v)}>
+                <SelectTrigger><SelectValue placeholder="Select store" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Head Office (default)</SelectItem>
+                  {STORES.map(x => <SelectItem key={x} value={x}>{x}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
           <div className="grid grid-cols-2 gap-3">
             <div><Label>Vendor Name</Label><Input value={f.vendorName} onChange={e => set('vendorName', e.target.value)} /></div>
             <div><Label>Contact No.</Label><Input value={f.contactNo} onChange={e => set('contactNo', e.target.value)} /></div>
@@ -2573,6 +2586,7 @@ function GatePassFormDialog({ open, onOpenChange, onCreated }) {
             <div><Label>Vehicle No.</Label><Input value={f.vehicleNo} onChange={e => set('vehicleNo', e.target.value)} /></div>
             <div><Label>Department</Label><Input value={f.department} onChange={e => set('department', e.target.value)} /></div>
           </div>
+
           <div><Label>Purpose of Movement *</Label><Textarea value={f.purposeOfMovement} onChange={e => set('purposeOfMovement', e.target.value)} rows={2} /></div>
 
           <div className="border rounded-lg p-3 bg-slate-50">
@@ -2610,7 +2624,6 @@ function GatePassFormDialog({ open, onOpenChange, onCreated }) {
     </Dialog>
   )
 }
-
 const generateGatePassPDF = async (gp) => {
   const { jsPDF } = await import('jspdf')
   const autoTable = (await import('jspdf-autotable')).default
