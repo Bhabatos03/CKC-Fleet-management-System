@@ -487,7 +487,11 @@ if (returnable === 'Returnable') {
     gatePassNo: await nextGatePassNumber(db),
     storeId: role === 'store_admin' ? storeId : (body.storeId || null), // never trust body for store admins
     type: body.type || 'Outward',
-    returnable: body.returnable || 'Non-Returnable',
+    returnable,
+    expectedReturnDate: returnable === 'Returnable' ? body.expectedReturnDate : null,
+    returnedAt: null,
+    returnedBy: null,
+    returnRemarks: '',
     vendorName: body.vendorName || '', contactNo: body.contactNo || '', address: body.address || '',
     vehicleNo: body.vehicleNo || '', department: body.department || '',
     purposeOfMovement: body.purposeOfMovement,
