@@ -2504,40 +2504,26 @@ const returnInfo = (g) => {
 }
 function GatePassFormDialog({ open, onOpenChange, onCreated }) {
   const emptyItem = () => ({ description: '', itemCode: '', qty: '', unit: '', remarks: '' })
-  const [f, setF] = useState({ {f.returnable === 'Returnable' && (
-  <div>
-    <Label>Expected Return Date *</Label>
-    <Input type="date" value={f.expectedReturnDate} min={f.date} onChange={e => set('expectedReturnDate', e.target.value)} />
-  </div>
-)}
-  type: 'Outward', returnable: 'Non-Returnable',
-  storeId: '',                                    // ← new
-  vendorName: '', contactNo: '', address: '', vehicleNo: '', department: '',
-  purposeOfMovement: '', requestedBy: '',
-  date: new Date().toISOString().slice(0, 10),
-  time: new Date().toTimeString().slice(0, 5),
-  items: [emptyItem()],
-})
+  const [f, setF] = useState({
+    type: 'Outward', returnable: 'Non-Returnable', expectedReturnDate: '',
+    vendorName: '', contactNo: '', address: '', vehicleNo: '', department: '',
+    purposeOfMovement: '', requestedBy: '',
+    date: new Date().toISOString().slice(0, 10),
+    time: new Date().toTimeString().slice(0, 5),
+    items: [emptyItem()],
+  })
   useEffect(() => {
-  if (open) {
-    const user = getUser()
-    setF({ {f.returnable === 'Returnable' && (
-  <div>
-    <Label>Expected Return Date *</Label>
-    <Input type="date" value={f.expectedReturnDate} min={f.date} onChange={e => set('expectedReturnDate', e.target.value)} />
-  </div>
-)}
-      type: 'Outward', returnable: 'Non-Returnable',
-      storeId: user.role === 'store_admin' ? user.storeId : '',
-      vendorName: '', contactNo: '', address: '', vehicleNo: '', department: '',
-      purposeOfMovement: '', requestedBy: '',
-      date: new Date().toISOString().slice(0, 10),
-      time: new Date().toTimeString().slice(0, 5),
-      items: [emptyItem()],
-    })
-  }
-}, [open])
-  const set = (k, v) => setF(x => ({ ...x, [k]: v }))
+    if (open) {
+      setF({
+        type: 'Outward', returnable: 'Non-Returnable', expectedReturnDate: '',
+        vendorName: '', contactNo: '', address: '', vehicleNo: '', department: '',
+        purposeOfMovement: '', requestedBy: '',
+        date: new Date().toISOString().slice(0, 10),
+        time: new Date().toTimeString().slice(0, 5),
+        items: [emptyItem()],
+      })
+    }
+  }, [open])  const set = (k, v) => setF(x => ({ ...x, [k]: v }))
   const setItem = (i, k, v) => setF(x => ({ ...x, items: x.items.map((it, idx) => idx === i ? { ...it, [k]: v } : it) }))
   const addItem = () => setF(x => ({ ...x, items: [...x.items, emptyItem()] }))
   const removeItem = (i) => setF(x => ({ ...x, items: x.items.filter((_, idx) => idx !== i) }))
