@@ -439,7 +439,7 @@ export async function POST(request, { params }) {
       if (u && u.status === 'Active' && verifyPassword(body.password, u.password)) {
         return json({ token: uuidv4(), user: { username: u.username, role: u.role, name: u.name, storeId: u.storeId || null } })
       }
-      return json({ error: 'Invalid credentials' }, 401)
+      return json({ error: 'Incorrect username or password. Please try again' }, 401)
     }
 
     if (path === 'users') {
