@@ -2504,7 +2504,12 @@ const returnInfo = (g) => {
 }
 function GatePassFormDialog({ open, onOpenChange, onCreated }) {
   const emptyItem = () => ({ description: '', itemCode: '', qty: '', unit: '', remarks: '' })
-  const [f, setF] = useState({
+  const [f, setF] = useState({ {f.returnable === 'Returnable' && (
+  <div>
+    <Label>Expected Return Date *</Label>
+    <Input type="date" value={f.expectedReturnDate} min={f.date} onChange={e => set('expectedReturnDate', e.target.value)} />
+  </div>
+)}
   type: 'Outward', returnable: 'Non-Returnable',
   storeId: '',                                    // ← new
   vendorName: '', contactNo: '', address: '', vehicleNo: '', department: '',
@@ -2516,7 +2521,12 @@ function GatePassFormDialog({ open, onOpenChange, onCreated }) {
   useEffect(() => {
   if (open) {
     const user = getUser()
-    setF({
+    setF({ {f.returnable === 'Returnable' && (
+  <div>
+    <Label>Expected Return Date *</Label>
+    <Input type="date" value={f.expectedReturnDate} min={f.date} onChange={e => set('expectedReturnDate', e.target.value)} />
+  </div>
+)}
       type: 'Outward', returnable: 'Non-Returnable',
       storeId: user.role === 'store_admin' ? user.storeId : '',
       vendorName: '', contactNo: '', address: '', vehicleNo: '', department: '',
