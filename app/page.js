@@ -2490,6 +2490,18 @@ function Reports() {
     </div>
   )
 }
+const todayLocal = () => new Date().toLocaleDateString('en-CA') // YYYY-MM-DD in local time
+
+const returnInfo = (g) => {
+  if (g.returnable !== 'Returnable') return null
+  if (g.returnedAt) return { key: 'returned', label: `Returned ${fmtDate(g.returnedAt)}`, color: 'bg-emerald-500' }
+  if (g.status !== 'Completed') return { key: 'pending', label: g.expectedReturnDate ? `Return by ${fmtDate(g.expectedReturnDate)}` : 'No due date', color: 'bg-slate-400' }
+  if (!g.expectedReturnDate) return { key: 'out', label: 'Out · no due date', color: 'bg-amber-500' }
+  const days = Math.round((new Date(todayLocal()) - new Date(g.expectedReturnDate)) / 864e5)
+  if (days > 0) return { key: 'overdue', label: `Overdue ${days}d`, color: 'bg-rose-600' }
+  if (days === 0) return { key: 'due', label: 'Due today', color: 'bg-amber-500' }
+  return { key: 'out', label: `Due ${fmtDate(g.expectedReturnDate)}`, color: 'bg-blue-500' }
+}
 function GatePassFormDialog({ open, onOpenChange, onCreated }) {
   const emptyItem = () => ({ description: '', itemCode: '', qty: '', unit: '', remarks: '' })
   const [f, setF] = useState({
