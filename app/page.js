@@ -3100,10 +3100,11 @@ function SecurityHome({ user, onLogout }) {
         <div className="flex items-center gap-2">
           {screen !== 'home' && <Button variant="ghost" size="sm" onClick={() => setScreen('home')} className="text-white hover:bg-white/10"><ArrowLeft className="w-4 h-4" /></Button>}
           <img src="/ckc-logo.png" alt="CKC" className="w-9 h-9 object-contain" />
-          <div>
-            <div className="font-semibold text-sm leading-none whitespace-nowrap text-white" style={{fontFamily: '"Times New Roman", Georgia, serif'}}>C. Krishniah Chetty</div>
-            <div className="text-[9px] tracking-[0.25em] text-amber-200/60 mt-0.5">FleetPulse · SECURITY</div>
-          </div>
+         <div>
+  <div className="font-semibold text-sm leading-none whitespace-nowrap text-white" style={{fontFamily: '"Times New Roman", Georgia, serif'}}>C. Krishniah Chetty</div>
+  <div className="text-[7px] tracking-[0.3em] text-amber-200/80 mt-1 whitespace-nowrap">GROUP OF JEWELLERS</div>
+  <div className="text-[9px] tracking-[0.25em] text-amber-200/60 mt-0.5">FleetPulse · SECURITY</div>
+</div>
         </div>
         <Button variant="ghost" size="sm" onClick={onLogout} className="text-white hover:bg-white/10"><LogOut className="w-4 h-4" /></Button>
       </header>
