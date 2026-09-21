@@ -409,9 +409,12 @@ function AdminShell({ user, onLogout, children, active, setActive }) {
         <header className="md:hidden bg-gradient-to-r from-[#5c0a0a] via-[#7a0d0d] to-[#5c0a0a] text-white p-3 flex items-center justify-between sticky top-0 z-30 shadow-lg">
           <button onClick={() => setDrawerOpen(true)} className="p-1"><Menu className="w-6 h-6" /></button>
           <div className="flex items-center gap-2">
-            <img src="/ckc-logo.png" alt="CKC" className="w-8 h-8 object-contain" />
-            <span className="font-semibold text-sm text-white" style={{fontFamily: '"Times New Roman", Georgia, serif'}}>C. Krishniah Chetty</span>
-          </div>
+  <img src="/ckc-logo.png" alt="CKC" className="w-8 h-8 object-contain" />
+  <div className="leading-tight">
+    <div className="font-semibold text-sm text-white" style={{fontFamily: '"Times New Roman", Georgia, serif'}}>C. Krishniah Chetty</div>
+    <div className="text-[7px] tracking-[0.3em] text-amber-200/80 mt-0.5 whitespace-nowrap">GROUP OF JEWELLERS</div>
+  </div>
+</div>
           <Button variant="ghost" size="sm" onClick={onLogout} className="text-white p-2 hover:bg-white/10"><LogOut className="w-4 h-4" /></Button>
         </header>
         {children}
