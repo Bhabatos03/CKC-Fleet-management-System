@@ -2684,7 +2684,6 @@ y += 60
   doc.setFontSize(7); doc.setTextColor(120)
   doc.text('THIS PASS IS VALID FOR THE DATE OF PURPOSE STATED ABOVE. SECURITY RESERVE THE RIGHT TO INSPECT ALL ITEMS OF THE GATE.', 30, y, { maxWidth: pageW - 60 })
   y += 14
-  doc.text('White Copy : Security  I  Pink Copy : Stores  I  Yellow Copy : Accounts', 30, y)
   doc.text('Ver. : 1 - 2026', pageW - 90, y)
 
   doc.save(`${gp.gatePassNo.replace(/\//g, '-')}.pdf`)
