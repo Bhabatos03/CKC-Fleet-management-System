@@ -2906,7 +2906,7 @@ function GatePassRegister() {
         </Table></div>
       </CardContent></Card>
 
-            <GatePassFormDialog open={open} onOpenChange={setOpen} onCreated={() => load()} />
+             <GatePassFormDialog open={open} onOpenChange={setOpen} onCreated={() => load()} isAdmin={isAdmin} />
       <GatePassDetailDialog
         gp={viewing}
         onClose={() => setViewing(null)}
