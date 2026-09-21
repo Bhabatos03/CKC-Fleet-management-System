@@ -2621,13 +2621,13 @@ doc.setFont('times', 'bold'); doc.setFontSize(14); doc.setTextColor(122, 13, 13)
 doc.text('C. Krishniah Chetty', 80, y + 18)
 doc.setFont('helvetica', 'normal'); doc.setFontSize(6.5); doc.setTextColor(122, 13, 13)
 doc.text('GROUP OF JEWELLERS', 80, y + 28)
-doc.setFontSize(6.5); doc.setTextColor(80)
 
+doc.setFontSize(7.5); doc.setTextColor(80)
 const storeInfo = STORE_ADDRESSES[gp.storeId] || STORE_ADDRESSES.TS
-doc.text(storeInfo.lines[0], 80, y + 32)
-doc.text(storeInfo.lines[1] || '', 80, y + 42)
+const addrLines = storeInfo.lines.filter(Boolean)
+addrLines.forEach((line, i) => doc.text(line, 80, y + 41 + i * 10))
 
-y += 60
+y += 41 + (addrLines.length - 1) * 10 + 19
   doc.setDrawColor(217, 119, 6); doc.setLineWidth(1); doc.line(30, y, pageW - 30, y); y += 18
 
   doc.setFont('helvetica', 'bold'); doc.setFontSize(13); doc.setTextColor(15, 23, 42)
