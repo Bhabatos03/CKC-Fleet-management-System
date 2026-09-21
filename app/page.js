@@ -2524,10 +2524,7 @@ function GatePassFormDialog({ open, onOpenChange, onCreated, isAdmin }) {
   const addItem = () => setF(x => ({ ...x, items: [...x.items, emptyItem()] }))
   const removeItem = (i) => setF(x => ({ ...x, items: x.items.filter((_, idx) => idx !== i) }))
 
-  const canSave =
-    f.purposeOfMovement &&
-    f.items.some(it => it.description) &&
-    (f.returnable !== 'Returnable' || f.expectedReturnDate)
+  const canSave = f.purposeOfMovement && f.items.some(it => it.description) && (f.returnable !== 'Returnable' || f.expectedReturnDate)
 
   const submit = async () => {
     try {
