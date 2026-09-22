@@ -3350,30 +3350,57 @@ const [scanResult, setScanResult] = useState(null)
   const set = (k, v) => setF(x => ({ ...x, [k]: v }))
   const amount = (Number(f.quantity) || 0) * (Number(f.rate) || 0)
 
-  const handleFile = async (e) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    setUploading(true)
+ const handleFile = async (e) => {
+  const file = e.target.files?.[0]
+  if (!file) return
+  setUploading(true)
+  try {
+    const img = await new Promise((res, rej) => {
+      const i = new Image()
+      i.onload = () => res(i)
+      i.onerror = rej
+      i.src = URL.createObjectURL(file)
+    })
+    const maxW = 1024
+    const scale = Math.min(1, maxW / img.width)
+    const canvas = document.createElement('canvas')
+    canvas.width = img.width * scale
+    canvas.height = img.height * scale
+    canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height)
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.75)
+    set('receiptImage', dataUrl)
+    setUploading(false)
+
+    // Auto-scan the receipt
+    setScanning(true)
     try {
-      // Resize to max 1024px width to keep base64 small
-      const img = await new Promise((res, rej) => {
-        const i = new Image()
-        i.onload = () => res(i)
-        i.onerror = rej
-        i.src = URL.createObjectURL(file)
+      const res = await fetch('/api/scan-receipt', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: dataUrl }),
       })
-      const maxW = 1024
-      const scale = Math.min(1, maxW / img.width)
-      const canvas = document.createElement('canvas')
-      canvas.width = img.width * scale
-      canvas.height = img.height * scale
-      canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height)
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.75)
-      set('receiptImage', dataUrl)
-      toast.success('Receipt attached')
-    } catch (err) { toast.error('Failed to load image') }
-    finally { setUploading(false) }
-  }
+      const result = await res.json()
+      if (res.ok) {
+        setScanResult(result)
+        setF(x => ({
+          ...x,
+          quantity: result.quantity ?? x.quantity,
+          rate: result.rate ?? x.rate,
+          station: result.station ?? x.station,
+          receiptNumber: result.receiptNumber ?? x.receiptNumber,
+        }))
+        toast.success(result.confidence === 'low' ? 'Receipt scanned — please double-check the values' : 'Receipt scanned — please confirm')
+      } else {
+        toast.error(result.error || 'Could not scan receipt')
+      }
+    } catch {
+      toast.error('Could not scan receipt — please enter details manually')
+    } finally {
+      setScanning(false)
+    }
+  } catch (err) { toast.error('Failed to load image') }
+  finally { setUploading(false) }
+}
 
   const submit = async () => {
     if (!f.vehicleId || !f.quantity || !f.rate) return toast.error('Fill required fields')
