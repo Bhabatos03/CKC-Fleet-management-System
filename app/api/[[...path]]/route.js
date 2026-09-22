@@ -14,7 +14,7 @@ const GP_FLOW = {
 
 const gpVisible = (gp, role, storeId) => {
   if (role === 'admin') return true
-  if (!storeId) return role === 'security'   // global security user
+  if (!storeId) return role === 'security'
   return gp.storeId === storeId
 }
 
