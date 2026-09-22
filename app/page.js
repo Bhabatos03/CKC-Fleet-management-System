@@ -2914,11 +2914,19 @@ const overdueCount = items.filter(g => returnInfo(g)?.key === 'overdue').length
 </div>
 
       <Card><CardContent className="p-4">
-        <div className="mb-4 relative max-w-sm">
-          <Search className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
-          <Input placeholder="Search Gate Pass No., vendor, department..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
-        </div>
-        <div className="overflow-x-auto"><Table>
+  <div className="flex flex-wrap gap-2 mb-3">
+    {[['all', 'All'], ['out', `Items Out (${outCount})`], ['overdue', `Overdue (${overdueCount})`]].map(([id, label]) => (
+      <button key={id} onClick={() => setView(id)}
+        className={`px-3 py-1.5 rounded-full text-xs font-medium border transition ${view === id ? 'bg-[#7a0d0d] text-white border-[#7a0d0d]' : 'bg-white text-slate-700 border-slate-200 hover:border-red-300'}`}>
+        {label}
+      </button>
+    ))}
+  </div>
+  <div className="mb-4 relative max-w-sm">
+    <Search className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
+    <Input placeholder="Search Gate Pass No., vendor, department..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
+  </div>
+  <div className="overflow-x-auto"><Table>
           <TableHeader><TableRow>
           <TableHead>Gate Pass No.</TableHead><TableHead>Store</TableHead><TableHead>Date</TableHead><TableHead>Type</TableHead>
           <TableHead>Vendor / Dept</TableHead><TableHead>Purpose</TableHead><TableHead>Status</TableHead><TableHead></TableHead>
