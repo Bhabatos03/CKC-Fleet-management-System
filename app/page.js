@@ -2826,7 +2826,18 @@ const markReturned = async () => {
             {gp.status === 'Uploaded' && isSecurity && (
               <Button size="sm" onClick={complete}><CheckCircle2 className="w-4 h-4 mr-1" /> Mark Completed</Button>
             )}
-            {gp.status === 'Completed' && <div className="text-emerald-600 text-sm font-medium">✓ This Gate Pass is complete.</div>}
+            {gp.status === 'Completed' && (
+  <div className="text-emerald-600 text-sm font-medium">
+    {gp.returnable === 'Returnable' && !gp.returnedAt ? '✓ Gate pass complete. Items still to be returned.' : '✓ This Gate Pass is complete.'}
+  </div>
+)}
+{gp.returnable === 'Returnable' && gp.status === 'Completed' && !gp.returnedAt && canReturn && (
+  <div className="space-y-2 border rounded-lg p-3 bg-amber-50/50">
+    <div className="text-sm font-medium">Items back at the store?</div>
+    <Textarea rows={2} placeholder="Condition / remarks (optional)" value={returnRemarks} onChange={e => setReturnRemarks(e.target.value)} />
+    <Button size="sm" onClick={markReturned}><CheckCircle2 className="w-4 h-4 mr-1" /> Mark Returned</Button>
+  </div>
+)}
           </div>
 
           <div className="border-t pt-3">
