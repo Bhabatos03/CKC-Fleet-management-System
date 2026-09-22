@@ -2727,7 +2727,6 @@ const [returnRemarks, setReturnRemarks] = useState('')
 if (!gp) return null
 const user = getUser()
 
-
   const setStatus = async (status) => {
     try {
       await api('gatepass/status', { method: 'POST', body: { id: gp.id, status, by: user.name } })
