@@ -2869,11 +2869,17 @@ function GatePassRegister() {
   const load = () => api('gatepasses').then(setItems).catch(e => toast.error(e.message))
   useEffect(() => { load() }, [])
 
-  const filtered = items.filter(g =>
+ const isOut = (g) => ['out', 'due', 'overdue'].includes(returnInfo(g)?.key)
+const matchesView = (g) => view === 'out' ? isOut(g) : view === 'overdue' ? returnInfo(g)?.key === 'overdue' : true
+
+const filtered = items
+  .filter(g => matchesView(g) && (
     !search ||
     g.gatePassNo?.toLowerCase().includes(search.toLowerCase()) ||
     g.vendorName?.toLowerCase().includes(search.toLowerCase()) ||
     g.department?.toLowerCase().includes(search.toLowerCase())
+  ))
+  .sort((a, b) => view === 'all' ? 0 : (a.expectedReturnDate || '9999').localeCompare(b.expectedReturnDate || '9999'))
   )
 
   const statusColor = (s) => ({
