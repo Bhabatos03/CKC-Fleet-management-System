@@ -2905,11 +2905,13 @@ const overdueCount = items.filter(g => returnInfo(g)?.key === 'overdue').length
 )} 
   </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        <Card><CardContent className="p-4"><div className="text-xs text-slate-500">Total Gate Passes</div><div className="text-2xl font-bold text-[#7a0d0d]">{items.length}</div></CardContent></Card>
-        <Card><CardContent className="p-4"><div className="text-xs text-slate-500">Pending</div><div className="text-2xl font-bold text-amber-600">{pendingCount}</div></CardContent></Card>
-        <Card><CardContent className="p-4"><div className="text-xs text-slate-500">Completed</div><div className="text-2xl font-bold text-emerald-600">{items.length - pendingCount}</div></CardContent></Card>
-      </div>
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+  <Card><CardContent className="p-4"><div className="text-xs text-slate-500">Total Gate Passes</div><div className="text-2xl font-bold text-[#7a0d0d]">{items.length}</div></CardContent></Card>
+  <Card><CardContent className="p-4"><div className="text-xs text-slate-500">Pending</div><div className="text-2xl font-bold text-amber-600">{pendingCount}</div></CardContent></Card>
+  <Card><CardContent className="p-4"><div className="text-xs text-slate-500">Completed</div><div className="text-2xl font-bold text-emerald-600">{items.length - pendingCount}</div></CardContent></Card>
+  <Card><CardContent className="p-4"><div className="text-xs text-slate-500">Items Out</div><div className="text-2xl font-bold text-blue-600">{outCount}</div></CardContent></Card>
+  <Card className={overdueCount > 0 ? 'border-rose-300 bg-rose-50' : ''}><CardContent className="p-4"><div className="text-xs text-slate-500">Overdue Returns</div><div className={`text-2xl font-bold ${overdueCount > 0 ? 'text-rose-600' : 'text-slate-400'}`}>{overdueCount}</div></CardContent></Card>
+</div>
 
       <Card><CardContent className="p-4">
         <div className="mb-4 relative max-w-sm">
