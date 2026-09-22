@@ -2888,6 +2888,8 @@ const filtered = items
   }[s] || 'bg-slate-400')
 
   const pendingCount = items.filter(g => g.status !== 'Completed').length
+  const outCount = items.filter(isOut).length
+const overdueCount = items.filter(g => returnInfo(g)?.key === 'overdue').length
 
   return (
     <div className="p-6 space-y-4">
