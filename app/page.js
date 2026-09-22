@@ -2716,42 +2716,28 @@ y += 41 + (addrLines.length - 1) * 10 + 19
 }
 
    function GatePassDetailDialog({ gp, onClose, onChanged, isSecurity, canPrepare }) {
-  const [uploading, setUploading] = useState(false)
-const [returnRemarks, setReturnRemarks] = useState('')
-if (!gp) return null
-const user = getUser()
+  const [closing, setClosing] = useState(false)
+  const [closeImg, setCloseImg] = useState(null)
+  const [returnRemarks, setReturnRemarks] = useState('')
+  if (!gp) return null
+  const user = getUser()
 
-  const setStatus = async (status) => {
+  const canReturn = isSecurity || canPrepare
+  const rInfo = returnInfo(gp)
+
+  const markReturned = async () => {
     try {
-      await api('gatepass/status', { method: 'POST', body: { id: gp.id, status, by: user.name } })
-      toast.success(`Marked ${status}`)
+      await api('gatepass/return', { method: 'POST', body: { id: gp.id, by: user.name, remarks: returnRemarks } })
+      toast.success('Marked as returned')
+      setReturnRemarks('')
       onChanged()
     } catch (e) { toast.error(e.message) }
   }
 
-  const complete = async () => {
-    try {
-      await api('gatepass/complete', { method: 'POST', body: { id: gp.id, by: user.name } })
-      toast.success('Gate Pass completed')
-      onChanged()
-    } catch (e) { toast.error(e.message) }
-  }
-     const canReturn = isSecurity || canPrepare
-const rInfo = returnInfo(gp)
-
-const markReturned = async () => {
-  try {
-    await api('gatepass/return', { method: 'POST', body: { id: gp.id, by: user.name, remarks: returnRemarks } })
-    toast.success('Marked as returned')
-    setReturnRemarks('')
-    onChanged()
-  } catch (e) { toast.error(e.message) }
-}
-
-  const handleUpload = async (e) => {
+  const handleCloseFile = async (e) => {
     const file = e.target.files?.[0]
     if (!file) return
-    setUploading(true)
+    setClosing(true)
     try {
       const img = await new Promise((res, rej) => {
         const i = new Image()
@@ -2765,12 +2751,21 @@ const markReturned = async () => {
       canvas.width = img.width * scale
       canvas.height = img.height * scale
       canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height)
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.8)
-      await api('gatepass/upload', { method: 'POST', body: { id: gp.id, signedCopyImage: dataUrl, by: user.name } })
-      toast.success('Signed copy uploaded')
+      setCloseImg(canvas.toDataURL('image/jpeg', 0.8))
+    } catch { toast.error('Could not load photo') }
+    finally { setClosing(false) }
+  }
+
+  const closeGatePass = async () => {
+    if (!closeImg) return toast.error('Please attach the signed copy photo first')
+    setClosing(true)
+    try {
+      await api('gatepass/close', { method: 'POST', body: { id: gp.id, signedCopyImage: closeImg, by: user.name } })
+      toast.success('Gate pass closed')
+      setCloseImg(null)
       onChanged()
-    } catch (err) { toast.error('Upload failed') }
-    finally { setUploading(false) }
+    } catch (e) { toast.error(e.message) }
+    finally { setClosing(false) }
   }
 
   return (
@@ -2784,6 +2779,13 @@ const markReturned = async () => {
             <div><span className="text-slate-500">Vendor: </span>{gp.vendorName || '-'}</div>
             <div><span className="text-slate-500">Department: </span>{gp.department || '-'}</div>
             <div className="col-span-2"><span className="text-slate-500">Purpose: </span>{gp.purposeOfMovement}</div>
+            {rInfo && (
+              <div className="col-span-2 flex items-center gap-2 flex-wrap">
+                <span className="text-slate-500">Return: </span>
+                <Badge className={`${rInfo.color} text-white`}>{rInfo.label}</Badge>
+                {gp.returnedAt && gp.returnedBy && <span className="text-xs text-slate-500">received by {gp.returnedBy}{gp.returnRemarks ? ` · ${gp.returnRemarks}` : ''}</span>}
+              </div>
+            )}
           </div>
           <div className="border rounded-lg overflow-hidden">
             <table className="w-full text-xs">
@@ -2802,37 +2804,42 @@ const markReturned = async () => {
           )}
 
           <div className="border-t pt-3 space-y-2">
-            <Label className="text-xs text-slate-500 uppercase tracking-wide">Workflow Actions</Label>
-           {gp.status === 'Draft' && canPrepare && (
-  <Button size="sm" onClick={async () => { await generateGatePassPDF(gp); setStatus('Printed') }}>Generate &amp; Print PDF</Button>
-)}
-{gp.status === 'Printed' && canPrepare && (
-  <Button size="sm" onClick={() => setStatus('Awaiting Signatures')}>Mark Awaiting Signatures</Button>
-)}
-            {gp.status === 'Awaiting Signatures' && isSecurity && (
-              <Button size="sm" onClick={() => setStatus('Verified by Security')}>Mark Verified by Security</Button>
+            <Label className="text-xs text-slate-500 uppercase tracking-wide">Workflow</Label>
+            {gp.status === 'Open' && isSecurity && (
+              <div className="space-y-2 border rounded-lg p-3 bg-amber-50/50">
+                <div className="text-sm font-medium">Verify & Close</div>
+                <p className="text-xs text-slate-500">Check items, seal & sign, then attach a photo of the signed & stamped gate pass to close it.</p>
+                {closeImg ? (
+                  <div className="relative">
+                    <img src={closeImg} alt="Signed copy preview" className="w-full rounded border" />
+                    <button onClick={() => setCloseImg(null)} className="absolute top-2 right-2 bg-rose-600 text-white rounded-full w-7 h-7 flex items-center justify-center shadow"><X className="w-4 h-4" /></button>
+                  </div>
+                ) : (
+                  <label className="inline-flex items-center gap-2 px-3 py-2 border rounded-lg cursor-pointer hover:bg-slate-50 text-sm">
+                    <Upload className="w-4 h-4" /> {closing ? 'Loading...' : 'Attach Signed & Stamped Copy Photo *'}
+                    <input type="file" accept="image/*" capture="environment" className="hidden" onChange={handleCloseFile} />
+                  </label>
+                )}
+                <Button size="sm" onClick={closeGatePass} disabled={!closeImg || closing}>
+                  <CheckCircle2 className="w-4 h-4 mr-1" /> {closing ? 'Closing...' : 'Verify & Close'}
+                </Button>
+              </div>
             )}
-            {gp.status === 'Verified by Security' && isSecurity && (
-              <label className="inline-flex items-center gap-2 px-3 py-2 border rounded-lg cursor-pointer hover:bg-slate-50 text-sm">
-                <Upload className="w-4 h-4" /> {uploading ? 'Uploading...' : 'Upload Signed & Stamped Copy'}
-                <input type="file" accept="image/*" capture="environment" className="hidden" onChange={handleUpload} />
-              </label>
+            {gp.status === 'Open' && !isSecurity && (
+              <div className="text-sm text-slate-500">Handed to Security — waiting for verification & closure.</div>
             )}
-            {gp.status === 'Uploaded' && isSecurity && (
-              <Button size="sm" onClick={complete}><CheckCircle2 className="w-4 h-4 mr-1" /> Mark Completed</Button>
+            {gp.status === 'Closed' && (
+              <div className="text-emerald-600 text-sm font-medium">
+                {gp.returnable === 'Returnable' && !gp.returnedAt ? '✓ Closed. Items still to be returned.' : '✓ This Gate Pass is closed.'}
+              </div>
             )}
-            {gp.status === 'Completed' && (
-  <div className="text-emerald-600 text-sm font-medium">
-    {gp.returnable === 'Returnable' && !gp.returnedAt ? '✓ Gate pass complete. Items still to be returned.' : '✓ This Gate Pass is complete.'}
-  </div>
-)}
-{gp.returnable === 'Returnable' && gp.status === 'Completed' && !gp.returnedAt && canReturn && (
-  <div className="space-y-2 border rounded-lg p-3 bg-amber-50/50">
-    <div className="text-sm font-medium">Items back at the store?</div>
-    <Textarea rows={2} placeholder="Condition / remarks (optional)" value={returnRemarks} onChange={e => setReturnRemarks(e.target.value)} />
-    <Button size="sm" onClick={markReturned}><CheckCircle2 className="w-4 h-4 mr-1" /> Mark Returned</Button>
-  </div>
-)}
+            {gp.returnable === 'Returnable' && gp.status === 'Closed' && !gp.returnedAt && canReturn && (
+              <div className="space-y-2 border rounded-lg p-3 bg-amber-50/50">
+                <div className="text-sm font-medium">Items back at the store?</div>
+                <Textarea rows={2} placeholder="Condition / remarks (optional)" value={returnRemarks} onChange={e => setReturnRemarks(e.target.value)} />
+                <Button size="sm" onClick={markReturned}><CheckCircle2 className="w-4 h-4 mr-1" /> Mark Returned</Button>
+              </div>
+            )}
           </div>
 
           <div className="border-t pt-3">
