@@ -2734,6 +2734,17 @@ if (!gp) return null
       onChanged()
     } catch (e) { toast.error(e.message) }
   }
+     const canReturn = isSecurity || canPrepare
+const rInfo = returnInfo(gp)
+
+const markReturned = async () => {
+  try {
+    await api('gatepass/return', { method: 'POST', body: { id: gp.id, by: user.name, remarks: returnRemarks } })
+    toast.success('Marked as returned')
+    setReturnRemarks('')
+    onChanged()
+  } catch (e) { toast.error(e.message) }
+}
 
   const handleUpload = async (e) => {
     const file = e.target.files?.[0]
