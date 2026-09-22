@@ -3444,7 +3444,7 @@ const [scanResult, setScanResult] = useState(null)
   {f.receiptImage ? (
             <div className="relative mt-1">
               <img src={f.receiptImage} alt="Receipt" className="w-full rounded-lg border" />
-              <button onClick={() => set('receiptImage', null)} className="absolute top-2 right-2 bg-rose-600 text-white rounded-full w-8 h-8 flex items-center justify-center shadow-lg">
+            onClick={() => { set('receiptImage', null); setScanResult(null) }}
                 <X className="w-4 h-4" />
               </button>
             </div>
