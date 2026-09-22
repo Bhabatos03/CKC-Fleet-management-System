@@ -711,7 +711,7 @@ if (['gatepass/status', 'gatepass/upload', 'gatepass/complete'].includes(path)) 
       return json(clean(entry))
     }
 
-    if (path === 'gatepasses') {
+   if (path === 'gatepasses') {
   if (!['admin', 'store_admin', 'security'].includes(role)) return json({ error: 'Not authorized' }, 403)
   if (role === 'store_admin' && !storeId) return json({ error: 'No store assigned to this user' }, 403)
   const query = (role === 'admin' || (role === 'security' && !storeId)) ? {} : { storeId }
