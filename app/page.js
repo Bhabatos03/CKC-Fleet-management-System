@@ -2880,7 +2880,7 @@ const filtered = items
     g.department?.toLowerCase().includes(search.toLowerCase())
   ))
   .sort((a, b) => view === 'all' ? 0 : (a.expectedReturnDate || '9999').localeCompare(b.expectedReturnDate || '9999'))
-  )
+  
 
   const statusColor = (s) => ({
     'Draft': 'bg-slate-400', 'Printed': 'bg-amber-500', 'Awaiting Signatures': 'bg-amber-600',
