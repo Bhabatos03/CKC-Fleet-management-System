@@ -504,13 +504,13 @@ if (['gatepass/status', 'gatepass/upload', 'gatepass/complete'].includes(path)) 
   })
   return json({ ok: true })
 }
-    if (path === 'gatepass/return') {
+   if (path === 'gatepass/return') {
   if (!['admin', 'store_admin', 'security'].includes(role)) return json({ error: 'Not allowed' }, 403)
   const gp = await db.collection('gatepasses').findOne({ id: body.id })
   if (!gp) return json({ error: 'Gate pass not found' }, 404)
   if (!gpVisible(gp, role, storeId)) return json({ error: 'Not your store' }, 403)
   if (gp.returnable !== 'Returnable') return json({ error: 'This gate pass is not returnable' }, 400)
-  if (gp.status !== 'Completed') return json({ error: 'Complete the gate pass before marking items returned' }, 409)
+  if (gp.status !== 'Closed') return json({ error: 'Close the gate pass before marking items returned' }, 409)
   if (gp.returnedAt) return json({ error: 'Already marked as returned' }, 409)
 
   const now = new Date().toISOString()
