@@ -3342,6 +3342,8 @@ function FuelEntry({ onDone }) {
   const [vehicles, setVehicles] = useState([])
   const [f, setF] = useState({ vehicleId: '', odometer: '', quantity: '', rate: '', station: '', receiptNumber: '', remarks: '', receiptImage: null })
   const [uploading, setUploading] = useState(false)
+  const [scanning, setScanning] = useState(false)
+const [scanResult, setScanResult] = useState(null)
   useEffect(() => { api('vehicles').then(setVehicles) }, [])
   const selectedVehicle = vehicles.find(v => v.id === f.vehicleId)
   useEffect(() => { if (selectedVehicle) setF(x => ({ ...x, odometer: selectedVehicle.currentOdometer })) }, [f.vehicleId, selectedVehicle])
