@@ -461,65 +461,82 @@ export async function POST(request, { params }) {
       return json(cleanUser(item))
     }
 
-   if (path === 'gatepass/close') {
-  const gp = await db.collection('gatepasses').findOne({ id: body.id })
-  if (!gp) return json({ error: 'Gate pass not found' }, 404)
-  if (!gpVisible(gp, role, storeId)) return json({ error: 'Not your store' }, 403)
-  if (role !== 'security') return json({ error: 'Only Security can close a gate pass' }, 403)
-  if (gp.status !== 'Open') return json({ error: `Cannot close a gate pass with status ${gp.status}` }, 409)
-  if (!body.signedCopyImage) return json({ error: 'Signed copy photo is required to close the gate pass' }, 400)
+      if (path === 'gatepass') {
+      if (!['admin', 'store_admin'].includes(role)) return json({ error: 'Not allowed to create gate passes' }, 403)
+      if (role === 'store_admin' && !storeId) return json({ error: 'No store assigned to this user' }, 403)
+      if (!body.purposeOfMovement || !Array.isArray(body.items) || body.items.length === 0) {
+        return json({ error: 'Purpose of movement and at least one item are required' }, 400)
+      }
+      const returnable = body.returnable || 'Non-Returnable'
+      if (returnable === 'Returnable') {
+        if (!body.expectedReturnDate) return json({ error: 'Expected return date is required for returnable items' }, 400)
+        const passDate = body.date || new Date().toISOString().slice(0, 10)
+        if (body.expectedReturnDate < passDate) return json({ error: 'Expected return date cannot be before the pass date' }, 400)
+      }
 
-  const now = new Date().toISOString()
-  await db.collection('gatepasses').updateOne({ id: gp.id }, {
-    $set: { status: 'Closed', signedCopyImage: body.signedCopyImage },
-    $push: { auditLog: { action: 'Closed (verified, sealed & signed copy uploaded)', by: body.by || role, role, at: now } },
-  })
-  return json({ ok: true })
-}
+      const now = new Date().toISOString()
+      const entry = {
+        id: uuidv4(),
+        gatePassNo: await nextGatePassNumber(db),
+        storeId: role === 'store_admin' ? storeId : (body.storeId || null),
+        type: body.type || 'Outward',
+        returnable,
+        expectedReturnDate: returnable === 'Returnable' ? body.expectedReturnDate : null,
+        returnedAt: null,
+        returnedBy: null,
+        returnRemarks: '',
+        vendorName: body.vendorName || '',
+        contactNo: body.contactNo || '',
+        address: body.address || '',
+        vehicleNo: body.vehicleNo || '',
+        department: body.department || '',
+        purposeOfMovement: body.purposeOfMovement,
+        items: body.items,
+        requestedBy: body.requestedBy || '',
+        date: body.date || now.slice(0, 10),
+        time: body.time || now.slice(11, 16),
+        status: 'Open',
+        signedCopyImage: null,
+        auditLog: [{ action: 'Created (Open)', by: body.requestedBy || role, role, at: now }],
+        createdAt: now,
+      }
+      await db.collection('gatepasses').insertOne(entry)
+      return json(clean(entry))
+    }
 
-if (['gatepass/status', 'gatepass/upload', 'gatepass/complete'].includes(path)) {
-  const gp = await db.collection('gatepasses').findOne({ id: body.id })
-  if (!gp) return json({ error: 'Gate pass not found' }, 404)
-  if (!gpVisible(gp, role, storeId)) return json({ error: 'Not your store' }, 403)
+    if (path === 'gatepass/close') {
+      const gp = await db.collection('gatepasses').findOne({ id: body.id })
+      if (!gp) return json({ error: 'Gate pass not found' }, 404)
+      if (!gpVisible(gp, role, storeId)) return json({ error: 'Not your store' }, 403)
+      if (role !== 'security') return json({ error: 'Only Security can close a gate pass' }, 403)
+      if (gp.status !== 'Open') return json({ error: `Cannot close a gate pass with status ${gp.status}` }, 409)
+      if (!body.signedCopyImage) return json({ error: 'Signed copy photo is required to close the gate pass' }, 400)
 
-  const target = path === 'gatepass/upload' ? 'Uploaded'
-               : path === 'gatepass/complete' ? 'Completed' : body.status
-  const step = Object.values(GP_FLOW).find(s => s.to === target)
-  if (!step) return json({ error: 'Invalid status' }, 400)
-  if (!step.roles.includes(role)) return json({ error: `${role} cannot mark this as ${target}` }, 403)
-  if (!step.from.includes(gp.status)) return json({ error: `Cannot move from ${gp.status} to ${target}` }, 409)
+      const now = new Date().toISOString()
+      await db.collection('gatepasses').updateOne({ id: gp.id }, {
+        $set: { status: 'Closed', signedCopyImage: body.signedCopyImage },
+        $push: { auditLog: { action: 'Closed (verified, sealed & signed copy uploaded)', by: body.by || role, role, at: now } },
+      })
+      return json({ ok: true })
+    }
 
-  const set = { status: target }
-  let action = target
-  if (path === 'gatepass/upload') {
-    if (!body.signedCopyImage) return json({ error: 'Signed copy image is required' }, 400)
-    set.signedCopyImage = body.signedCopyImage
-    action = 'Uploaded signed copy'
-  }
-  if (path === 'gatepass/complete') action = 'Marked Completed'
+    if (path === 'gatepass/return') {
+      if (!['admin', 'store_admin', 'security'].includes(role)) return json({ error: 'Not allowed' }, 403)
+      const gp = await db.collection('gatepasses').findOne({ id: body.id })
+      if (!gp) return json({ error: 'Gate pass not found' }, 404)
+      if (!gpVisible(gp, role, storeId)) return json({ error: 'Not your store' }, 403)
+      if (gp.returnable !== 'Returnable') return json({ error: 'This gate pass is not returnable' }, 400)
+      if (gp.status !== 'Closed') return json({ error: 'Close the gate pass before marking items returned' }, 409)
+      if (gp.returnedAt) return json({ error: 'Already marked as returned' }, 409)
 
-  await db.collection('gatepasses').updateOne({ id: gp.id }, {
-    $set: set,
-    $push: { auditLog: { action, by: body.by || role, role, at: new Date().toISOString() } },
-  })
-  return json({ ok: true })
-}
-   if (path === 'gatepass/return') {
-  if (!['admin', 'store_admin', 'security'].includes(role)) return json({ error: 'Not allowed' }, 403)
-  const gp = await db.collection('gatepasses').findOne({ id: body.id })
-  if (!gp) return json({ error: 'Gate pass not found' }, 404)
-  if (!gpVisible(gp, role, storeId)) return json({ error: 'Not your store' }, 403)
-  if (gp.returnable !== 'Returnable') return json({ error: 'This gate pass is not returnable' }, 400)
-  if (gp.status !== 'Closed') return json({ error: 'Close the gate pass before marking items returned' }, 409)
-  if (gp.returnedAt) return json({ error: 'Already marked as returned' }, 409)
+      const now = new Date().toISOString()
+      await db.collection('gatepasses').updateOne({ id: gp.id }, {
+        $set: { returnedAt: now, returnedBy: body.by || role, returnRemarks: body.remarks || '' },
+        $push: { auditLog: { action: 'Marked Returned', by: body.by || role, role, at: now } },
+      })
+      return json({ ok: true })
+    }
 
-  const now = new Date().toISOString()
-  await db.collection('gatepasses').updateOne({ id: gp.id }, {
-    $set: { returnedAt: now, returnedBy: body.by || role, returnRemarks: body.remarks || '' },
-    $push: { auditLog: { action: 'Marked Returned', by: body.by || role, role, at: now } },
-  })
-  return json({ ok: true })
-}
     // Everything below here requires write access
     if (role === 'store_admin') {
       return json({ error: 'Store admins have read-only access' }, 403)
