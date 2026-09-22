@@ -2725,6 +2725,8 @@ y += 41 + (addrLines.length - 1) * 10 + 19
   const [uploading, setUploading] = useState(false)
 const [returnRemarks, setReturnRemarks] = useState('')
 if (!gp) return null
+const user = getUser()
+
 
   const setStatus = async (status) => {
     try {
