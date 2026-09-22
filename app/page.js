@@ -2716,8 +2716,8 @@ y += 41 + (addrLines.length - 1) * 10 + 19
 
    function GatePassDetailDialog({ gp, onClose, onChanged, isSecurity, canPrepare }) {
   const [uploading, setUploading] = useState(false)
-  if (!gp) return null
-  const user = getUser()
+const [returnRemarks, setReturnRemarks] = useState('')
+if (!gp) return null
 
   const setStatus = async (status) => {
     try {
