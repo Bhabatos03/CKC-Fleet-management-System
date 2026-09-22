@@ -2586,14 +2586,7 @@ function GatePassFormDialog({ open, onOpenChange, onCreated, isAdmin }) {
           </div>
 
           <div><Label>Purpose of Movement *</Label><Textarea value={f.purposeOfMovement} onChange={e => set('purposeOfMovement', e.target.value)} rows={2} /></div>
-            {rInfo && (
-  <div className="col-span-2 flex items-center gap-2 flex-wrap">
-    <span className="text-slate-500">Return: </span>
-    <Badge className={`${rInfo.color} text-white`}>{rInfo.label}</Badge>
-    {gp.returnedAt && gp.returnedBy && <span className="text-xs text-slate-500">received by {gp.returnedBy}{gp.returnRemarks ? ` · ${gp.returnRemarks}` : ''}</span>}
-  </div>
-)}
-
+           
           <div className="border rounded-lg p-3 bg-slate-50">
             <div className="flex items-center justify-between mb-2">
               <Label className="font-semibold">Material / Asset Details *</Label>
