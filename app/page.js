@@ -2865,6 +2865,7 @@ function GatePassRegister() {
   const [search, setSearch] = useState('')
   const [open, setOpen] = useState(false)
   const [viewing, setViewing] = useState(null)
+  const [view, setView] = useState('all')
   const load = () => api('gatepasses').then(setItems).catch(e => toast.error(e.message))
   useEffect(() => { load() }, [])
 
