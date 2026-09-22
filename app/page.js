@@ -3428,9 +3428,20 @@ const [scanResult, setScanResult] = useState(null)
         <div className="p-3 bg-amber-50 rounded text-center"><div className="text-xs">Total Amount</div><div className="text-2xl font-bold">{fmtINR(amount)}</div></div>
         <div><Label>Fuel Station</Label><Input value={f.station} onChange={e => set('station', e.target.value)} /></div>
         <div><Label>Receipt Number</Label><Input value={f.receiptNumber} onChange={e => set('receiptNumber', e.target.value)} /></div>
-        <div>
-          <Label>Receipt Photo</Label>
-          {f.receiptImage ? (
+       <div>
+  <Label>Receipt Photo</Label>
+  {scanning && (
+    <div className="mt-1 mb-2 flex items-center gap-2 text-sm text-amber-700 bg-amber-50 p-2 rounded-lg">
+      <span className="w-4 h-4 border-2 border-amber-600 border-t-transparent rounded-full animate-spin" />
+      Reading receipt...
+    </div>
+  )}
+  {scanResult?.confidence === 'low' && !scanning && (
+    <div className="mt-1 mb-2 text-xs text-amber-700 bg-amber-50 p-2 rounded-lg">
+      ⚠️ Some values may not have scanned clearly — please check Quantity, Rate and Station below.
+    </div>
+  )}
+  {f.receiptImage ? (
             <div className="relative mt-1">
               <img src={f.receiptImage} alt="Receipt" className="w-full rounded-lg border" />
               <button onClick={() => set('receiptImage', null)} className="absolute top-2 right-2 bg-rose-600 text-white rounded-full w-8 h-8 flex items-center justify-center shadow-lg">
