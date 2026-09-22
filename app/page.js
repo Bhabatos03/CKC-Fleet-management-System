@@ -2884,12 +2884,11 @@ const filtered = items
   .sort((a, b) => view === 'all' ? 0 : (a.expectedReturnDate || '9999').localeCompare(b.expectedReturnDate || '9999'))
   
 
-  const statusColor = (s) => ({
-    'Draft': 'bg-slate-400', 'Printed': 'bg-amber-500', 'Awaiting Signatures': 'bg-amber-600',
-    'Verified by Security': 'bg-blue-500', 'Uploaded': 'bg-indigo-500', 'Completed': 'bg-emerald-500',
-  }[s] || 'bg-slate-400')
+ const statusColor = (s) => ({
+  'Open': 'bg-amber-500', 'Closed': 'bg-emerald-500',
+}[s] || 'bg-slate-400')
 
-  const pendingCount = items.filter(g => g.status !== 'Completed').length
+const pendingCount = items.filter(g => g.status !== 'Closed').length
   const outCount = items.filter(isOut).length
 const overdueCount = items.filter(g => returnInfo(g)?.key === 'overdue').length
 
