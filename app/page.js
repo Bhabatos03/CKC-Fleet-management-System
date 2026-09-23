@@ -3570,8 +3570,7 @@ function AskFleetPulse() {
     <div className="w-full h-full bg-gradient-to-br from-[#7a0d0d] to-[#a01414] flex items-center justify-center">
       <X className="w-6 h-6 text-white" />
     </div>
-  ) : (
-    <img src="/fleetpulse-bot.png" alt="Ask FleetPulse" className="w-full h-full object-cover animate-[bounce_3s_ease-in-out_infinite]" />
+  ) : (<img src="/fleetpulse-bot.png" alt="Ask FleetPulse" className="w-full h-full object-cover" />
   )}
 </button>
 
