@@ -3657,6 +3657,7 @@ function App() {
       {effectiveActive === 'users' && <UserManagement />}
     </AdminShell>
     <OfflineBanner />
+      <AskFleetPulse />
     </>
   )
 }
