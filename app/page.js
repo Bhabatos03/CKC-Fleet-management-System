@@ -3561,13 +3561,19 @@ function AskFleetPulse() {
 
   return (
     <>
-      <button
-        onClick={() => setOpen(x => !x)}
-        className="fixed bottom-5 right-5 z-[90] w-14 h-14 rounded-full bg-gradient-to-br from-[#7a0d0d] to-[#a01414] text-white shadow-xl flex items-center justify-center hover:brightness-110 transition"
-        title="Ask FleetPulse"
-      >
-        {open ? <X className="w-6 h-6" /> : <span className="text-xl">💬</span>}
-      </button>
+    <button
+  onClick={() => setOpen(x => !x)}
+  className="fixed bottom-5 right-5 z-[90] w-16 h-16 rounded-full bg-white shadow-xl flex items-center justify-center hover:scale-105 transition-transform overflow-hidden border-2 border-white ring-2 ring-[#7a0d0d]/20"
+  title="Ask FleetPulse"
+>
+  {open ? (
+    <div className="w-full h-full bg-gradient-to-br from-[#7a0d0d] to-[#a01414] flex items-center justify-center">
+      <X className="w-6 h-6 text-white" />
+    </div>
+  ) : (
+    <img src="/fleetpulse-bot.png" alt="Ask FleetPulse" className="w-full h-full object-cover animate-[bounce_3s_ease-in-out_infinite]" />
+  )}
+</button>
 
       {open && (
         <div className="fixed bottom-24 right-5 z-[90] w-[360px] max-w-[92vw] h-[500px] max-h-[75vh] bg-white rounded-2xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden">
