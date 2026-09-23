@@ -3577,10 +3577,13 @@ function AskFleetPulse() {
 
       {open && (
         <div className="fixed bottom-24 right-5 z-[90] w-[360px] max-w-[92vw] h-[500px] max-h-[75vh] bg-white rounded-2xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden">
-          <div className="bg-gradient-to-r from-[#5c0a0a] via-[#7a0d0d] to-[#5c0a0a] text-white px-4 py-3">
-            <div className="font-semibold text-sm">Ask FleetPulse</div>
-            <div className="text-[10px] text-amber-200/70">Ask about vehicles, gate passes, fuel & more</div>
-          </div>
+       <div className="bg-gradient-to-r from-[#5c0a0a] via-[#7a0d0d] to-[#5c0a0a] text-white px-4 py-3 flex items-center gap-2">
+  <img src="/fleetpulse-bot.png" alt="" className="w-9 h-9 rounded-full flex-shrink-0" />
+  <div>
+    <div className="font-semibold text-sm">Ask FleetPulse</div>
+    <div className="text-[10px] text-amber-200/70">Ask about vehicles, gate passes, fuel & more</div>
+  </div>
+</div>
 
           <div className="flex-1 overflow-y-auto p-3 space-y-3 bg-slate-50">
             {messages.length === 0 && (
