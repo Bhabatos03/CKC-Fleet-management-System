@@ -414,10 +414,7 @@ export async function GET(request, { params }) {
 export async function POST(request, { params }) {
   try {
     const db = await getDb()
-    if (!seedChecked) {
-      await seedUsersIfEmpty(db)
-      seedChecked = true
-    }
+    await seedUsersIfEmpty(db)   // ← runs on EVERY request
 
     const pathArr = (await params).path || []
     const path = pathArr.join('/')
