@@ -3536,26 +3536,32 @@ function AskFleetPulse() {
     'What was our fuel cost this month?',
   ]
 
-  const ask = async (q) => {
-    const question = (q || input).trim()
-    if (!question || asking) return
-    setMessages(m => [...m, { role: 'user', text: question }])
-    setInput('')
-    setAsking(true)
-    try {
-      const res = await fetch('/api/ask-fleetpulse', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question, role: user.role, storeId: user.storeId }),
-      })
-      const data = await res.json()
-      setMessages(m => [...m, { role: 'assistant', text: res.ok ? data.answer : (data.error || 'Something went wrong.') }])
-    } catch {
-      setMessages(m => [...m, { role: 'assistant', text: 'Could not reach the assistant. Please try again.' }])
-    } finally {
-      setAsking(false)
+ const CLOSING_WORDS = ['no', 'nothing', 'ok', 'okay', 'thanks', 'thank you', 'done', 'bye', 'nope', 'no thanks']
+
+const ask = async (q) => {
+  const question = (q || input).trim()
+  if (!question || asking) return
+  const isClosing = CLOSING_WORDS.includes(question.toLowerCase().replace(/[.!?]/g, '').trim())
+  setMessages(m => [...m, { role: 'user', text: question }])
+  setInput('')
+  setAsking(true)
+  try {
+    const res = await fetch('/api/ask-fleetpulse', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question, role: user.role, storeId: user.storeId }),
+    })
+    const data = await res.json()
+    setMessages(m => [...m, { role: 'assistant', text: res.ok ? data.answer : (data.error || 'Something went wrong.') }])
+    if (isClosing) {
+      setTimeout(() => { setOpen(false); setMessages([]) }, 1800)
     }
+  } catch {
+    setMessages(m => [...m, { role: 'assistant', text: 'Could not reach the assistant. Please try again.' }])
+  } finally {
+    setAsking(false)
   }
+}
 
   if (user.role !== 'admin' && user.role !== 'store_admin') return null
 
