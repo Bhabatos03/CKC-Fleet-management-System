@@ -621,6 +621,29 @@ export async function POST(request, { params }) {
       })
       return json({ ok: true })
     }
+    if (path === 'utilities/electricity-meters') {
+  const items = await db.collection('electricity_meters').find({}).sort({ createdAt: -1 }).toArray()
+  return json(items.map(clean))
+}
+
+if (path === 'utilities/electricity-readings') {
+  const items = await db.collection('electricity_readings').find({}).sort({ readingDate: -1 }).limit(500).toArray()
+  return json(items.map(clean))
+}
+
+if (path === 'utilities/dashboard') {
+  const now = new Date()
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+  const readings = await db.collection('electricity_readings').find({}).toArray()
+  const monthReadings = readings.filter(r => new Date(r.readingDate) >= monthStart)
+  return json({
+    electricity: {
+      totalUnitsAllTime: readings.reduce((s, r) => s + (r.unitsConsumed || 0), 0),
+      monthUnits: monthReadings.reduce((s, r) => s + (r.unitsConsumed || 0), 0),
+      monthCost: monthReadings.reduce((s, r) => s + (r.billAmount || 0), 0),
+    },
+  })
+}
     if (path === 'meters') {
   if (role !== 'admin') return json({ error: 'Only Admin can add meters' }, 403)
   if (!body.name || !body.type || !body.store) return json({ error: 'Name, type and store are required' }, 400)
