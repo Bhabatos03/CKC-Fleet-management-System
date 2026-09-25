@@ -468,6 +468,21 @@ if (path === 'utility-settings') {
   const s = await db.collection('utility_settings').findOne({ id: 'default' })
   return json(clean(s) || {})
 }
+    if (path === 'tenants') {
+  if (!['admin', 'store_admin'].includes(role)) return json({ error: 'Not authorized' }, 403)
+  const query = (role === 'store_admin' && storeId) ? { store: storeId } : {}
+  const items = await db.collection('tenants').find(query).sort({ store: 1, name: 1 }).toArray()
+  return json(items.map(clean))
+}
+
+if (path === 'tenant-bills') {
+  if (!['admin', 'store_admin'].includes(role)) return json({ error: 'Not authorized' }, 403)
+  const month = new URL(request.url).searchParams.get('month')
+  const query = month ? { month } : {}
+  if (role === 'store_admin' && storeId) query.store = storeId
+  const items = await db.collection('tenant_bills').find(query).sort({ createdAt: -1 }).toArray()
+  return json(items.map(clean))
+}
 
     return json({ error: 'Not found', path }, 404)
   } catch (e) {
