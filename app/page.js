@@ -355,7 +355,7 @@ function AdminShell({ user, onLogout, children, active, setActive }) {
   { id: 'users', label: 'User Management', icon: UserCog },
 ]
   const nav = user.role === 'store_admin'
-  ? fullNav.filter(n => ['dashboard', 'vehicles', 'trips', 'maintenance', 'tracking', 'gatepass'].includes(n.id))
+  ? fullNav.filter(n => ['dashboard', 'vehicles', 'trips', 'maintenance', 'tracking', 'gatepass', 'utilities'].includes(n.id))
   : fullNav
   const pick = (id) => { setActive(id); setDrawerOpen(false) }
   const SidebarContent = () => (
