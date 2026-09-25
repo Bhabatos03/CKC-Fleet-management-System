@@ -10,6 +10,20 @@ const gpVisible = (gp, role, storeId) => {
   return gp.storeId === storeId
 }
 
+async function seedUtilitySettingsIfEmpty(db) {
+  const existing = await db.collection('utility_settings').findOne({ id: 'default' })
+  if (existing) return
+  await db.collection('utility_settings').insertOne({
+    id: 'default',
+    ebUnitRate: 5.95,
+    kvaDemandRate: 370,
+    ebTaxPercent: 9,
+    fuelSurchargePerUnit: 0.60,
+    dgUnitRate: 38,
+    dgTaxPerUnit: 0.20,
+    updatedAt: new Date().toISOString(),
+  })
+}
 async function nextGatePassNumber(db) {
   const year = new Date().getFullYear()
   const r = await db.collection('counters').findOneAndUpdate(
