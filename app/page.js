@@ -752,6 +752,7 @@ function Drivers() {
   )
 }
 const STORES = ['TS', 'TSS', 'TSW']
+const UTILITY_STORES = ['TS', 'TSS', 'TSW', 'HS', 'BCC', 'CKCIFJ']
 const STORE_ADDRESSES = {
   TS: {
     label: 'TS — Head Office',
