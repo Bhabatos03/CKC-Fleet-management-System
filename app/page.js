@@ -3667,6 +3667,257 @@ function UtilitySettingsDialog({ open, onOpenChange }) {
   )
 }
 
+function TenantDialog({ open, onOpenChange, onCreated, meters }) {
+  const [f, setF] = useState({ name: '', store: 'TS', kva: '', recipientName: '', recipientAddress: '', subject: '', meterIds: [] })
+  useEffect(() => { if (open) setF({ name: '', store: 'TS', kva: '', recipientName: '', recipientAddress: '', subject: '', meterIds: [] }) }, [open])
+  const set = (k, v) => setF(x => ({ ...x, [k]: v }))
+  const toggleMeter = (id) => setF(x => ({ ...x, meterIds: x.meterIds.includes(id) ? x.meterIds.filter(m => m !== id) : [...x.meterIds, id] }))
+  const storeMeters = meters.filter(m => m.store === f.store)
+
+  const submit = async () => {
+    try {
+      await api('tenants', { method: 'POST', body: f })
+      toast.success('Tenant added')
+      onOpenChange(false)
+      onCreated()
+    } catch (e) { toast.error(e.message) }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader><DialogTitle>Add Tenant / Billing Entity</DialogTitle></DialogHeader>
+        <div className="space-y-3">
+          <div><Label>Tenant Name</Label><Input value={f.name} onChange={e => set('name', e.target.value)} placeholder="e.g. A Block 3rd Floor Corporate Office" /></div>
+          <div className="grid grid-cols-2 gap-3">
+            <div><Label>Store</Label>
+              <Select value={f.store} onValueChange={v => set('store', v)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>{STORES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div><Label>Sanctioned KVA</Label><Input type="number" value={f.kva} onChange={e => set('kva', e.target.value)} placeholder="e.g. 65" /></div>
+          </div>
+          <div><Label>Recipient Name</Label><Input value={f.recipientName} onChange={e => set('recipientName', e.target.value)} placeholder="M/s. C. KRISHNIAH CHETTY JEWELLERS PVT. LTD." /></div>
+          <div><Label>Recipient Address</Label><Textarea rows={2} value={f.recipientAddress} onChange={e => set('recipientAddress', e.target.value)} /></div>
+          <div><Label>Subject Line</Label><Input value={f.subject} onChange={e => set('subject', e.target.value)} placeholder="THE TOUCHSTONE - BLOCK A 3rd FLOOR CORPORATE OFFICE" /></div>
+          <div>
+            <Label>Assign Meters ({f.meterIds.length} selected)</Label>
+            <div className="border rounded-lg p-3 max-h-48 overflow-y-auto space-y-1 mt-1">
+              {storeMeters.length === 0 && <div className="text-sm text-slate-400">No meters for this store yet.</div>}
+              {storeMeters.map(m => (
+                <label key={m.id} className="flex items-center gap-2 text-sm py-1">
+                  <input type="checkbox" checked={f.meterIds.includes(m.id)} onChange={() => toggleMeter(m.id)} />
+                  {m.name} <Badge variant="outline" className="text-[10px]">{m.type}</Badge>
+                </label>
+              ))}
+            </div>
+          </div>
+        </div>
+        <DialogFooter><Button onClick={submit} disabled={!f.name || !f.kva} className="bg-[#7a0d0d] hover:bg-[#5c0a0a]">Add Tenant</Button></DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+const generateTenantBillPDF = async (bill) => {
+  const { jsPDF } = await import('jspdf')
+  const autoTable = (await import('jspdf-autotable')).default
+  const doc = new jsPDF({ unit: 'pt', format: 'a4' })
+  const pageW = doc.internal.pageSize.getWidth()
+
+  let logoDataUrl = null
+  try {
+    const res = await fetch('/ckc-logo-pdf.png')
+    const blob = await res.blob()
+    logoDataUrl = await new Promise((r) => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(blob) })
+  } catch {}
+
+  let y = 40
+  if (logoDataUrl) doc.addImage(logoDataUrl, 'PNG', 40, y, 40, 40)
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(11)
+  doc.text('ANNEXURE', pageW / 2, y + 15, { align: 'center' })
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(9)
+  doc.text(`Date: ${new Date().toLocaleDateString('en-GB').replace(/\//g, '.')}`, pageW - 40, y + 15, { align: 'right' })
+  y += 60
+
+  doc.setFontSize(9)
+  doc.text('To:', 40, y); y += 14
+  doc.setFont('helvetica', 'bold')
+  doc.text(bill.recipientName, 40, y); y += 14
+  doc.setFont('helvetica', 'normal')
+  const addrLines = doc.splitTextToSize(bill.recipientAddress, pageW - 80)
+  addrLines.forEach(l => { doc.text(l, 40, y); y += 13 })
+  y += 10
+
+  doc.setFont('helvetica', 'bold')
+  doc.text('SUB: REIMBURSEMENT OF MONTHLY POWER AND DG CONSUMPTION', 40, y); y += 14
+  doc.text(bill.subject, 40, y); y += 20
+  doc.setFont('helvetica', 'normal')
+  const [yy, mm] = bill.month.split('-')
+  const monthName = new Date(Number(yy), Number(mm) - 1, 1).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })
+  doc.text(`Dear Sir,`, 40, y); y += 14
+  const intro = doc.splitTextToSize(`The Power consumption for the month of ${monthName} is as detailed below. You are requested to kindly reimburse the same, as your contribution towards the Electricity bill.`, pageW - 80)
+  intro.forEach(l => { doc.text(l, 40, y); y += 13 })
+  y += 10
+
+  autoTable(doc, {
+    startY: y,
+    head: [['a) Energy Meter', 'Present', 'Previous', 'Units', 'Rate', 'Amount (Rs.)']],
+    body: [
+      ...bill.ebMeterDetails.map(m => [m.name, m.closing, m.opening, m.units, bill.ebUnitRate, (m.units * bill.ebUnitRate).toFixed(2)]),
+      ['', '', '', bill.ebUnits, '', bill.ebAmount.toFixed(2)],
+    ],
+    theme: 'grid', headStyles: { fillColor: [139, 20, 20] }, styles: { fontSize: 8 }, margin: { left: 40, right: 40 },
+  })
+  y = doc.lastAutoTable.finalY + 10
+
+  autoTable(doc, {
+    startY: y,
+    body: [
+      ['b)', `KVA demand charges for ${bill.kva} KVA`, `Rs. ${bill.kvaAmount.toFixed(2)}`],
+      ['c)', 'Total (a+b)', `Rs. ${bill.subtotal.toFixed(2)}`],
+      ['d)', `Tax ${bill.ebTaxPercent}%`, `Rs. ${bill.tax.toFixed(2)}`],
+      ['e)', `P&G Sur. Fuel Cost Adjust Charges (Rs.${bill.fuelSurchargePerUnit}/unit)`, `Rs. ${bill.fuelSurcharge.toFixed(2)}`],
+      ['f)', 'Total EB Amount (c+d+e)', `Rs. ${bill.totalEB.toFixed(2)}`],
+    ],
+    theme: 'plain', styles: { fontSize: 9 }, margin: { left: 40, right: 40 },
+    columnStyles: { 0: { cellWidth: 25 }, 2: { halign: 'right' } },
+  })
+  y = doc.lastAutoTable.finalY + 15
+
+  if (bill.dgMeterDetails.length > 0) {
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(9)
+    doc.text('g) DG Power', 40, y); y += 5
+    autoTable(doc, {
+      startY: y + 5,
+      head: [['DG Meter', 'Present', 'Previous', 'Units', 'Rate', 'Amount (Rs.)']],
+      body: [
+        ...bill.dgMeterDetails.map(m => [m.name, m.closing, m.opening, m.units, bill.dgUnitRate, (m.units * bill.dgUnitRate).toFixed(2)]),
+        ['', '', '', bill.dgUnits, '', bill.dgAmount.toFixed(2)],
+      ],
+      theme: 'grid', headStyles: { fillColor: [217, 119, 6] }, styles: { fontSize: 8 }, margin: { left: 40, right: 40 },
+    })
+    y = doc.lastAutoTable.finalY + 10
+
+    autoTable(doc, {
+      startY: y,
+      body: [
+        ['i)', `Tax (Rs.${bill.dgTaxPerUnit}/unit)`, `Rs. ${bill.dgTax.toFixed(2)}`],
+        ['j)', 'Total DG Amount', `Rs. ${bill.totalDG.toFixed(2)}`],
+      ],
+      theme: 'plain', styles: { fontSize: 9 }, margin: { left: 40, right: 40 },
+      columnStyles: { 0: { cellWidth: 25 }, 2: { halign: 'right' } },
+    })
+    y = doc.lastAutoTable.finalY + 15
+  }
+
+  doc.setFillColor(245, 230, 230)
+  doc.rect(40, y, pageW - 80, 26, 'F')
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(11)
+  doc.text('Grand Total', 50, y + 17)
+  doc.text(`Rs. ${bill.grandTotal.toFixed(2)}`, pageW - 50, y + 17, { align: 'right' })
+
+  doc.setFontSize(7); doc.setTextColor(120)
+  doc.text(`Generated by FleetPulse on ${new Date().toLocaleString('en-IN')}`, 40, doc.internal.pageSize.getHeight() - 20)
+
+  doc.save(`${bill.tenantName.replace(/\s+/g, '-')}-${bill.month}.pdf`)
+}
+
+function TenantBills() {
+  const user = getUser()
+  const isAdmin = user.role === 'admin'
+  const [tenants, setTenants] = useState([])
+  const [meters, setMeters] = useState([])
+  const [month, setMonth] = useState(new Date().toISOString().slice(0, 7))
+  const [selectedTenant, setSelectedTenant] = useState('')
+  const [bill, setBill] = useState(null)
+  const [generating, setGenerating] = useState(false)
+  const [tenantDialogOpen, setTenantDialogOpen] = useState(false)
+  const [pastBills, setPastBills] = useState([])
+
+  const loadTenants = () => api('tenants').then(setTenants).catch(e => toast.error(e.message))
+  useEffect(() => { loadTenants(); api('meters').then(setMeters) }, [])
+  useEffect(() => { api(`tenant-bills?month=${month}`).then(setPastBills).catch(() => {}) }, [month])
+
+  const generate = async () => {
+    if (!selectedTenant) return toast.error('Select a tenant')
+    setGenerating(true)
+    try {
+      const result = await api('tenant-bill/generate', { method: 'POST', body: { tenantId: selectedTenant, month, by: user.name } })
+      setBill(result)
+      toast.success('Bill generated')
+    } catch (e) { toast.error(e.message) }
+    finally { setGenerating(false) }
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
+          <div>
+            <Label className="text-xs text-slate-500">Month</Label>
+            <Input type="month" value={month} onChange={e => { setMonth(e.target.value); setBill(null) }} className="w-40" />
+          </div>
+          <div>
+            <Label className="text-xs text-slate-500">Tenant</Label>
+            <Select value={selectedTenant} onValueChange={v => { setSelectedTenant(v); setBill(null) }}>
+              <SelectTrigger className="w-64"><SelectValue placeholder="Select tenant" /></SelectTrigger>
+              <SelectContent>{tenants.map(t => <SelectItem key={t.id} value={t.id}>{t.name} ({t.store})</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <Button onClick={generate} disabled={generating} className="mt-5 bg-gradient-to-r from-[#7a0d0d] to-[#a01414] text-white">
+            {generating ? 'Generating...' : 'Generate Bill'}
+          </Button>
+        </div>
+        {isAdmin && <Button variant="outline" onClick={() => setTenantDialogOpen(true)}><Plus className="w-4 h-4 mr-1" /> Add Tenant</Button>}
+      </div>
+
+      {bill && (
+        <Card className="border-2 border-amber-300/60">
+          <CardHeader><CardTitle className="flex items-center justify-between">
+            <span>{bill.tenantName}</span>
+            <Button size="sm" onClick={() => generateTenantBillPDF(bill)}><FileText className="w-4 h-4 mr-1" /> Download PDF</Button>
+          </CardTitle></CardHeader>
+          <CardContent className="space-y-3 text-sm">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="p-3 bg-slate-50 rounded-lg"><div className="text-xs text-slate-500">EB Units</div><div className="text-lg font-bold">{bill.ebUnits}</div></div>
+              <div className="p-3 bg-slate-50 rounded-lg"><div className="text-xs text-slate-500">DG Units</div><div className="text-lg font-bold">{bill.dgUnits}</div></div>
+              <div className="p-3 bg-red-50 rounded-lg"><div className="text-xs text-slate-500">Total EB Amount</div><div className="text-lg font-bold text-[#7a0d0d]">{fmtINR(bill.totalEB)}</div></div>
+              <div className="p-3 bg-amber-50 rounded-lg"><div className="text-xs text-slate-500">Total DG Amount</div><div className="text-lg font-bold text-amber-700">{fmtINR(bill.totalDG)}</div></div>
+            </div>
+            <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg flex justify-between items-center">
+              <span className="font-semibold">Grand Total</span>
+              <span className="text-xl font-bold text-emerald-700">{fmtINR(bill.grandTotal)}</span>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      <Card><CardContent className="p-4">
+        <div className="text-sm font-semibold mb-2">Generated this month</div>
+        <div className="overflow-x-auto"><Table>
+          <TableHeader><TableRow><TableHead>Tenant</TableHead><TableHead>Store</TableHead><TableHead>Grand Total</TableHead><TableHead>Generated</TableHead><TableHead></TableHead></TableRow></TableHeader>
+          <TableBody>
+            {pastBills.map(b => (
+              <TableRow key={b.id}>
+                <TableCell className="font-medium">{b.tenantName}</TableCell>
+                <TableCell>{b.store}</TableCell>
+                <TableCell className="font-semibold">{fmtINR(b.grandTotal)}</TableCell>
+                <TableCell className="text-xs">{fmtDT(b.createdAt)} by {b.generatedBy}</TableCell>
+                <TableCell className="text-right"><Button size="sm" variant="outline" onClick={() => generateTenantBillPDF(b)}>PDF</Button></TableCell>
+              </TableRow>
+            ))}
+            {pastBills.length === 0 && <TableRow><TableCell colSpan={5} className="text-center text-slate-500 py-6">No bills generated for this month yet.</TableCell></TableRow>}
+          </TableBody>
+        </Table></div>
+      </CardContent></Card>
+
+      <TenantDialog open={tenantDialogOpen} onOpenChange={setTenantDialogOpen} onCreated={loadTenants} meters={meters} />
+    </div>
+  )
+}
+
 function MeterDialog({ open, onOpenChange, onCreated }) {
   const [f, setF] = useState({ name: '', type: 'EB', store: 'TS', tracksDiesel: false })
   useEffect(() => { if (open) setF({ name: '', type: 'EB', store: 'TS', tracksDiesel: false }) }, [open])
