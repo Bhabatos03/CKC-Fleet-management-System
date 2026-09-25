@@ -3870,6 +3870,7 @@ function App() {
     <>
     <AdminShell user={user} onLogout={logout} active={effectiveActive} setActive={setActive}>
       {effectiveActive === 'dashboard' && <Dashboard />}
+      {effectiveActive === 'utilities' && <Utilities />}
       {effectiveActive === 'vehicles' && <Vehicles />}
       {effectiveActive === 'tracking' && <LiveTracking />}
       {effectiveActive === 'drivers' && <Drivers />}
