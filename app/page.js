@@ -3636,6 +3636,216 @@ const ask = async (q) => {
     </>
   )
 }
+function UtilitySettingsDialog({ open, onOpenChange }) {
+  const [f, setF] = useState(null)
+  useEffect(() => { if (open) api('utility-settings').then(setF).catch(() => {}) }, [open])
+  const set = (k, v) => setF(x => ({ ...x, [k]: v }))
+  const save = async () => {
+    try {
+      await api('utility-settings', { method: 'POST', body: f })
+      toast.success('Utility rates updated')
+      onOpenChange(false)
+    } catch (e) { toast.error(e.message) }
+  }
+  if (!f) return open ? <Dialog open={open} onOpenChange={onOpenChange}><DialogContent><div className="p-6 text-center text-slate-500">Loading...</div></DialogContent></Dialog> : null
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader><DialogTitle>Utility Tariff Settings</DialogTitle></DialogHeader>
+        <div className="grid grid-cols-2 gap-3">
+          <div><Label>EB Unit Rate (₹/unit)</Label><Input type="number" step="0.01" value={f.ebUnitRate ?? ''} onChange={e => set('ebUnitRate', e.target.value)} /></div>
+          <div><Label>KVA Demand Charge (₹/KVA)</Label><Input type="number" step="0.01" value={f.kvaDemandRate ?? ''} onChange={e => set('kvaDemandRate', e.target.value)} /></div>
+          <div><Label>EB Tax (%)</Label><Input type="number" step="0.01" value={f.ebTaxPercent ?? ''} onChange={e => set('ebTaxPercent', e.target.value)} /></div>
+          <div><Label>Fuel Surcharge (₹/unit)</Label><Input type="number" step="0.01" value={f.fuelSurchargePerUnit ?? ''} onChange={e => set('fuelSurchargePerUnit', e.target.value)} /></div>
+          <div><Label>DG Unit Rate (₹/unit)</Label><Input type="number" step="0.01" value={f.dgUnitRate ?? ''} onChange={e => set('dgUnitRate', e.target.value)} /></div>
+          <div><Label>DG Tax (₹/unit)</Label><Input type="number" step="0.01" value={f.dgTaxPerUnit ?? ''} onChange={e => set('dgTaxPerUnit', e.target.value)} /></div>
+        </div>
+        <DialogFooter><Button onClick={save} className="bg-[#7a0d0d] hover:bg-[#5c0a0a]">Save Rates</Button></DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+function MeterDialog({ open, onOpenChange, onCreated }) {
+  const [f, setF] = useState({ name: '', type: 'EB', store: 'TS', tracksDiesel: false })
+  useEffect(() => { if (open) setF({ name: '', type: 'EB', store: 'TS', tracksDiesel: false }) }, [open])
+  const set = (k, v) => setF(x => ({ ...x, [k]: v }))
+  const submit = async () => {
+    try {
+      await api('meters', { method: 'POST', body: f })
+      toast.success('Meter added')
+      onOpenChange(false)
+      onCreated()
+    } catch (e) { toast.error(e.message) }
+  }
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader><DialogTitle>Add Meter</DialogTitle></DialogHeader>
+        <div className="space-y-3">
+          <div><Label>Meter Name</Label><Input value={f.name} onChange={e => set('name', e.target.value)} placeholder="e.g. TS(A)-CKCPL-3rd floor" /></div>
+          <div className="grid grid-cols-2 gap-3">
+            <div><Label>Type</Label>
+              <Select value={f.type} onValueChange={v => set('type', v)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent><SelectItem value="EB">EB (Electricity)</SelectItem><SelectItem value="DG">DG (Generator)</SelectItem><SelectItem value="HT">HT Reading</SelectItem></SelectContent>
+              </Select>
+            </div>
+            <div><Label>Store</Label>
+              <Select value={f.store} onValueChange={v => set('store', v)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>{STORES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+          </div>
+          {f.type === 'DG' && (
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" checked={f.tracksDiesel} onChange={e => set('tracksDiesel', e.target.checked)} /> Track diesel litres for this meter
+            </label>
+          )}
+        </div>
+        <DialogFooter><Button onClick={submit} disabled={!f.name} className="bg-[#7a0d0d] hover:bg-[#5c0a0a]">Add Meter</Button></DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+function Utilities() {
+  const user = getUser()
+  const isAdmin = user.role === 'admin'
+  const [tab, setTab] = useState('readings')
+  const [meters, setMeters] = useState([])
+  const [month, setMonth] = useState(new Date().toISOString().slice(0, 7))
+  const [readings, setReadings] = useState([])
+  const [loading, setLoading] = useState(false)
+  const [edits, setEdits] = useState({})
+  const [meterDialogOpen, setMeterDialogOpen] = useState(false)
+  const [settingsOpen, setSettingsOpen] = useState(false)
+
+  const loadMeters = () => api('meters').then(setMeters).catch(e => toast.error(e.message))
+  const loadReadings = () => {
+    setLoading(true)
+    api(`meter-readings?month=${month}`).then(d => { setReadings(d.readings); setEdits({}) }).catch(e => toast.error(e.message)).finally(() => setLoading(false))
+  }
+  useEffect(() => { loadMeters() }, [])
+  useEffect(() => { loadReadings() }, [month])
+
+  const edit = (meterId, patch) => setEdits(x => ({ ...x, [meterId]: { ...x[meterId], ...patch } }))
+  const rowValue = (r, key) => edits[r.meterId]?.[key] ?? r[key]
+
+  const saveRow = async (r) => {
+    const e = edits[r.meterId]
+    if (!e || e.closing === undefined || e.closing === '') return toast.error('Enter closing reading first')
+    try {
+      await api('meter-readings', { method: 'POST', body: {
+        meterId: r.meterId, month, opening: r.opening ?? 0, closing: e.closing,
+        dieselLitres: e.dieselLitres, manualOverride: e.manualOverride || false,
+        unitsConsumed: e.unitsConsumed, enteredBy: user.name,
+      }})
+      toast.success(`${r.meterName} saved`)
+      loadReadings()
+    } catch (err) { toast.error(err.message) }
+  }
+
+  const saveAll = async () => {
+    const rows = readings.filter(r => edits[r.meterId]?.closing !== undefined && edits[r.meterId]?.closing !== '')
+    if (rows.length === 0) return toast.error('No new readings to save')
+    for (const r of rows) await saveRow(r)
+  }
+
+  return (
+    <div className="p-6 space-y-4">
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900 relative inline-block">Utilities<span className="absolute -bottom-1 left-0 w-16 h-1 bg-gradient-to-r from-[#7a0d0d] to-amber-500 rounded-full" /></h1>
+          <p className="text-slate-500 mt-2">Electricity & DG meter readings, per store</p>
+        </div>
+        <div className="flex gap-2">
+          {isAdmin && <Button variant="outline" onClick={() => setSettingsOpen(true)}>Tariff Rates</Button>}
+          {isAdmin && <Button onClick={() => setMeterDialogOpen(true)} className="bg-gradient-to-r from-[#7a0d0d] to-[#a01414] text-white"><Plus className="w-4 h-4 mr-1" /> Add Meter</Button>}
+        </div>
+      </div>
+
+      <div className="flex gap-2">
+        <button onClick={() => setTab('readings')} className={`px-4 py-2 rounded-lg text-sm font-medium border ${tab === 'readings' ? 'bg-[#7a0d0d] text-white border-[#7a0d0d]' : 'bg-white border-slate-200'}`}>Monthly Readings</button>
+        <button onClick={() => setTab('meters')} className={`px-4 py-2 rounded-lg text-sm font-medium border ${tab === 'meters' ? 'bg-[#7a0d0d] text-white border-[#7a0d0d]' : 'bg-white border-slate-200'}`}>Meters ({meters.length})</button>
+      </div>
+
+      {tab === 'readings' && (
+        <Card><CardContent className="p-4 space-y-4">
+          <div className="flex items-center gap-3">
+            <Label className="text-xs text-slate-500">Month</Label>
+            <Input type="month" value={month} onChange={e => setMonth(e.target.value)} className="w-44" />
+            <Button size="sm" onClick={saveAll} className="bg-emerald-600 hover:bg-emerald-700 text-white ml-auto">Save All Entered</Button>
+          </div>
+          {loading ? <div className="text-center text-slate-400 py-8">Loading...</div> : (
+            <div className="overflow-x-auto"><Table>
+              <TableHeader><TableRow>
+                <TableHead>Meter</TableHead><TableHead>Type</TableHead><TableHead>Store</TableHead>
+                <TableHead>Opening</TableHead><TableHead>Closing</TableHead><TableHead>Units</TableHead>
+                <TableHead>Diesel (L)</TableHead><TableHead></TableHead>
+              </TableRow></TableHeader>
+              <TableBody>
+                {readings.map(r => {
+                  const closing = rowValue(r, 'closing')
+                  const opening = r.opening ?? 0
+                  const units = edits[r.meterId]?.manualOverride ? edits[r.meterId]?.unitsConsumed : (closing !== null && closing !== '' ? Number(closing) - Number(opening) : r.unitsConsumed)
+                  const negative = units !== null && units !== undefined && units < 0
+                  return (
+                    <TableRow key={r.meterId} className={negative ? 'bg-rose-50' : ''}>
+                      <TableCell className="font-medium text-sm">{r.meterName}</TableCell>
+                      <TableCell><Badge variant="outline">{r.meterType}</Badge></TableCell>
+                      <TableCell className="text-xs">{r.store}</TableCell>
+                      <TableCell className="text-sm">{opening ?? '-'}</TableCell>
+                      <TableCell>
+                        <Input type="number" className="w-28 h-8" value={closing ?? ''} onChange={e => edit(r.meterId, { closing: e.target.value })} placeholder={r.closing ?? 'Enter'} />
+                      </TableCell>
+                      <TableCell className={negative ? 'text-rose-600 font-semibold' : ''}>
+                        {units ?? '-'}
+                        {negative && <div className="text-[10px] text-rose-500">Check reading — meter may have been replaced</div>}
+                      </TableCell>
+                      <TableCell>
+                        {r.meterType === 'DG' && (
+                          <Input type="number" className="w-20 h-8" value={rowValue(r, 'dieselLitres') ?? ''} onChange={e => edit(r.meterId, { dieselLitres: e.target.value })} placeholder="L" />
+                        )}
+                      </TableCell>
+                      <TableCell><Button size="sm" variant="outline" onClick={() => saveRow(r)}>Save</Button></TableCell>
+                    </TableRow>
+                  )
+                })}
+                {readings.length === 0 && (
+                  <TableRow><TableCell colSpan={8} className="text-center text-slate-500 py-8">No meters yet. {isAdmin ? 'Click "Add Meter" to get started.' : 'Ask an Admin to add meters for your store.'}</TableCell></TableRow>
+                )}
+              </TableBody>
+            </Table></div>
+          )}
+        </CardContent></Card>
+      )}
+
+      {tab === 'meters' && (
+        <Card><CardContent className="p-4">
+          <div className="overflow-x-auto"><Table>
+            <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Type</TableHead><TableHead>Store</TableHead><TableHead>Tracks Diesel</TableHead></TableRow></TableHeader>
+            <TableBody>
+              {meters.map(m => (
+                <TableRow key={m.id}>
+                  <TableCell className="font-medium">{m.name}</TableCell>
+                  <TableCell><Badge variant="outline">{m.type}</Badge></TableCell>
+                  <TableCell>{m.store}</TableCell>
+                  <TableCell>{m.tracksDiesel ? 'Yes' : '-'}</TableCell>
+                </TableRow>
+              ))}
+              {meters.length === 0 && <TableRow><TableCell colSpan={4} className="text-center text-slate-500 py-8">No meters added yet.</TableCell></TableRow>}
+            </TableBody>
+          </Table></div>
+        </CardContent></Card>
+      )}
+
+      <MeterDialog open={meterDialogOpen} onOpenChange={setMeterDialogOpen} onCreated={loadMeters} />
+      <UtilitySettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
+    </div>
+  )
+}
 
 function App() {
   const [user, setUser] = useState(null)
