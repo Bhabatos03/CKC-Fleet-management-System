@@ -4021,6 +4021,7 @@ function Utilities() {
       <div className="flex gap-2">
         <button onClick={() => setTab('readings')} className={`px-4 py-2 rounded-lg text-sm font-medium border ${tab === 'readings' ? 'bg-[#7a0d0d] text-white border-[#7a0d0d]' : 'bg-white border-slate-200'}`}>Monthly Readings</button>
         <button onClick={() => setTab('meters')} className={`px-4 py-2 rounded-lg text-sm font-medium border ${tab === 'meters' ? 'bg-[#7a0d0d] text-white border-[#7a0d0d]' : 'bg-white border-slate-200'}`}>Meters ({meters.length})</button>
+        <button onClick={() => setTab('bills')} className={`px-4 py-2 rounded-lg text-sm font-medium border ${tab === 'bills' ? 'bg-[#7a0d0d] text-white border-[#7a0d0d]' : 'bg-white border-slate-200'}`}>Tenant Bills</button>
       </div>
 
       {tab === 'readings' && (
