@@ -421,6 +421,53 @@ export async function GET(request, { params }) {
         alerts,
       })
     }
+    if (path === 'meters') {
+  if (!['admin', 'store_admin'].includes(role)) return json({ error: 'Not authorized' }, 403)
+  const query = (role === 'store_admin' && storeId) ? { store: storeId } : {}
+  const items = await db.collection('meters').find(query).sort({ store: 1, name: 1 }).toArray()
+  return json(items.map(clean))
+}
+
+if (path === 'meter-readings') {
+  if (!['admin', 'store_admin'].includes(role)) return json({ error: 'Not authorized' }, 403)
+  const month = new URL(request.url).searchParams.get('month')
+  if (!month) return json({ error: 'month query param required' }, 400)
+  const meterQuery = (role === 'store_admin' && storeId) ? { store: storeId } : {}
+  const meters = await db.collection('meters').find(meterQuery).sort({ store: 1, name: 1 }).toArray()
+  const meterIds = meters.map(m => m.id)
+
+  const readings = await db.collection('meter_readings').find({ month, meterId: { $in: meterIds } }).toArray()
+  const readingMap = {}
+  readings.forEach(r => { readingMap[r.meterId] = r })
+
+  const [y, m] = month.split('-').map(Number)
+  const prevDate = new Date(y, m - 2, 1)
+  const prevMonth = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, '0')}`
+  const prevReadings = await db.collection('meter_readings').find({ month: prevMonth, meterId: { $in: meterIds } }).toArray()
+  const prevMap = {}
+  prevReadings.forEach(r => { prevMap[r.meterId] = r })
+
+  const combined = meters.map(m => {
+    const r = readingMap[m.id]
+    const prev = prevMap[m.id]
+    return {
+      meterId: m.id, meterName: m.name, meterType: m.type, store: m.store,
+      opening: r ? r.opening : (prev ? prev.closing : null),
+      closing: r ? r.closing : null,
+      unitsConsumed: r ? r.unitsConsumed : null,
+      dieselLitres: r ? r.dieselLitres : null,
+      manualOverride: r ? r.manualOverride : false,
+      enteredBy: r ? r.enteredBy : null,
+      enteredAt: r ? r.enteredAt : null,
+    }
+  })
+  return json({ month, readings: combined })
+}
+
+if (path === 'utility-settings') {
+  const s = await db.collection('utility_settings').findOne({ id: 'default' })
+  return json(clean(s) || {})
+}
 
     return json({ error: 'Not found', path }, 404)
   } catch (e) {
