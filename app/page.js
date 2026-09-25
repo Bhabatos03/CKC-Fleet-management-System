@@ -3944,12 +3944,12 @@ function MeterDialog({ open, onOpenChange, onCreated }) {
                 <SelectContent><SelectItem value="EB">EB (Electricity)</SelectItem><SelectItem value="DG">DG (Generator)</SelectItem><SelectItem value="HT">HT Reading</SelectItem></SelectContent>
               </Select>
             </div>
-            <div><Label>Store</Label>
-              <Select value={f.store} onValueChange={v => set('store', v)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{STORES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-              </Select>
-            </div>
+           <div><Label>Store</Label>
+  <Select value={f.store} onValueChange={v => set('store', v)}>
+    <SelectTrigger><SelectValue /></SelectTrigger>
+    <SelectContent>{UTILITY_STORES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+  </Select>
+</div>
           </div>
           {f.type === 'DG' && (
             <label className="flex items-center gap-2 text-sm">
