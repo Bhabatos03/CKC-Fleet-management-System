@@ -255,8 +255,12 @@ async function seedIfEmpty(db) {
 export async function GET(request, { params }) {
   try {
     const db = await getDb()
-    await seedIfEmpty(db)        // ← runs on EVERY request
-    await seedUsersIfEmpty(db)   // ← runs on EVERY request
+    if (!seedChecked) {
+      await seedIfEmpty(db)
+      await seedUsersIfEmpty(db)
+      await seedUtilitySettingsIfEmpty(db)
+      seedChecked = true
+    }
 
     const pathArr = (await params).path || []
     const path = pathArr.join('/')
