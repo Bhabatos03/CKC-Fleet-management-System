@@ -606,6 +606,57 @@ export async function POST(request, { params }) {
       })
       return json({ ok: true })
     }
+    if (path === 'meters') {
+  if (role !== 'admin') return json({ error: 'Only Admin can add meters' }, 403)
+  if (!body.name || !body.type || !body.store) return json({ error: 'Name, type and store are required' }, 400)
+  const item = { id: uuidv4(), name: body.name, type: body.type, store: body.store, tracksDiesel: !!body.tracksDiesel, createdAt: new Date().toISOString() }
+  await db.collection('meters').insertOne(item)
+  return json(clean(item))
+}
+
+if (path === 'meter-readings') {
+  if (!['admin', 'store_admin'].includes(role)) return json({ error: 'Not authorized' }, 403)
+  const meter = await db.collection('meters').findOne({ id: body.meterId })
+  if (!meter) return json({ error: 'Meter not found' }, 404)
+  if (role === 'store_admin' && meter.store !== storeId) return json({ error: 'Not your store' }, 403)
+  if (body.closing === undefined || body.closing === null || body.closing === '') return json({ error: 'Closing reading is required' }, 400)
+
+  const opening = Number(body.opening ?? 0)
+  const closing = Number(body.closing)
+  const unitsConsumed = body.manualOverride ? Number(body.unitsConsumed) : (closing - opening)
+  const now = new Date().toISOString()
+
+  await db.collection('meter_readings').updateOne(
+    { meterId: body.meterId, month: body.month },
+    {
+      $set: {
+        meterId: body.meterId, month: body.month, opening, closing, unitsConsumed,
+        dieselLitres: body.dieselLitres != null && body.dieselLitres !== '' ? Number(body.dieselLitres) : null,
+        manualOverride: !!body.manualOverride,
+        enteredBy: body.enteredBy || role, enteredAt: now,
+      },
+      $setOnInsert: { id: uuidv4() },
+    },
+    { upsert: true }
+  )
+  return json({ ok: true })
+}
+
+if (path === 'utility-settings') {
+  if (role !== 'admin') return json({ error: 'Only Admin can edit utility settings' }, 403)
+  const settings = {
+    id: 'default',
+    ebUnitRate: Number(body.ebUnitRate),
+    kvaDemandRate: Number(body.kvaDemandRate),
+    ebTaxPercent: Number(body.ebTaxPercent),
+    fuelSurchargePerUnit: Number(body.fuelSurchargePerUnit),
+    dgUnitRate: Number(body.dgUnitRate),
+    dgTaxPerUnit: Number(body.dgTaxPerUnit),
+    updatedAt: new Date().toISOString(),
+  }
+  await db.collection('utility_settings').updateOne({ id: 'default' }, { $set: settings }, { upsert: true })
+  return json(clean(settings))
+}
 
     // Everything below here requires write access
     if (role === 'store_admin') {
