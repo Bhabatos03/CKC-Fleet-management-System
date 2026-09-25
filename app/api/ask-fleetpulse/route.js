@@ -55,20 +55,7 @@ const TOOLS = [
     input_schema: { type: 'object', properties: {} },
   },
 ]
-async function seedUtilitySettingsIfEmpty(db) {
-  const existing = await db.collection('utility_settings').findOne({ id: 'default' })
-  if (existing) return
-  await db.collection('utility_settings').insertOne({
-    id: 'default',
-    ebUnitRate: 5.95,
-    kvaDemandRate: 370,
-    ebTaxPercent: 9,
-    fuelSurchargePerUnit: 0.60,
-    dgUnitRate: 38,
-    dgTaxPerUnit: 0.20,
-    updatedAt: new Date().toISOString(),
-  })
-}
+
 async function runTool(db, name, input) {
   const days = input?.days || 30
   const since = new Date(Date.now() - days * 24 * 3600 * 1000).toISOString()
