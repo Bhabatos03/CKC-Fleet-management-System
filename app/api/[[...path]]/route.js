@@ -39,6 +39,7 @@ const MONGO_URL = process.env.MONGO_URL
 const DB_NAME = process.env.DB_NAME || 'ckc_fleet'
 
 let cachedClient = null
+let seedChecked = false
 async function getDb() {
   if (!cachedClient) {
     cachedClient = new MongoClient(MONGO_URL)
