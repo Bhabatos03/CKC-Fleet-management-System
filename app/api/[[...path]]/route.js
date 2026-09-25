@@ -673,6 +673,91 @@ if (path === 'utility-settings') {
   return json(clean(settings))
 }
 
+    if (path === 'tenants') {
+  if (role !== 'admin') return json({ error: 'Only Admin can add tenants' }, 403)
+  if (!body.name || !body.store) return json({ error: 'Name and store are required' }, 400)
+  const item = {
+    id: uuidv4(),
+    name: body.name,
+    store: body.store,
+    kva: Number(body.kva || 0),
+    recipientName: body.recipientName || '',
+    recipientAddress: body.recipientAddress || '',
+    subject: body.subject || '',
+    meterIds: body.meterIds || [],
+    createdAt: new Date().toISOString(),
+  }
+  await db.collection('tenants').insertOne(item)
+  return json(clean(item))
+}
+
+if (path === 'tenant-bill/generate') {
+  if (!['admin', 'store_admin'].includes(role)) return json({ error: 'Not authorized' }, 403)
+  const tenant = await db.collection('tenants').findOne({ id: body.tenantId })
+  if (!tenant) return json({ error: 'Tenant not found' }, 404)
+  if (role === 'store_admin' && tenant.store !== storeId) return json({ error: 'Not your store' }, 403)
+  if (!body.month) return json({ error: 'month is required' }, 400)
+
+  const meters = await db.collection('meters').find({ id: { $in: tenant.meterIds } }).toArray()
+  const readings = await db.collection('meter_readings').find({ month: body.month, meterId: { $in: tenant.meterIds } }).toArray()
+  const readingMap = {}
+  readings.forEach(r => { readingMap[r.meterId] = r })
+
+  const ebMeters = meters.filter(m => m.type === 'EB' || m.type === 'HT')
+  const dgMeters = meters.filter(m => m.type === 'DG')
+
+  const missing = meters.filter(m => !readingMap[m.id]).map(m => m.name)
+  if (missing.length > 0) {
+    return json({ error: `Readings missing for: ${missing.join(', ')}. Enter them in Monthly Readings first.` }, 400)
+  }
+
+  const ebUnits = ebMeters.reduce((s, m) => s + (readingMap[m.id]?.unitsConsumed || 0), 0)
+  const dgUnits = dgMeters.reduce((s, m) => s + (readingMap[m.id]?.unitsConsumed || 0), 0)
+  const dgDiesel = dgMeters.reduce((s, m) => s + (readingMap[m.id]?.dieselLitres || 0), 0)
+
+  const settings = await db.collection('utility_settings').findOne({ id: 'default' })
+
+  const ebAmount = ebUnits * settings.ebUnitRate
+  const kvaAmount = tenant.kva * settings.kvaDemandRate
+  const subtotal = ebAmount + kvaAmount
+  const tax = subtotal * (settings.ebTaxPercent / 100)
+  const fuelSurcharge = ebUnits * settings.fuelSurchargePerUnit
+  const totalEB = subtotal + tax + fuelSurcharge
+
+  const dgAmount = dgUnits * settings.dgUnitRate
+  const dgTax = dgUnits * settings.dgTaxPerUnit
+  const totalDG = dgAmount + dgTax
+
+  const grandTotal = totalEB + totalDG
+
+  const bill = {
+    id: uuidv4(),
+    tenantId: tenant.id, tenantName: tenant.name, store: tenant.store,
+    recipientName: tenant.recipientName, recipientAddress: tenant.recipientAddress, subject: tenant.subject,
+    month: body.month,
+    kva: tenant.kva,
+    ebMeterDetails: ebMeters.map(m => ({ name: m.name, opening: readingMap[m.id].opening, closing: readingMap[m.id].closing, units: readingMap[m.id].unitsConsumed })),
+    dgMeterDetails: dgMeters.map(m => ({ name: m.name, opening: readingMap[m.id].opening, closing: readingMap[m.id].closing, units: readingMap[m.id].unitsConsumed })),
+    ebUnits, ebUnitRate: settings.ebUnitRate, ebAmount,
+    kvaDemandRate: settings.kvaDemandRate, kvaAmount,
+    subtotal, ebTaxPercent: settings.ebTaxPercent, tax,
+    fuelSurchargePerUnit: settings.fuelSurchargePerUnit, fuelSurcharge,
+    totalEB,
+    dgUnits, dgUnitRate: settings.dgUnitRate, dgAmount,
+    dgTaxPerUnit: settings.dgTaxPerUnit, dgTax, totalDG,
+    dgDiesel,
+    grandTotal,
+    generatedBy: body.by || role,
+    createdAt: new Date().toISOString(),
+  }
+
+  await db.collection('tenant_bills').updateOne(
+    { tenantId: tenant.id, month: body.month },
+    { $set: bill },
+    { upsert: true }
+  )
+  return json(bill)
+}
     // Everything below here requires write access
     if (role === 'store_admin') {
       return json({ error: 'Store admins have read-only access' }, 403)
