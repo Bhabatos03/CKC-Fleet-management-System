@@ -3692,11 +3692,11 @@ function TenantDialog({ open, onOpenChange, onCreated, meters }) {
           <div><Label>Tenant Name</Label><Input value={f.name} onChange={e => set('name', e.target.value)} placeholder="e.g. A Block 3rd Floor Corporate Office" /></div>
           <div className="grid grid-cols-2 gap-3">
             <div><Label>Store</Label>
-              <Select value={f.store} onValueChange={v => set('store', v)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{STORES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-              </Select>
-            </div>
+  <Select value={f.store} onValueChange={v => set('store', v)}>
+    <SelectTrigger><SelectValue /></SelectTrigger>
+    <SelectContent>{UTILITY_STORES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+  </Select>
+</div>
             <div><Label>Sanctioned KVA</Label><Input type="number" value={f.kva} onChange={e => set('kva', e.target.value)} placeholder="e.g. 65" /></div>
           </div>
           <div><Label>Recipient Name</Label><Input value={f.recipientName} onChange={e => set('recipientName', e.target.value)} placeholder="M/s. C. KRISHNIAH CHETTY JEWELLERS PVT. LTD." /></div>
