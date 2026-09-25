@@ -342,6 +342,7 @@ function AdminShell({ user, onLogout, children, active, setActive }) {
   const [drawerOpen, setDrawerOpen] = useState(false)
         const fullNav = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { id: 'utilities', label: 'Utilities', icon: Zap },
   { id: 'vehicles', label: 'Vehicles', icon: Car },
   { id: 'drivers', label: 'Drivers', icon: Users },
   { id: 'trips', label: 'Trip Register', icon: ClipboardList },
