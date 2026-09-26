@@ -758,6 +758,42 @@ if (path === 'utilities/dg-logs') {
   await db.collection('utility_maintenance').insertOne(item)
   return json(clean(item))
 }
+    if (path === 'utilities/amc') {
+  if (!body.equipment || !body.location || !body.amcEndDate) {
+    return json({ error: 'Equipment, location and AMC end date are required' }, 400)
+  }
+  if (body.amcStartDate && body.amcEndDate < body.amcStartDate) {
+    return json({ error: 'AMC end date cannot be before start date' }, 400)
+  }
+  const amcValue = Number(body.amcValue || 0)
+  const gst = Number(body.gst || 0)
+  const item = {
+    id: uuidv4(),
+    location: body.location,
+    equipment: body.equipment,
+    assetId: body.assetId || '',
+    category: body.category || '',
+    vendor: body.vendor || '',
+    amcStartDate: body.amcStartDate || null,
+    amcEndDate: body.amcEndDate,
+    amcValue,
+    gst,
+    totalValue: amcValue + (amcValue * gst / 100),
+    serviceFrequency: body.serviceFrequency || 'Quarterly',
+    visitsPlanned: Number(body.visitsPlanned || 0),
+    visitsCompleted: Number(body.visitsCompleted || 0),
+    nextServiceDate: body.nextServiceDate || null,
+    sla: body.sla || '',
+    contactPerson: body.contactPerson || '',
+    contactNumber: body.contactNumber || '',
+    contractDocument: body.contractDocument || null,
+    status: body.status || 'Active',
+    remarks: body.remarks || '',
+    createdAt: new Date().toISOString(),
+  }
+  await db.collection('utility_amc').insertOne(item)
+  return json(clean(item))
+}
 
     if (path === 'meters') {
   if (role !== 'admin') return json({ error: 'Only Admin can add meters' }, 403)
