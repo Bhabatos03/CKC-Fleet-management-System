@@ -4002,6 +4002,125 @@ function Utilities() {
     </div>
   )
 }
+function UtilityMaintenanceModule() {
+  const [items, setItems] = useState([])
+  const [open, setOpen] = useState(false)
+  const [editing, setEditing] = useState(null)
+  const load = () => api('utilities/maintenance').then(setItems).catch(e => toast.error(e.message))
+  useEffect(() => { load() }, [])
+
+  const dueStatus = (m) => {
+    if (!m.nextDueDate) return { label: 'No due date', color: 'bg-slate-400' }
+    const days = Math.round((new Date(m.nextDueDate) - new Date(todayLocal())) / 864e5)
+    if (days < 0) return { label: `Overdue ${-days}d`, color: 'bg-rose-600' }
+    if (days === 0) return { label: 'Due today', color: 'bg-amber-500' }
+    if (days <= 7) return { label: `Due in ${days}d`, color: 'bg-amber-500' }
+    return { label: `Due ${fmtDate(m.nextDueDate)}`, color: 'bg-emerald-500' }
+  }
+
+  const submit = async (data) => {
+    try {
+      if (editing) { await api(`utilities/maintenance/${editing.id}`, { method: 'PUT', body: data }); toast.success('Updated') }
+      else { await api('utilities/maintenance', { method: 'POST', body: data }); toast.success('Added') }
+      setOpen(false); setEditing(null); load()
+    } catch (e) { toast.error(e.message) }
+  }
+  const remove = async (id) => {
+    if (!confirm('Delete this maintenance record?')) return
+    await api(`utilities/maintenance/${id}`, { method: 'DELETE' })
+    toast.success('Deleted'); load()
+  }
+
+  const overdueCount = items.filter(m => dueStatus(m).label.startsWith('Overdue')).length
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div className="text-sm text-slate-500">{items.length} assets tracked{overdueCount > 0 ? ` · ${overdueCount} overdue` : ''}</div>
+        <Button size="sm" onClick={() => { setEditing(null); setOpen(true) }} className="bg-gradient-to-r from-[#7a0d0d] to-[#a01414] text-white">
+          <Plus className="w-4 h-4 mr-1" /> Add Maintenance Record
+        </Button>
+      </div>
+      <Card><CardContent className="p-4"><div className="overflow-x-auto"><Table>
+        <TableHeader><TableRow>
+          <TableHead>Asset</TableHead><TableHead>Category</TableHead><TableHead>Location</TableHead>
+          <TableHead>Frequency</TableHead><TableHead>Last Done</TableHead><TableHead>Next Due</TableHead>
+          <TableHead>Vendor</TableHead><TableHead>Cost</TableHead><TableHead></TableHead>
+        </TableRow></TableHeader>
+        <TableBody>
+          {items.map(m => {
+            const d = dueStatus(m)
+            return (
+              <TableRow key={m.id}>
+                <TableCell className="font-medium">{m.asset}</TableCell>
+                <TableCell><Badge variant="outline">{m.category}</Badge></TableCell>
+                <TableCell className="text-xs">{m.location}</TableCell>
+                <TableCell className="text-xs">{m.frequency}</TableCell>
+                <TableCell className="text-xs">{fmtDate(m.lastMaintenanceDate)}</TableCell>
+                <TableCell><Badge className={`${d.color} text-white`}>{d.label}</Badge></TableCell>
+                <TableCell className="text-xs">{m.vendor || '-'}</TableCell>
+                <TableCell className="text-xs">{fmtINR(m.actualCost || m.estimatedCost)}</TableCell>
+                <TableCell className="text-right space-x-1">
+                  <Button size="sm" variant="outline" onClick={() => { setEditing(m); setOpen(true) }}>Edit</Button>
+                  <Button size="sm" variant="destructive" onClick={() => remove(m.id)}><Trash2 className="w-3 h-3" /></Button>
+                </TableCell>
+              </TableRow>
+            )
+          })}
+          {items.length === 0 && <TableRow><TableCell colSpan={9} className="text-center text-slate-500 py-8">No maintenance records yet.</TableCell></TableRow>}
+        </TableBody>
+      </Table></div></CardContent></Card>
+      <UtilityMaintenanceDialog open={open} onOpenChange={setOpen} onSubmit={submit} initial={editing} />
+    </div>
+  )
+}
+
+function UtilityMaintenanceDialog({ open, onOpenChange, onSubmit, initial }) {
+  const [f, setF] = useState({})
+  useEffect(() => {
+    setF(initial || {
+      location: '', asset: '', category: 'DG', maintenanceType: '', frequency: 'Monthly',
+      lastMaintenanceDate: '', nextDueDate: '', vendor: '', responsiblePerson: '',
+      estimatedCost: '', actualCost: '', status: 'Upcoming', remarks: '',
+    })
+  }, [initial, open])
+  const set = (k, v) => setF(x => ({ ...x, [k]: v }))
+  const categories = ['DG', 'Electrical Panel', 'Transformer', 'UPS', 'HVAC', 'Lift', 'Water Pump', 'Electrical Equipment', 'Plumbing', 'Other']
+  const frequencies = ['Daily', 'Weekly', 'Monthly', 'Quarterly', 'Half-Yearly', 'Annual', 'Custom']
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader><DialogTitle>{initial ? 'Edit' : 'Add'} Maintenance Record</DialogTitle></DialogHeader>
+        <div className="grid grid-cols-2 gap-3">
+          <div><Label>Location *</Label><Input value={f.location || ''} onChange={e => set('location', e.target.value)} /></div>
+          <div><Label>Category *</Label>
+            <Select value={f.category} onValueChange={v => set('category', v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>{categories.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div className="col-span-2"><Label>Asset *</Label><Input value={f.asset || ''} onChange={e => set('asset', e.target.value)} placeholder="e.g. DG Set 1 - 125 KVA" /></div>
+          <div><Label>Maintenance Type</Label><Input value={f.maintenanceType || ''} onChange={e => set('maintenanceType', e.target.value)} placeholder="e.g. Oil change, filter service" /></div>
+          <div><Label>Frequency</Label>
+            <Select value={f.frequency} onValueChange={v => set('frequency', v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>{frequencies.map(fr => <SelectItem key={fr} value={fr}>{fr}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div><Label>Last Maintenance Date</Label><Input type="date" value={f.lastMaintenanceDate || ''} onChange={e => set('lastMaintenanceDate', e.target.value)} /></div>
+          <div><Label>Next Due Date</Label><Input type="date" value={f.nextDueDate || ''} onChange={e => set('nextDueDate', e.target.value)} /></div>
+          <div><Label>Vendor</Label><Input value={f.vendor || ''} onChange={e => set('vendor', e.target.value)} /></div>
+          <div><Label>Responsible Person</Label><Input value={f.responsiblePerson || ''} onChange={e => set('responsiblePerson', e.target.value)} /></div>
+          <div><Label>Estimated Cost</Label><Input type="number" value={f.estimatedCost || ''} onChange={e => set('estimatedCost', e.target.value)} /></div>
+          <div><Label>Actual Cost</Label><Input type="number" value={f.actualCost || ''} onChange={e => set('actualCost', e.target.value)} /></div>
+          <div className="col-span-2"><Label>Remarks</Label><Textarea value={f.remarks || ''} onChange={e => set('remarks', e.target.value)} /></div>
+        </div>
+        <DialogFooter><Button onClick={() => onSubmit(f)} disabled={!f.asset || !f.location} className="bg-[#7a0d0d] hover:bg-[#5c0a0a]">Save</Button></DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
 function DGModule() {
   const [subtab, setSubtab] = useState('logs')
   const [units, setUnits] = useState([])
