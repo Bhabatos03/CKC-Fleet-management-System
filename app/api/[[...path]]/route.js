@@ -831,6 +831,43 @@ if (path === 'utilities/dg-logs') {
   return json(clean(item))
 }
 
+    if (path === 'utilities/projects') {
+  if (!body.projectName || !body.location) {
+    return json({ error: 'Project name and location are required' }, 400)
+  }
+  if (body.startDate && body.targetCompletionDate && body.targetCompletionDate < body.startDate) {
+    return json({ error: 'Target completion date cannot be before start date' }, 400)
+  }
+  const approvedBudget = Number(body.approvedBudget || 0)
+  const actualCost = Number(body.actualCost || 0)
+  const item = {
+    id: uuidv4(),
+    location: body.location,
+    projectName: body.projectName,
+    category: body.category || '',
+    description: body.description || '',
+    projectOwner: body.projectOwner || '',
+    vendor: body.vendor || '',
+    proposedBudget: Number(body.proposedBudget || 0),
+    approvedBudget,
+    poValue: Number(body.poValue || 0),
+    actualCost,
+    balanceBudget: approvedBudget - actualCost,
+    capexUtilizationPercent: approvedBudget > 0 ? Number(((actualCost / approvedBudget) * 100).toFixed(1)) : 0,
+    startDate: body.startDate || null,
+    targetCompletionDate: body.targetCompletionDate || null,
+    actualCompletionDate: body.actualCompletionDate || null,
+    status: body.status || 'Proposal',
+    approvalStatus: body.approvalStatus || 'Pending',
+    priority: body.priority || 'Medium',
+    remarks: body.remarks || '',
+    documents: body.documents || [],
+    photos: body.photos || [],
+    createdAt: new Date().toISOString(),
+  }
+  await db.collection('utility_projects').insertOne(item)
+  return json(clean(item))
+}
     if (path === 'meters') {
   if (role !== 'admin') return json({ error: 'Only Admin can add meters' }, 403)
   if (!body.name || !body.type || !body.store) return json({ error: 'Name, type and store are required' }, 400)
