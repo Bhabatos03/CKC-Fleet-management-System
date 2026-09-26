@@ -4001,6 +4001,181 @@ function Utilities() {
     </div>
   )
 }
+function DGModule() {
+  const [subtab, setSubtab] = useState('logs')
+  const [units, setUnits] = useState([])
+  const [logs, setLogs] = useState([])
+  const [unitOpen, setUnitOpen] = useState(false)
+  const [logOpen, setLogOpen] = useState(false)
+  const load = () => {
+    api('utilities/dg-units').then(setUnits).catch(e => toast.error(e.message))
+    api('utilities/dg-logs').then(setLogs).catch(e => toast.error(e.message))
+  }
+  useEffect(() => { load() }, [])
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div className="flex gap-2">
+          <button onClick={() => setSubtab('logs')} className={`px-3 py-1.5 rounded-lg text-sm ${subtab === 'logs' ? 'bg-slate-800 text-white' : 'bg-slate-100'}`}>DG Log</button>
+          <button onClick={() => setSubtab('units')} className={`px-3 py-1.5 rounded-lg text-sm ${subtab === 'units' ? 'bg-slate-800 text-white' : 'bg-slate-100'}`}>DG Master</button>
+        </div>
+        {subtab === 'units'
+          ? <Button size="sm" onClick={() => setUnitOpen(true)} className="bg-gradient-to-r from-[#7a0d0d] to-[#a01414] text-white"><Plus className="w-4 h-4 mr-1" /> Add DG</Button>
+          : <Button size="sm" onClick={() => setLogOpen(true)} className="bg-gradient-to-r from-[#7a0d0d] to-[#a01414] text-white"><Plus className="w-4 h-4 mr-1" /> Log Entry</Button>}
+      </div>
+
+      {subtab === 'units' && (
+        <Card><CardContent className="p-4"><div className="overflow-x-auto"><Table>
+          <TableHeader><TableRow>
+            <TableHead>DG ID</TableHead><TableHead>Location</TableHead><TableHead>Capacity (KVA)</TableHead>
+            <TableHead>Make/Model</TableHead><TableHead>Vendor</TableHead><TableHead>Status</TableHead>
+          </TableRow></TableHeader>
+          <TableBody>
+            {units.map(u => (
+              <TableRow key={u.id}>
+                <TableCell className="font-mono text-xs font-semibold">{u.dgId}</TableCell>
+                <TableCell>{u.location}</TableCell>
+                <TableCell>{u.capacityKva}</TableCell>
+                <TableCell>{u.make} {u.model}</TableCell>
+                <TableCell>{u.vendor || '-'}</TableCell>
+                <TableCell><Badge>{u.status}</Badge></TableCell>
+              </TableRow>
+            ))}
+            {units.length === 0 && <TableRow><TableCell colSpan={6} className="text-center text-slate-500 py-8">No DGs added yet.</TableCell></TableRow>}
+          </TableBody>
+        </Table></div></CardContent></Card>
+      )}
+
+      {subtab === 'logs' && (
+        <Card><CardContent className="p-4"><div className="overflow-x-auto"><Table>
+          <TableHeader><TableRow>
+            <TableHead>Date</TableHead><TableHead>DG</TableHead><TableHead>Opening Hr</TableHead>
+            <TableHead>Closing Hr</TableHead><TableHead>Running Hrs</TableHead><TableHead>Diesel Consumed</TableHead>
+            <TableHead>Diesel Closing</TableHead><TableHead>Operator</TableHead>
+          </TableRow></TableHeader>
+          <TableBody>
+            {logs.map(l => (
+              <TableRow key={l.id}>
+                <TableCell className="text-xs">{fmtDate(l.date)}</TableCell>
+                <TableCell className="font-mono text-xs">{l.dgId}</TableCell>
+                <TableCell>{l.openingHourMeter}</TableCell>
+                <TableCell>{l.closingHourMeter}</TableCell>
+                <TableCell className="font-semibold">{l.runningHours}</TableCell>
+                <TableCell>{l.dieselConsumed} L</TableCell>
+                <TableCell>{l.dieselClosingBalance} L</TableCell>
+                <TableCell className="text-xs">{l.operator || '-'}</TableCell>
+              </TableRow>
+            ))}
+            {logs.length === 0 && <TableRow><TableCell colSpan={8} className="text-center text-slate-500 py-8">No DG log entries yet.</TableCell></TableRow>}
+          </TableBody>
+        </Table></div></CardContent></Card>
+      )}
+
+      <DGUnitFormDialog open={unitOpen} onOpenChange={setUnitOpen} onCreated={load} />
+      <DGLogFormDialog open={logOpen} onOpenChange={setLogOpen} onCreated={load} units={units} logs={logs} />
+    </div>
+  )
+}
+
+function DGUnitFormDialog({ open, onOpenChange, onCreated }) {
+  const [f, setF] = useState({})
+  useEffect(() => { setF({ dgId: '', location: '', capacityKva: '', make: '', model: '', serialNumber: '', installationDate: '', fuelType: 'Diesel', vendor: '', amcStatus: '', status: 'Active', remarks: '' }) }, [open])
+  const set = (k, v) => setF(x => ({ ...x, [k]: v }))
+  const submit = async () => {
+    try {
+      await api('utilities/dg-units', { method: 'POST', body: f })
+      toast.success('DG added')
+      onOpenChange(false); onCreated()
+    } catch (e) { toast.error(e.message) }
+  }
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader><DialogTitle>Add DG</DialogTitle></DialogHeader>
+        <div className="grid grid-cols-2 gap-3">
+          <div><Label>DG ID *</Label><Input value={f.dgId || ''} onChange={e => set('dgId', e.target.value)} placeholder="e.g. DG-01" /></div>
+          <div><Label>Location *</Label><Input value={f.location || ''} onChange={e => set('location', e.target.value)} /></div>
+          <div><Label>Capacity (KVA)</Label><Input type="number" value={f.capacityKva || ''} onChange={e => set('capacityKva', e.target.value)} /></div>
+          <div><Label>Fuel Type</Label><Input value={f.fuelType || ''} onChange={e => set('fuelType', e.target.value)} /></div>
+          <div><Label>Make</Label><Input value={f.make || ''} onChange={e => set('make', e.target.value)} /></div>
+          <div><Label>Model</Label><Input value={f.model || ''} onChange={e => set('model', e.target.value)} /></div>
+          <div><Label>Serial Number</Label><Input value={f.serialNumber || ''} onChange={e => set('serialNumber', e.target.value)} /></div>
+          <div><Label>Installation Date</Label><Input type="date" value={f.installationDate || ''} onChange={e => set('installationDate', e.target.value)} /></div>
+          <div><Label>Vendor</Label><Input value={f.vendor || ''} onChange={e => set('vendor', e.target.value)} /></div>
+          <div><Label>AMC Status</Label><Input value={f.amcStatus || ''} onChange={e => set('amcStatus', e.target.value)} /></div>
+          <div className="col-span-2"><Label>Remarks</Label><Textarea value={f.remarks || ''} onChange={e => set('remarks', e.target.value)} /></div>
+        </div>
+        <DialogFooter><Button onClick={submit} disabled={!f.dgId || !f.location} className="bg-[#7a0d0d] hover:bg-[#5c0a0a]">Save</Button></DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+function DGLogFormDialog({ open, onOpenChange, onCreated, units, logs }) {
+  const [f, setF] = useState({})
+  useEffect(() => { setF({ dgId: '', location: '', date: new Date().toISOString().slice(0, 10), openingHourMeter: '', closingHourMeter: '', dieselOpeningBalance: '', dieselAdded: '', dieselConsumed: '', reasonForRunning: '', operator: '', remarks: '' }) }, [open])
+  const set = (k, v) => setF(x => ({ ...x, [k]: v }))
+
+  // Auto-fill opening hour meter / diesel opening balance from this DG's last log entry
+  useEffect(() => {
+    if (!f.dgId) return
+    const lastLog = logs.find(l => l.dgId === f.dgId)
+    const unit = units.find(u => u.dgId === f.dgId)
+    setF(x => ({
+      ...x,
+      location: unit?.location || x.location,
+      openingHourMeter: lastLog ? lastLog.closingHourMeter : (x.openingHourMeter || 0),
+      dieselOpeningBalance: lastLog ? lastLog.dieselClosingBalance : (x.dieselOpeningBalance || 0),
+    }))
+  }, [f.dgId])
+
+  const runningHours = Number(f.closingHourMeter || 0) - Number(f.openingHourMeter || 0)
+  const dieselClosing = Number(f.dieselOpeningBalance || 0) + Number(f.dieselAdded || 0) - Number(f.dieselConsumed || 0)
+
+  const submit = async () => {
+    try {
+      await api('utilities/dg-logs', { method: 'POST', body: f })
+      toast.success('DG log saved')
+      onOpenChange(false); onCreated()
+    } catch (e) { toast.error(e.message) }
+  }
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-xl">
+        <DialogHeader><DialogTitle>Log DG Entry</DialogTitle></DialogHeader>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="col-span-2">
+            <Label>DG *</Label>
+            <Select value={f.dgId} onValueChange={v => set('dgId', v)}>
+              <SelectTrigger><SelectValue placeholder="Select DG" /></SelectTrigger>
+              <SelectContent>{units.map(u => <SelectItem key={u.id} value={u.dgId}>{u.dgId} — {u.location}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div><Label>Date</Label><Input type="date" value={f.date || ''} onChange={e => set('date', e.target.value)} /></div>
+          <div><Label>Operator</Label><Input value={f.operator || ''} onChange={e => set('operator', e.target.value)} /></div>
+          <div><Label>Opening Hour Meter</Label><Input type="number" value={f.openingHourMeter || ''} onChange={e => set('openingHourMeter', e.target.value)} /></div>
+          <div><Label>Closing Hour Meter *</Label><Input type="number" value={f.closingHourMeter || ''} onChange={e => set('closingHourMeter', e.target.value)} /></div>
+          <div className="col-span-2 bg-slate-50 rounded p-2 text-sm"><span className="text-slate-500">Running Hours: </span><b className={runningHours < 0 ? 'text-rose-600' : ''}>{runningHours}</b></div>
+
+          <div><Label>Diesel Opening (L)</Label><Input type="number" value={f.dieselOpeningBalance || ''} onChange={e => set('dieselOpeningBalance', e.target.value)} /></div>
+          <div><Label>Diesel Added (L)</Label><Input type="number" value={f.dieselAdded || ''} onChange={e => set('dieselAdded', e.target.value)} /></div>
+          <div><Label>Diesel Consumed (L)</Label><Input type="number" value={f.dieselConsumed || ''} onChange={e => set('dieselConsumed', e.target.value)} /></div>
+          <div className="bg-slate-50 rounded p-2 text-sm"><span className="text-slate-500">Diesel Closing: </span><b className={dieselClosing < 0 ? 'text-rose-600' : ''}>{dieselClosing} L</b></div>
+          {dieselClosing < 0 && (
+            <div className="col-span-2 text-xs text-rose-600 bg-rose-50 border border-rose-200 rounded p-2">
+              Diesel closing balance cannot be negative — check your opening, added and consumed values.
+            </div>
+          )}
+
+          <div className="col-span-2"><Label>Reason for Running</Label><Input value={f.reasonForRunning || ''} onChange={e => set('reasonForRunning', e.target.value)} placeholder="e.g. Power outage, scheduled test run" /></div>
+          <div className="col-span-2"><Label>Remarks</Label><Textarea value={f.remarks || ''} onChange={e => set('remarks', e.target.value)} /></div>
+        </div>
+        <DialogFooter><Button onClick={submit} disabled={!f.dgId || !f.closingHourMeter || dieselClosing < 0} className="bg-[#7a0d0d] hover:bg-[#5c0a0a]">Save Log</Button></DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
 
 function UtilitiesDashboard() {
   const [data, setData] = useState(null)
