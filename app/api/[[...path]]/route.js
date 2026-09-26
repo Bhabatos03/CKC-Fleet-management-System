@@ -330,6 +330,10 @@ if (path === 'utilities/dg-logs') {
       const items = await db.collection('electricity_readings').find({}).sort({ readingDate: -1 }).limit(500).toArray()
       return json(items.map(clean))
     }
+    if (path === 'utilities/maintenance') {
+  const items = await db.collection('utility_maintenance').find({}).sort({ nextDueDate: 1 }).toArray()
+  return json(items.map(clean))
+}
 
     if (path === 'utilities/dashboard') {
       const now = new Date()
