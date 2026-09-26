@@ -3998,12 +3998,8 @@ function Utilities() {
 {tab === 'compliance' && <ComplianceModule />}
 {tab === 'projects' && <ProjectsModule />}
 {tab === 'vendors' && <VendorsModule />}
-{tab === 'reports' && (
-        <Card><CardContent className="p-10 text-center text-slate-400">
-          {tabs.find(t => t.id === tab)?.label} — coming in the next phase.
-        </CardContent></Card>
-      )}
-    </div>
+{tab === 'reports' && <UtilitiesReportsModule />}
+</div>
   )
 }
 function VendorsModule() {
