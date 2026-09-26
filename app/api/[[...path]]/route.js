@@ -1130,7 +1130,7 @@ export async function PUT(request, { params }) {
       return json({ error: 'Store admins have read-only access' }, 403)
     }
 
-    const map = { vehicles: 'vehicles', drivers: 'drivers', maintenance: 'maintenance', electricity_meters: 'electricity_meters', electricity_readings: 'electricity_readings' }
+    const map = { vehicles: 'vehicles', drivers: 'drivers', maintenance: 'maintenance', electricity_meters: 'electricity_meters', electricity_readings: 'electricity_readings', dg_units: 'dg_units', dg_logs: 'dg_logs' }
     if (!map[col]) return json({ error: 'Not found' }, 404)
     delete body._id
     delete body.id
