@@ -3997,7 +3997,8 @@ function Utilities() {
 {tab === 'amc' && <AMCModule />}
 {tab === 'compliance' && <ComplianceModule />}
 {tab === 'projects' && <ProjectsModule />}
-{['vendors', 'reports'].includes(tab) && (
+{tab === 'vendors' && <VendorsModule />}
+{tab === 'reports' && (
         <Card><CardContent className="p-10 text-center text-slate-400">
           {tabs.find(t => t.id === tab)?.label} — coming in the next phase.
         </CardContent></Card>
