@@ -4005,6 +4005,153 @@ function Utilities() {
     </div>
   )
 }
+function ProjectsModule() {
+  const [items, setItems] = useState([])
+  const [open, setOpen] = useState(false)
+  const [editing, setEditing] = useState(null)
+  const load = () => api('utilities/projects').then(setItems).catch(e => toast.error(e.message))
+  useEffect(() => { load() }, [])
+
+  const submit = async (data) => {
+    try {
+      if (editing) { await api(`utilities/projects/${editing.id}`, { method: 'PUT', body: data }); toast.success('Updated') }
+      else { await api('utilities/projects', { method: 'POST', body: data }); toast.success('Added') }
+      setOpen(false); setEditing(null); load()
+    } catch (e) { toast.error(e.message) }
+  }
+  const remove = async (id) => {
+    if (!confirm('Delete this project?')) return
+    await api(`utilities/projects/${id}`, { method: 'DELETE' })
+    toast.success('Deleted'); load()
+  }
+
+  const overBudgetCount = items.filter(p => p.actualCost > p.approvedBudget && p.approvedBudget > 0).length
+  const totalApproved = items.reduce((s, p) => s + (p.approvedBudget || 0), 0)
+  const totalActual = items.reduce((s, p) => s + (p.actualCost || 0), 0)
+
+  const statusColor = (s) => ({
+    'Proposal': 'bg-slate-400', 'Evaluation': 'bg-slate-500', 'Approval Pending': 'bg-amber-500',
+    'Approved': 'bg-blue-500', 'PO Issued': 'bg-indigo-500', 'Work in Progress': 'bg-amber-600',
+    'On Hold': 'bg-rose-400', 'Completed': 'bg-emerald-500', 'Closed': 'bg-emerald-700', 'Cancelled': 'bg-slate-600',
+  }[s] || 'bg-slate-400')
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div className="flex gap-4 text-sm">
+          <div><span className="text-slate-500">Projects: </span><b>{items.length}</b></div>
+          <div><span className="text-slate-500">Approved Budget: </span><b>{fmtINR(totalApproved)}</b></div>
+          <div><span className="text-slate-500">Actual Spend: </span><b>{fmtINR(totalActual)}</b></div>
+          {overBudgetCount > 0 && <div className="text-rose-600"><b>{overBudgetCount} over budget</b></div>}
+        </div>
+        <Button size="sm" onClick={() => { setEditing(null); setOpen(true) }} className="bg-gradient-to-r from-[#7a0d0d] to-[#a01414] text-white">
+          <Plus className="w-4 h-4 mr-1" /> Add Project
+        </Button>
+      </div>
+      <Card><CardContent className="p-4"><div className="overflow-x-auto"><Table>
+        <TableHeader><TableRow>
+          <TableHead>Project</TableHead><TableHead>Location</TableHead><TableHead>Approved</TableHead>
+          <TableHead>Actual</TableHead><TableHead>Balance</TableHead><TableHead>Utilization</TableHead>
+          <TableHead>Status</TableHead><TableHead></TableHead>
+        </TableRow></TableHeader>
+        <TableBody>
+          {items.map(p => {
+            const overBudget = p.actualCost > p.approvedBudget && p.approvedBudget > 0
+            return (
+              <TableRow key={p.id} className={overBudget ? 'bg-rose-50' : ''}>
+                <TableCell className="font-medium">{p.projectName}</TableCell>
+                <TableCell className="text-xs">{p.location}</TableCell>
+                <TableCell className="text-xs">{fmtINR(p.approvedBudget)}</TableCell>
+                <TableCell className="text-xs">{fmtINR(p.actualCost)}</TableCell>
+                <TableCell className={`text-xs ${p.balanceBudget < 0 ? 'text-rose-600 font-semibold' : ''}`}>{fmtINR(p.balanceBudget)}</TableCell>
+                <TableCell className={overBudget ? 'text-rose-600 font-semibold' : ''}>{p.capexUtilizationPercent}%</TableCell>
+                <TableCell><Badge className={`${statusColor(p.status)} text-white`}>{p.status}</Badge></TableCell>
+                <TableCell className="text-right space-x-1">
+                  <Button size="sm" variant="outline" onClick={() => { setEditing(p); setOpen(true) }}>Edit</Button>
+                  <Button size="sm" variant="destructive" onClick={() => remove(p.id)}><Trash2 className="w-3 h-3" /></Button>
+                </TableCell>
+              </TableRow>
+            )
+          })}
+          {items.length === 0 && <TableRow><TableCell colSpan={8} className="text-center text-slate-500 py-8">No projects yet.</TableCell></TableRow>}
+        </TableBody>
+      </Table></div></CardContent></Card>
+      <ProjectDialog open={open} onOpenChange={setOpen} onSubmit={submit} initial={editing} />
+    </div>
+  )
+}
+
+function ProjectDialog({ open, onOpenChange, onSubmit, initial }) {
+  const [f, setF] = useState({})
+  useEffect(() => {
+    setF(initial || {
+      location: '', projectName: '', category: '', description: '', projectOwner: '', vendor: '',
+      proposedBudget: '', approvedBudget: '', poValue: '', actualCost: '',
+      startDate: '', targetCompletionDate: '', actualCompletionDate: '',
+      status: 'Proposal', approvalStatus: 'Pending', priority: 'Medium', remarks: '',
+    })
+  }, [initial, open])
+  const set = (k, v) => setF(x => ({ ...x, [k]: v }))
+  const statuses = ['Proposal', 'Evaluation', 'Approval Pending', 'Approved', 'PO Issued', 'Work in Progress', 'On Hold', 'Completed', 'Closed', 'Cancelled']
+
+  const approvedBudget = Number(f.approvedBudget || 0)
+  const actualCost = Number(f.actualCost || 0)
+  const balanceBudget = approvedBudget - actualCost
+  const utilizationPercent = approvedBudget > 0 ? ((actualCost / approvedBudget) * 100).toFixed(1) : 0
+  const overBudget = actualCost > approvedBudget && approvedBudget > 0
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader><DialogTitle>{initial ? 'Edit' : 'Add'} Project</DialogTitle></DialogHeader>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="col-span-2"><Label>Project Name *</Label><Input value={f.projectName || ''} onChange={e => set('projectName', e.target.value)} /></div>
+          <div><Label>Location *</Label><Input value={f.location || ''} onChange={e => set('location', e.target.value)} /></div>
+          <div><Label>Category</Label><Input value={f.category || ''} onChange={e => set('category', e.target.value)} placeholder="e.g. HVAC upgrade, renovation" /></div>
+          <div className="col-span-2"><Label>Description</Label><Textarea value={f.description || ''} onChange={e => set('description', e.target.value)} /></div>
+          <div><Label>Project Owner</Label><Input value={f.projectOwner || ''} onChange={e => set('projectOwner', e.target.value)} /></div>
+          <div><Label>Vendor</Label><Input value={f.vendor || ''} onChange={e => set('vendor', e.target.value)} /></div>
+          <div><Label>Proposed Budget</Label><Input type="number" value={f.proposedBudget || ''} onChange={e => set('proposedBudget', e.target.value)} /></div>
+          <div><Label>Approved Budget</Label><Input type="number" value={f.approvedBudget || ''} onChange={e => set('approvedBudget', e.target.value)} /></div>
+          <div><Label>PO Value</Label><Input type="number" value={f.poValue || ''} onChange={e => set('poValue', e.target.value)} /></div>
+          <div><Label>Actual Cost</Label><Input type="number" value={f.actualCost || ''} onChange={e => set('actualCost', e.target.value)} /></div>
+          <div className={`col-span-2 rounded p-2 text-sm ${overBudget ? 'bg-rose-50 border border-rose-200' : 'bg-slate-50'}`}>
+            <span className="text-slate-500">Balance: </span><b className={balanceBudget < 0 ? 'text-rose-600' : ''}>{fmtINR(balanceBudget)}</b>
+            <span className="text-slate-500 ml-4">Utilization: </span><b className={overBudget ? 'text-rose-600' : ''}>{utilizationPercent}%</b>
+            {overBudget && <div className="text-xs text-rose-600 mt-1">⚠ Actual cost exceeds approved budget</div>}
+          </div>
+          <div><Label>Start Date</Label><Input type="date" value={f.startDate || ''} onChange={e => set('startDate', e.target.value)} /></div>
+          <div><Label>Target Completion</Label><Input type="date" value={f.targetCompletionDate || ''} min={f.startDate || undefined} onChange={e => set('targetCompletionDate', e.target.value)} /></div>
+          <div><Label>Actual Completion</Label><Input type="date" value={f.actualCompletionDate || ''} onChange={e => set('actualCompletionDate', e.target.value)} /></div>
+          <div><Label>Priority</Label>
+            <Select value={f.priority} onValueChange={v => set('priority', v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent><SelectItem value="Low">Low</SelectItem><SelectItem value="Medium">Medium</SelectItem><SelectItem value="High">High</SelectItem></SelectContent>
+            </Select>
+          </div>
+          <div><Label>Status</Label>
+            <Select value={f.status} onValueChange={v => set('status', v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>{statuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div><Label>Approval Status</Label>
+            <Select value={f.approvalStatus} onValueChange={v => set('approvalStatus', v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent><SelectItem value="Pending">Pending</SelectItem><SelectItem value="Approved">Approved</SelectItem><SelectItem value="Rejected">Rejected</SelectItem></SelectContent>
+            </Select>
+          </div>
+          <div className="col-span-2"><Label>Remarks</Label><Textarea value={f.remarks || ''} onChange={e => set('remarks', e.target.value)} /></div>
+        </div>
+        <DialogFooter>
+          <Button onClick={() => onSubmit(f)} disabled={!f.projectName || !f.location} className="bg-[#7a0d0d] hover:bg-[#5c0a0a]">
+            Save
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
 function ComplianceModule() {
   const [items, setItems] = useState([])
   const [open, setOpen] = useState(false)
