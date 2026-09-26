@@ -4004,6 +4004,127 @@ function Utilities() {
     </div>
   )
 }
+function ComplianceModule() {
+  const [items, setItems] = useState([])
+  const [open, setOpen] = useState(false)
+  const [editing, setEditing] = useState(null)
+  const load = () => api('utilities/compliance').then(setItems).catch(e => toast.error(e.message))
+  useEffect(() => { load() }, [])
+
+  const complianceStatus = (c) => {
+    if (c.status === 'Not Applicable') return { label: 'Not Applicable', color: 'bg-slate-400' }
+    if (!c.expiryDate) return { label: 'No expiry set', color: 'bg-slate-400' }
+    const days = Math.round((new Date(c.expiryDate) - new Date(todayLocal())) / 864e5)
+    if (days < 0) return { label: `Overdue ${-days}d`, color: 'bg-rose-600' }
+    if (days <= 30) return { label: `Due in ${days}d`, color: 'bg-amber-500' }
+    return { label: 'Compliant', color: 'bg-emerald-500' }
+  }
+
+  const submit = async (data) => {
+    try {
+      if (editing) { await api(`utilities/compliance/${editing.id}`, { method: 'PUT', body: data }); toast.success('Updated') }
+      else { await api('utilities/compliance', { method: 'POST', body: data }); toast.success('Added') }
+      setOpen(false); setEditing(null); load()
+    } catch (e) { toast.error(e.message) }
+  }
+  const remove = async (id) => {
+    if (!confirm('Delete this compliance record?')) return
+    await api(`utilities/compliance/${id}`, { method: 'DELETE' })
+    toast.success('Deleted'); load()
+  }
+
+  const overdueCount = items.filter(c => complianceStatus(c).label.startsWith('Overdue')).length
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div className="text-sm text-slate-500">{items.length} compliance items{overdueCount > 0 ? ` · ${overdueCount} overdue` : ''}</div>
+        <Button size="sm" onClick={() => { setEditing(null); setOpen(true) }} className="bg-gradient-to-r from-[#7a0d0d] to-[#a01414] text-white">
+          <Plus className="w-4 h-4 mr-1" /> Add Compliance Record
+        </Button>
+      </div>
+      <Card><CardContent className="p-4"><div className="overflow-x-auto"><Table>
+        <TableHeader><TableRow>
+          <TableHead>Type</TableHead><TableHead>Requirement</TableHead><TableHead>Location</TableHead>
+          <TableHead>Authority</TableHead><TableHead>Cert. No.</TableHead><TableHead>Expiry</TableHead>
+          <TableHead>Status</TableHead><TableHead></TableHead>
+        </TableRow></TableHeader>
+        <TableBody>
+          {items.map(c => {
+            const s = complianceStatus(c)
+            return (
+              <TableRow key={c.id}>
+                <TableCell className="font-medium">{c.complianceType}</TableCell>
+                <TableCell className="text-xs max-w-[200px] truncate">{c.requirement}</TableCell>
+                <TableCell className="text-xs">{c.location}</TableCell>
+                <TableCell className="text-xs">{c.authority || '-'}</TableCell>
+                <TableCell className="text-xs">{c.certificateNumber || '-'}</TableCell>
+                <TableCell className="text-xs">{fmtDate(c.expiryDate)}</TableCell>
+                <TableCell><Badge className={`${s.color} text-white`}>{s.label}</Badge></TableCell>
+                <TableCell className="text-right space-x-1">
+                  <Button size="sm" variant="outline" onClick={() => { setEditing(c); setOpen(true) }}>Edit</Button>
+                  <Button size="sm" variant="destructive" onClick={() => remove(c.id)}><Trash2 className="w-3 h-3" /></Button>
+                </TableCell>
+              </TableRow>
+            )
+          })}
+          {items.length === 0 && <TableRow><TableCell colSpan={8} className="text-center text-slate-500 py-8">No compliance records yet.</TableCell></TableRow>}
+        </TableBody>
+      </Table></div></CardContent></Card>
+      <ComplianceDialog open={open} onOpenChange={setOpen} onSubmit={submit} initial={editing} />
+    </div>
+  )
+}
+
+function ComplianceDialog({ open, onOpenChange, onSubmit, initial }) {
+  const [f, setF] = useState({})
+  useEffect(() => {
+    setF(initial || {
+      location: '', complianceType: 'Electrical Safety', requirement: '', authority: '',
+      certificateNumber: '', issueDate: '', expiryDate: '', renewalDueDate: '',
+      responsiblePerson: '', vendorAgency: '', cost: '', status: 'Compliant', remarks: '',
+    })
+  }, [initial, open])
+  const set = (k, v) => setF(x => ({ ...x, [k]: v }))
+  const types = ['Electrical Safety', 'Electrical Inspection', 'DG Compliance', 'Lift License', 'Fire Safety', 'Fire Equipment', 'Pollution-related Compliance', 'Other']
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader><DialogTitle>{initial ? 'Edit' : 'Add'} Compliance Record</DialogTitle></DialogHeader>
+        <div className="grid grid-cols-2 gap-3">
+          <div><Label>Location *</Label><Input value={f.location || ''} onChange={e => set('location', e.target.value)} /></div>
+          <div><Label>Compliance Type *</Label>
+            <Select value={f.complianceType} onValueChange={v => set('complianceType', v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>{types.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div className="col-span-2"><Label>Requirement *</Label><Input value={f.requirement || ''} onChange={e => set('requirement', e.target.value)} placeholder="e.g. Annual electrical safety certificate" /></div>
+          <div><Label>Authority</Label><Input value={f.authority || ''} onChange={e => set('authority', e.target.value)} placeholder="e.g. KSEB, Fire Dept." /></div>
+          <div><Label>Certificate Number</Label><Input value={f.certificateNumber || ''} onChange={e => set('certificateNumber', e.target.value)} /></div>
+          <div><Label>Issue Date</Label><Input type="date" value={f.issueDate || ''} onChange={e => set('issueDate', e.target.value)} /></div>
+          <div><Label>Expiry Date</Label><Input type="date" value={f.expiryDate || ''} min={f.issueDate || undefined} onChange={e => set('expiryDate', e.target.value)} /></div>
+          <div><Label>Renewal Due Date</Label><Input type="date" value={f.renewalDueDate || ''} onChange={e => set('renewalDueDate', e.target.value)} /></div>
+          <div><Label>Responsible Person</Label><Input value={f.responsiblePerson || ''} onChange={e => set('responsiblePerson', e.target.value)} /></div>
+          <div><Label>Vendor / Agency</Label><Input value={f.vendorAgency || ''} onChange={e => set('vendorAgency', e.target.value)} /></div>
+          <div><Label>Cost</Label><Input type="number" value={f.cost || ''} onChange={e => set('cost', e.target.value)} /></div>
+          <div><Label>Status</Label>
+            <Select value={f.status} onValueChange={v => set('status', v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Compliant">Compliant</SelectItem>
+                <SelectItem value="Not Applicable">Not Applicable</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="col-span-2"><Label>Remarks</Label><Textarea value={f.remarks || ''} onChange={e => set('remarks', e.target.value)} /></div>
+        </div>
+        <DialogFooter><Button onClick={() => onSubmit(f)} disabled={!f.location || !f.requirement} className="bg-[#7a0d0d] hover:bg-[#5c0a0a]">Save</Button></DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
 function AMCModule() {
   const [items, setItems] = useState([])
   const [open, setOpen] = useState(false)
