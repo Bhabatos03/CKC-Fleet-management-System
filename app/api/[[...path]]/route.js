@@ -346,6 +346,10 @@ if (path === 'utilities/dg-logs') {
   const items = await db.collection('utility_projects').find({}).sort({ createdAt: -1 }).toArray()
   return json(items.map(clean))
 }
+    if (path === 'utilities/vendors') {
+  const items = await db.collection('utility_vendors').find({}).sort({ name: 1 }).toArray()
+  return json(items.map(clean))
+}
 
     if (path === 'utilities/dashboard') {
       const now = new Date()
@@ -866,6 +870,32 @@ if (path === 'utilities/dg-logs') {
     createdAt: new Date().toISOString(),
   }
   await db.collection('utility_projects').insertOne(item)
+  return json(clean(item))
+}
+    if (path === 'utilities/vendors') {
+  if (!body.vendorName || !body.serviceCategory) {
+    return json({ error: 'Vendor name and service category are required' }, 400)
+  }
+  const existing = await db.collection('utility_vendors').findOne({ vendorName: body.vendorName })
+  if (existing) return json({ error: 'A vendor with this name already exists' }, 409)
+  const item = {
+    id: uuidv4(),
+    vendorName: body.vendorName,
+    serviceCategory: body.serviceCategory,
+    contactPerson: body.contactPerson || '',
+    mobile: body.mobile || '',
+    email: body.email || '',
+    gstNumber: body.gstNumber || '',
+    pan: body.pan || '',
+    address: body.address || '',
+    contractStart: body.contractStart || null,
+    contractEnd: body.contractEnd || null,
+    amcAvailable: !!body.amcAvailable,
+    vendorStatus: body.vendorStatus || 'Active',
+    remarks: body.remarks || '',
+    createdAt: new Date().toISOString(),
+  }
+  await db.collection('utility_vendors').insertOne(item)
   return json(clean(item))
 }
     if (path === 'meters') {
