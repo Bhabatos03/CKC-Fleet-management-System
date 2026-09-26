@@ -4934,15 +4934,133 @@ function DGLogFormDialog({ open, onOpenChange, onCreated, units, logs }) {
   )
 }
 
-function UtilitiesDashboard() {
+function UtilitiesDashboard({ onNavigate }) {
+  const [loading, setLoading] = useState(true)
   const [data, setData] = useState(null)
-  useEffect(() => { api('utilities/dashboard').then(setData).catch(e => toast.error(e.message)) }, [])
-  if (!data) return <div className="p-4">Loading...</div>
+  const [locationFilter, setLocationFilter] = useState('all')
+
+  const load = () => {
+    setLoading(true)
+    Promise.all([
+      api('utilities/electricity-readings'),
+      api('utilities/dg-logs'),
+      api('utilities/maintenance'),
+      api('utilities/amc'),
+      api('utilities/compliance'),
+      api('utilities/projects'),
+    ]).then(([electricity, dg, maintenance, amc, compliance, projects]) => {
+      setData({ electricity, dg, maintenance, amc, compliance, projects })
+    }).catch(e => toast.error(e.message)).finally(() => setLoading(false))
+  }
+  useEffect(() => { load() }, [])
+
+  if (loading || !data) return <div className="p-8 text-center text-slate-400">Loading dashboard...</div>
+
+  const today = new Date().toLocaleDateString('en-CA')
+  const in30 = (dateStr) => {
+    if (!dateStr) return false
+    const days = Math.round((new Date(dateStr) - new Date(today)) / 864e5)
+    return days >= 0 && days <= 30
+  }
+  const isOverdue = (dateStr) => dateStr && dateStr.slice(0, 10) < today
+
+  const locations = [...new Set([
+    ...data.electricity.map(r => r.location),
+    ...data.dg.map(r => r.location),
+    ...data.maintenance.map(r => r.location),
+    ...data.amc.map(r => r.location),
+    ...data.compliance.map(r => r.location),
+    ...data.projects.map(r => r.location),
+  ].filter(Boolean))]
+
+  const byLocation = (arr) => locationFilter === 'all' ? arr : arr.filter(x => x.location === locationFilter)
+
+  const electricity = byLocation(data.electricity)
+  const dg = byLocation(data.dg)
+  const maintenance = byLocation(data.maintenance)
+  const amc = byLocation(data.amc)
+  const compliance = byLocation(data.compliance)
+  const projects = byLocation(data.projects)
+
+  const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().slice(0, 10)
+  const electricityThisMonth = electricity.filter(r => r.readingDate?.slice(0, 10) >= monthStart)
+  const dgThisMonth = dg.filter(r => r.date?.slice(0, 10) >= monthStart)
+
+  const kpis = [
+    { label: 'Electricity This Month', value: `${electricityThisMonth.reduce((s, r) => s + (r.unitsConsumed || 0), 0).toLocaleString()} units`, sub: fmtINR(electricityThisMonth.reduce((s, r) => s + (r.billAmount || 0), 0)), icon: Zap, color: 'bg-gradient-to-br from-amber-500 to-amber-600' },
+    { label: 'DG Running Hours', value: `${dgThisMonth.reduce((s, r) => s + (r.runningHours || 0), 0)} hrs`, sub: `${dgThisMonth.reduce((s, r) => s + (r.dieselConsumed || 0), 0)} L diesel`, icon: Gauge, color: 'bg-gradient-to-br from-slate-600 to-slate-700' },
+    { label: 'Active AMCs', value: amc.filter(a => a.amcEndDate >= today).length, sub: `${amc.filter(a => in30(a.amcEndDate)).length} expiring <30d`, icon: ClipboardCheck, color: 'bg-gradient-to-br from-blue-500 to-blue-600' },
+    { label: 'Compliance Due <30d', value: compliance.filter(c => c.status !== 'Not Applicable' && in30(c.expiryDate)).length, sub: `${compliance.filter(c => c.status !== 'Not Applicable' && isOverdue(c.expiryDate)).length} overdue`, icon: ShieldAlert, color: 'bg-gradient-to-br from-[#7a0d0d] to-[#a01414]' },
+    { label: 'Overdue Maintenance', value: maintenance.filter(m => isOverdue(m.nextDueDate)).length, sub: `${maintenance.length} assets tracked`, icon: Wrench, color: 'bg-gradient-to-br from-rose-500 to-rose-600' },
+    { label: 'Active Projects', value: projects.filter(p => !['Completed', 'Closed', 'Cancelled'].includes(p.status)).length, sub: `${projects.filter(p => p.actualCost > p.approvedBudget && p.approvedBudget > 0).length} over budget`, icon: ClipboardList, color: 'bg-gradient-to-br from-emerald-600 to-emerald-700' },
+  ]
+
+  const actionItems = [
+    ...maintenance.filter(m => isOverdue(m.nextDueDate)).map(m => ({ severity: 'overdue', type: 'Maintenance', label: m.asset, date: m.nextDueDate, nav: 'maintenance' })),
+    ...amc.filter(a => isOverdue(a.amcEndDate)).map(a => ({ severity: 'overdue', type: 'AMC', label: a.equipment, date: a.amcEndDate, nav: 'amc' })),
+    ...compliance.filter(c => c.status !== 'Not Applicable' && isOverdue(c.expiryDate)).map(c => ({ severity: 'overdue', type: 'Compliance', label: c.requirement, date: c.expiryDate, nav: 'compliance' })),
+    ...projects.filter(p => isOverdue(p.targetCompletionDate) && !['Completed', 'Closed', 'Cancelled'].includes(p.status)).map(p => ({ severity: 'overdue', type: 'Project', label: p.projectName, date: p.targetCompletionDate, nav: 'projects' })),
+    ...maintenance.filter(m => !isOverdue(m.nextDueDate) && in30(m.nextDueDate)).map(m => ({ severity: 'due', type: 'Maintenance', label: m.asset, date: m.nextDueDate, nav: 'maintenance' })),
+    ...amc.filter(a => in30(a.amcEndDate)).map(a => ({ severity: 'due', type: 'AMC', label: a.equipment, date: a.amcEndDate, nav: 'amc' })),
+    ...compliance.filter(c => c.status !== 'Not Applicable' && !isOverdue(c.expiryDate) && in30(c.expiryDate)).map(c => ({ severity: 'due', type: 'Compliance', label: c.requirement, date: c.expiryDate, nav: 'compliance' })),
+  ].sort((a, b) => (a.date || '').localeCompare(b.date || ''))
+
+  const overdueItems = actionItems.filter(i => i.severity === 'overdue')
+  const dueSoonItems = actionItems.filter(i => i.severity === 'due')
+
+  const ActionRow = ({ item }) => (
+    <button onClick={() => onNavigate && onNavigate(item.nav)} className="w-full flex items-center justify-between text-left px-3 py-2 rounded-lg hover:bg-slate-50 border-b last:border-0">
+      <div>
+        <span className="text-xs font-medium text-slate-500 mr-2">{item.type}</span>
+        <span className="text-sm">{item.label}</span>
+      </div>
+      <span className="text-xs text-slate-400">{fmtDate(item.date)}</span>
+    </button>
+  )
+
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-      <Card><CardContent className="p-4"><div className="text-xs text-slate-500">Month Electricity Units</div><div className="text-2xl font-bold text-[#7a0d0d]">{data.electricity.monthUnits.toLocaleString()}</div></CardContent></Card>
-      <Card><CardContent className="p-4"><div className="text-xs text-slate-500">Month Electricity Cost</div><div className="text-2xl font-bold text-amber-600">{fmtINR(data.electricity.monthCost)}</div></CardContent></Card>
-      <Card><CardContent className="p-4"><div className="text-xs text-slate-500">Total Units (all time)</div><div className="text-2xl font-bold">{data.electricity.totalUnitsAllTime.toLocaleString()}</div></CardContent></Card>
+    <div className="space-y-4">
+      <div className="flex items-center gap-3">
+        <Label className="text-xs text-slate-500">Location</Label>
+        <Select value={locationFilter} onValueChange={setLocationFilter}>
+          <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Locations</SelectItem>
+            {locations.map(l => <SelectItem key={l} value={l}>{l}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+        {kpis.map(k => {
+          const Icon = k.icon
+          return (
+            <Card key={k.label} className="border-t-4 border-t-[#7a0d0d] hover:shadow-lg transition-shadow"><CardContent className="p-5 flex items-center gap-4">
+              <div className={`${k.color} w-12 h-12 rounded-lg flex items-center justify-center text-white shadow-md flex-shrink-0`}><Icon className="w-6 h-6" /></div>
+              <div className="min-w-0">
+                <div className="text-xl font-bold truncate">{k.value}</div>
+                <div className="text-xs text-slate-500">{k.label}</div>
+                <div className="text-[11px] text-slate-400">{k.sub}</div>
+              </div>
+            </CardContent></Card>
+          )
+        })}
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-4">
+        <Card className={overdueItems.length > 0 ? 'border-2 border-rose-300' : ''}>
+          <CardHeader className="pb-2"><CardTitle className="flex items-center gap-2 text-rose-600 text-base">🔴 Overdue ({overdueItems.length})</CardTitle></CardHeader>
+          <CardContent className="p-0 max-h-72 overflow-y-auto">
+            {overdueItems.length === 0 ? <div className="p-4 text-sm text-slate-400">Nothing overdue.</div> : overdueItems.map((item, i) => <ActionRow key={i} item={item} />)}
+          </CardContent>
+        </Card>
+        <Card className={dueSoonItems.length > 0 ? 'border-2 border-amber-300' : ''}>
+          <CardHeader className="pb-2"><CardTitle className="flex items-center gap-2 text-amber-600 text-base">🟠 Due Soon ({dueSoonItems.length})</CardTitle></CardHeader>
+          <CardContent className="p-0 max-h-72 overflow-y-auto">
+            {dueSoonItems.length === 0 ? <div className="p-4 text-sm text-slate-400">Nothing due within 30 days.</div> : dueSoonItems.map((item, i) => <ActionRow key={i} item={item} />)}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }
