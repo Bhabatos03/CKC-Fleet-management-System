@@ -1219,7 +1219,7 @@ export async function PUT(request, { params }) {
       return json({ error: 'Store admins have read-only access' }, 403)
     }
 
-   const map = { vehicles: 'vehicles', drivers: 'drivers', maintenance: 'maintenance', electricity_meters: 'electricity_meters', electricity_readings: 'electricity_readings', dg_units: 'dg_units', dg_logs: 'dg_logs', utility_maintenance: 'utility_maintenance', utility_amc: 'utility_amc' }
+   const map = { vehicles: 'vehicles', drivers: 'drivers', maintenance: 'maintenance', electricity_meters: 'electricity_meters', electricity_readings: 'electricity_readings', dg_units: 'dg_units', dg_logs: 'dg_logs', utility_maintenance: 'utility_maintenance', utility_amc: 'utility_amc', utility_compliance: 'utility_compliance' }
 if (!map[col]) return json({ error: 'Not found' }, 404)
     delete body._id
     delete body.id
@@ -1248,7 +1248,7 @@ export async function DELETE(request, { params }) {
       return json({ error: 'Store admins have read-only access' }, 403)
     }
 
-    const map = { vehicles: 'vehicles', drivers: 'drivers', maintenance: 'maintenance', electricity_meters: 'electricity_meters', electricity_readings: 'electricity_readings', dg_units: 'dg_units', dg_logs: 'dg_logs', utility_maintenance: 'utility_maintenance', utility_amc: 'utility_amc' }
+    const map = { vehicles: 'vehicles', drivers: 'drivers', maintenance: 'maintenance', electricity_meters: 'electricity_meters', electricity_readings: 'electricity_readings', dg_units: 'dg_units', dg_logs: 'dg_logs', utility_maintenance: 'utility_maintenance', utility_amc: 'utility_amc', utility_compliance: 'utility_compliance' }
     if (!map[col]) return json({ error: 'Not found' }, 404)
     await db.collection(map[col]).deleteOne({ id })
     return json({ ok: true })
