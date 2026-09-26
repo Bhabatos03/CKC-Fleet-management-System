@@ -798,6 +798,34 @@ if (path === 'utilities/dg-logs') {
   await db.collection('utility_amc').insertOne(item)
   return json(clean(item))
 }
+    if (path === 'utilities/compliance') {
+  if (!body.location || !body.complianceType || !body.requirement) {
+    return json({ error: 'Location, compliance type and requirement are required' }, 400)
+  }
+  if (body.issueDate && body.expiryDate && body.expiryDate < body.issueDate) {
+    return json({ error: 'Expiry date cannot be before issue date' }, 400)
+  }
+  const item = {
+    id: uuidv4(),
+    location: body.location,
+    complianceType: body.complianceType,
+    requirement: body.requirement,
+    authority: body.authority || '',
+    certificateNumber: body.certificateNumber || '',
+    issueDate: body.issueDate || null,
+    expiryDate: body.expiryDate || null,
+    renewalDueDate: body.renewalDueDate || null,
+    responsiblePerson: body.responsiblePerson || '',
+    vendorAgency: body.vendorAgency || '',
+    cost: Number(body.cost || 0),
+    status: body.status || 'Compliant',
+    document: body.document || null,
+    remarks: body.remarks || '',
+    createdAt: new Date().toISOString(),
+  }
+  await db.collection('utility_compliance').insertOne(item)
+  return json(clean(item))
+}
 
     if (path === 'meters') {
   if (role !== 'admin') return json({ error: 'Only Admin can add meters' }, 403)
