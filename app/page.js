@@ -3990,7 +3990,7 @@ function Utilities() {
           </button>
         ))}
       </div>
-      {tab === 'dashboard' && <UtilitiesDashboard />}
+    {tab === 'dashboard' && <UtilitiesDashboard onNavigate={setTab} />}
       {tab === 'electricity' && <ElectricityModule />}
      {tab === 'dg' && <DGModule />}
 {tab === 'maintenance' && <UtilityMaintenanceModule />}
