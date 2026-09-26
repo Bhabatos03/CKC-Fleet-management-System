@@ -342,6 +342,10 @@ if (path === 'utilities/dg-logs') {
   const items = await db.collection('utility_compliance').find({}).sort({ expiryDate: 1 }).toArray()
   return json(items.map(clean))
 }
+    if (path === 'utilities/projects') {
+  const items = await db.collection('utility_projects').find({}).sort({ createdAt: -1 }).toArray()
+  return json(items.map(clean))
+}
 
     if (path === 'utilities/dashboard') {
       const now = new Date()
