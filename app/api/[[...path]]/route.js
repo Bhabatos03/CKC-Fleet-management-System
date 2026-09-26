@@ -312,61 +312,29 @@ export async function GET(request, { params }) {
       const items = await db.collection('fuel_entries').find(query).sort({ date: -1 }).limit(500).toArray()
       return json(items.map(clean))
     }
-    if (path === 'utilities/electricity-meters') {
-  if (!body.meterNumber || !body.location) {
-    return json({ error: 'Location and Meter Number are required' }, 400)
-  }
-  const existing = await db.collection('electricity_meters').findOne({ meterNumber: body.meterNumber })
-  if (existing) return json({ error: 'A meter with this number already exists' }, 409)
-  const item = {
-    id: uuidv4(),
-    location: body.location,
-    meterNumber: body.meterNumber,
-    meterType: body.meterType || '',
-    meterMake: body.meterMake || '',
-    connectionType: body.connectionType || '',
-    sanctionedLoad: Number(body.sanctionedLoad || 0),
-    tariffCategory: body.tariffCategory || '',
-    installationDate: body.installationDate || null,
-    status: body.status || 'Active',
-    remarks: body.remarks || '',
-    createdAt: new Date().toISOString(),
-  }
-  await db.collection('electricity_meters').insertOne(item)
-  return json(clean(item))
-}
+       if (path === 'utilities/electricity-meters') {
+      const items = await db.collection('electricity_meters').find({}).sort({ createdAt: -1 }).toArray()
+      return json(items.map(clean))
+    }
 
-if (path === 'utilities/electricity-readings') {
-  if (!body.meterNumber || body.currentReading === undefined) {
-    return json({ error: 'Meter and current reading are required' }, 400)
-  }
-  const current = Number(body.currentReading)
-  const previous = Number(body.previousReading || 0)
-  const unitsConsumed = current - previous
-  if (unitsConsumed < 0 && !body.meterResetConfirmed) {
-    return json({ error: 'Current reading is lower than previous — confirm meter reset if this is intentional' }, 400)
-  }
-  const item = {
-    id: uuidv4(),
-    location: body.location || '',
-    meterNumber: body.meterNumber,
-    readingDate: body.readingDate || new Date().toISOString(),
-    previousReading: previous,
-    currentReading: current,
-    unitsConsumed: unitsConsumed < 0 ? current : unitsConsumed, // meter reset: treat current as the new count
-    billAmount: Number(body.billAmount || 0),
-    billNumber: body.billNumber || '',
-    billDate: body.billDate || null,
-    dueDate: body.dueDate || null,
-    paymentStatus: body.paymentStatus || 'Pending',
-    remarks: body.remarks || '',
-    attachment: body.attachment || null,
-    createdAt: new Date().toISOString(),
-  }
-  await db.collection('electricity_readings').insertOne(item)
-  return json(clean(item))
-}
+    if (path === 'utilities/electricity-readings') {
+      const items = await db.collection('electricity_readings').find({}).sort({ readingDate: -1 }).limit(500).toArray()
+      return json(items.map(clean))
+    }
 
+    if (path === 'utilities/dashboard') {
+      const now = new Date()
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+      const readings = await db.collection('electricity_readings').find({}).toArray()
+      const monthReadings = readings.filter(r => new Date(r.readingDate) >= monthStart)
+      return json({
+        electricity: {
+          totalUnitsAllTime: readings.reduce((s, r) => s + (r.unitsConsumed || 0), 0),
+          monthUnits: monthReadings.reduce((s, r) => s + (r.unitsConsumed || 0), 0),
+          monthCost: monthReadings.reduce((s, r) => s + (r.billAmount || 0), 0),
+        },
+      })
+    }
         if (path === 'maintenance') {
       const query = storeVehicleIds ? { vehicleId: { $in: storeVehicleIds } } : {}
       const items = await db.collection('maintenance').find(query).sort({ serviceDate: -1 }).toArray()
