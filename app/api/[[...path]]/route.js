@@ -661,6 +661,69 @@ if (path === 'utilities/electricity-readings') {
   const items = await db.collection('electricity_readings').find({}).sort({ readingDate: -1 }).limit(500).toArray()
   return json(items.map(clean))
 }
+    if (path === 'utilities/dg-units') {
+  if (!body.dgId || !body.location) {
+    return json({ error: 'DG ID and Location are required' }, 400)
+  }
+  const existing = await db.collection('dg_units').findOne({ dgId: body.dgId })
+  if (existing) return json({ error: 'A DG with this ID already exists' }, 409)
+  const item = {
+    id: uuidv4(),
+    dgId: body.dgId,
+    location: body.location,
+    capacityKva: Number(body.capacityKva || 0),
+    make: body.make || '',
+    model: body.model || '',
+    serialNumber: body.serialNumber || '',
+    installationDate: body.installationDate || null,
+    fuelType: body.fuelType || 'Diesel',
+    vendor: body.vendor || '',
+    amcStatus: body.amcStatus || '',
+    status: body.status || 'Active',
+    remarks: body.remarks || '',
+    createdAt: new Date().toISOString(),
+  }
+  await db.collection('dg_units').insertOne(item)
+  return json(clean(item))
+}
+
+if (path === 'utilities/dg-logs') {
+  if (!body.dgId || body.closingHourMeter === undefined) {
+    return json({ error: 'DG and closing hour meter are required' }, 400)
+  }
+  const openingHour = Number(body.openingHourMeter || 0)
+  const closingHour = Number(body.closingHourMeter)
+  const runningHours = closingHour - openingHour
+  if (runningHours < 0) {
+    return json({ error: 'Closing hour meter cannot be less than opening hour meter' }, 400)
+  }
+  const dieselOpening = Number(body.dieselOpeningBalance || 0)
+  const dieselAdded = Number(body.dieselAdded || 0)
+  const dieselConsumed = Number(body.dieselConsumed || 0)
+  const dieselClosing = dieselOpening + dieselAdded - dieselConsumed
+  if (dieselClosing < 0) {
+    return json({ error: 'Diesel closing balance cannot be negative — check opening, added and consumed values' }, 400)
+  }
+  const item = {
+    id: uuidv4(),
+    date: body.date || new Date().toISOString(),
+    location: body.location || '',
+    dgId: body.dgId,
+    openingHourMeter: openingHour,
+    closingHourMeter: closingHour,
+    runningHours,
+    dieselOpeningBalance: dieselOpening,
+    dieselAdded,
+    dieselConsumed,
+    dieselClosingBalance: dieselClosing,
+    reasonForRunning: body.reasonForRunning || '',
+    operator: body.operator || '',
+    remarks: body.remarks || '',
+    createdAt: new Date().toISOString(),
+  }
+  await db.collection('dg_logs').insertOne(item)
+  return json(clean(item))
+}
 
 if (path === 'utilities/dashboard') {
   const now = new Date()
