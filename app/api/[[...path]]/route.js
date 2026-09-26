@@ -729,6 +729,31 @@ if (path === 'utilities/dg-logs') {
   return json(clean(item))
 }
 
+    if (path === 'utilities/maintenance') {
+  if (!body.asset || !body.location || !body.category) {
+    return json({ error: 'Asset, location and category are required' }, 400)
+  }
+  const item = {
+    id: uuidv4(),
+    location: body.location,
+    asset: body.asset,
+    category: body.category,
+    maintenanceType: body.maintenanceType || '',
+    frequency: body.frequency || 'Monthly',
+    lastMaintenanceDate: body.lastMaintenanceDate || null,
+    nextDueDate: body.nextDueDate || null,
+    vendor: body.vendor || '',
+    responsiblePerson: body.responsiblePerson || '',
+    estimatedCost: Number(body.estimatedCost || 0),
+    actualCost: Number(body.actualCost || 0),
+    status: body.status || 'Upcoming',
+    serviceReport: body.serviceReport || null,
+    remarks: body.remarks || '',
+    createdAt: new Date().toISOString(),
+  }
+  await db.collection('utility_maintenance').insertOne(item)
+  return json(clean(item))
+}
 
     if (path === 'meters') {
   if (role !== 'admin') return json({ error: 'Only Admin can add meters' }, 403)
