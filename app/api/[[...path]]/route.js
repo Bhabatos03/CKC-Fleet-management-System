@@ -325,6 +325,10 @@ if (path === 'utilities/dg-logs') {
   const items = await db.collection('dg_logs').find({}).sort({ date: -1 }).limit(500).toArray()
   return json(items.map(clean))
 }
+    if (path === 'utilities/amc') {
+  const items = await db.collection('utility_amc').find({}).sort({ amcEndDate: 1 }).toArray()
+  return json(items.map(clean))
+}
 
     if (path === 'utilities/electricity-readings') {
       const items = await db.collection('electricity_readings').find({}).sort({ readingDate: -1 }).limit(500).toArray()
