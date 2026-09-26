@@ -4006,6 +4006,124 @@ function Utilities() {
     </div>
   )
 }
+function VendorsModule() {
+  const [items, setItems] = useState([])
+  const [open, setOpen] = useState(false)
+  const [editing, setEditing] = useState(null)
+  const [search, setSearch] = useState('')
+  const load = () => api('utilities/vendors').then(setItems).catch(e => toast.error(e.message))
+  useEffect(() => { load() }, [])
+
+  const filtered = items.filter(v =>
+    !search ||
+    v.vendorName?.toLowerCase().includes(search.toLowerCase()) ||
+    v.serviceCategory?.toLowerCase().includes(search.toLowerCase())
+  )
+
+  const submit = async (data) => {
+    try {
+      if (editing) { await api(`utilities/vendors/${editing.id}`, { method: 'PUT', body: data }); toast.success('Updated') }
+      else { await api('utilities/vendors', { method: 'POST', body: data }); toast.success('Added') }
+      setOpen(false); setEditing(null); load()
+    } catch (e) { toast.error(e.message) }
+  }
+  const remove = async (id) => {
+    if (!confirm('Delete this vendor?')) return
+    await api(`utilities/vendors/${id}`, { method: 'DELETE' })
+    toast.success('Deleted'); load()
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div className="relative max-w-sm flex-1">
+          <Search className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
+          <Input placeholder="Search vendor or category..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
+        </div>
+        <Button size="sm" onClick={() => { setEditing(null); setOpen(true) }} className="bg-gradient-to-r from-[#7a0d0d] to-[#a01414] text-white">
+          <Plus className="w-4 h-4 mr-1" /> Add Vendor
+        </Button>
+      </div>
+      <Card><CardContent className="p-4"><div className="overflow-x-auto"><Table>
+        <TableHeader><TableRow>
+          <TableHead>Vendor</TableHead><TableHead>Category</TableHead><TableHead>Contact</TableHead>
+          <TableHead>Mobile</TableHead><TableHead>Contract End</TableHead><TableHead>AMC</TableHead>
+          <TableHead>Status</TableHead><TableHead></TableHead>
+        </TableRow></TableHeader>
+        <TableBody>
+          {filtered.map(v => (
+            <TableRow key={v.id}>
+              <TableCell className="font-medium">{v.vendorName}</TableCell>
+              <TableCell><Badge variant="outline">{v.serviceCategory}</Badge></TableCell>
+              <TableCell className="text-xs">{v.contactPerson || '-'}</TableCell>
+              <TableCell className="text-xs">{v.mobile || '-'}</TableCell>
+              <TableCell className="text-xs">{fmtDate(v.contractEnd)}</TableCell>
+              <TableCell>{v.amcAvailable ? <Badge className="bg-emerald-500 text-white">Yes</Badge> : <span className="text-slate-300 text-xs">—</span>}</TableCell>
+              <TableCell><Badge className={v.vendorStatus === 'Active' ? 'bg-emerald-500 text-white' : ''} variant={v.vendorStatus === 'Active' ? 'default' : 'secondary'}>{v.vendorStatus}</Badge></TableCell>
+              <TableCell className="text-right space-x-1">
+                <Button size="sm" variant="outline" onClick={() => { setEditing(v); setOpen(true) }}>Edit</Button>
+                <Button size="sm" variant="destructive" onClick={() => remove(v.id)}><Trash2 className="w-3 h-3" /></Button>
+              </TableCell>
+            </TableRow>
+          ))}
+          {filtered.length === 0 && <TableRow><TableCell colSpan={8} className="text-center text-slate-500 py-8">No vendors yet.</TableCell></TableRow>}
+        </TableBody>
+      </Table></div></CardContent></Card>
+      <VendorDialog open={open} onOpenChange={setOpen} onSubmit={submit} initial={editing} />
+    </div>
+  )
+}
+
+function VendorDialog({ open, onOpenChange, onSubmit, initial }) {
+  const [f, setF] = useState({})
+  useEffect(() => {
+    setF(initial || {
+      vendorName: '', serviceCategory: 'Electrical', contactPerson: '', mobile: '', email: '',
+      gstNumber: '', pan: '', address: '', contractStart: '', contractEnd: '',
+      amcAvailable: false, vendorStatus: 'Active', remarks: '',
+    })
+  }, [initial, open])
+  const set = (k, v) => setF(x => ({ ...x, [k]: v }))
+  const categories = ['Electrical', 'DG', 'HVAC', 'Lift', 'Fire & Safety', 'Plumbing', 'Civil', 'Other']
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader><DialogTitle>{initial ? 'Edit' : 'Add'} Vendor</DialogTitle></DialogHeader>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="col-span-2"><Label>Vendor Name *</Label><Input value={f.vendorName || ''} onChange={e => set('vendorName', e.target.value)} disabled={!!initial} /></div>
+          {initial && <p className="col-span-2 text-xs text-slate-500 -mt-2">Vendor name can't be changed once added, since AMC/Maintenance/Compliance/Projects may reference it by name.</p>}
+          <div><Label>Service Category *</Label>
+            <Select value={f.serviceCategory} onValueChange={v => set('serviceCategory', v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>{categories.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div><Label>Contact Person</Label><Input value={f.contactPerson || ''} onChange={e => set('contactPerson', e.target.value)} /></div>
+          <div><Label>Mobile</Label><Input value={f.mobile || ''} onChange={e => set('mobile', e.target.value)} /></div>
+          <div><Label>Email</Label><Input type="email" value={f.email || ''} onChange={e => set('email', e.target.value)} /></div>
+          <div><Label>GST Number</Label><Input value={f.gstNumber || ''} onChange={e => set('gstNumber', e.target.value)} /></div>
+          <div><Label>PAN</Label><Input value={f.pan || ''} onChange={e => set('pan', e.target.value)} /></div>
+          <div className="col-span-2"><Label>Address</Label><Textarea value={f.address || ''} onChange={e => set('address', e.target.value)} /></div>
+          <div><Label>Contract Start</Label><Input type="date" value={f.contractStart || ''} onChange={e => set('contractStart', e.target.value)} /></div>
+          <div><Label>Contract End</Label><Input type="date" value={f.contractEnd || ''} min={f.contractStart || undefined} onChange={e => set('contractEnd', e.target.value)} /></div>
+          <div><Label>Status</Label>
+            <Select value={f.vendorStatus} onValueChange={v => set('vendorStatus', v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent><SelectItem value="Active">Active</SelectItem><SelectItem value="Inactive">Inactive</SelectItem></SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center gap-2 pt-6">
+            <input type="checkbox" id="amcAvailable" checked={!!f.amcAvailable} onChange={e => set('amcAvailable', e.target.checked)} />
+            <Label htmlFor="amcAvailable" className="mb-0">AMC Available with this vendor</Label>
+          </div>
+          <div className="col-span-2"><Label>Remarks</Label><Textarea value={f.remarks || ''} onChange={e => set('remarks', e.target.value)} /></div>
+        </div>
+        <DialogFooter><Button onClick={() => onSubmit(f)} disabled={!f.vendorName || !f.serviceCategory} className="bg-[#7a0d0d] hover:bg-[#5c0a0a]">Save</Button></DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
 function ProjectsModule() {
   const [items, setItems] = useState([])
   const [open, setOpen] = useState(false)
