@@ -4002,6 +4002,133 @@ function Utilities() {
 </div>
   )
 }
+function UtilitiesReportsModule() {
+  const [reportType, setReportType] = useState('electricity')
+  const [fromDate, setFromDate] = useState('')
+  const [toDate, setToDate] = useState('')
+  const [location, setLocation] = useState('all')
+  const [generating, setGenerating] = useState(false)
+  const [preview, setPreview] = useState(null)
+
+  const reportTypes = [
+    { id: 'electricity', label: 'Electricity Consumption Report', dateField: 'readingDate' },
+    { id: 'dg', label: 'DG Running Hours & Diesel Report', dateField: 'date' },
+    { id: 'maintenance', label: 'Maintenance Report', dateField: 'nextDueDate' },
+    { id: 'amc', label: 'AMC Report', dateField: 'amcEndDate' },
+    { id: 'compliance', label: 'Compliance Report', dateField: 'expiryDate' },
+    { id: 'projects', label: 'Project & CAPEX Report', dateField: 'startDate' },
+    { id: 'vendors', label: 'Vendor Report', dateField: null },
+    { id: 'overdue', label: 'Overdue Action Report (all modules)', dateField: null },
+  ]
+  const current = reportTypes.find(r => r.id === reportType)
+
+  const inRange = (item, field) => {
+    if (!field || (!fromDate && !toDate)) return true
+    const d = item[field]?.slice(0, 10)
+    if (!d) return true
+    if (fromDate && d < fromDate) return false
+    if (toDate && d > toDate) return false
+    return true
+  }
+  const matchesLocation = (item) => location === 'all' || item.location === location
+
+  const fetchOverdue = async () => {
+    const [maint, amc, comp, proj] = await Promise.all([
+      api('utilities/maintenance'), api('utilities/amc'), api('utilities/compliance'), api('utilities/projects'),
+    ])
+    const today = new Date().toLocaleDateString('en-CA')
+    const overdueMaint = maint.filter(m => m.nextDueDate && m.nextDueDate < today).map(m => ({ type: 'Maintenance', item: m.asset, location: m.location, due: m.nextDueDate, detail: m.category }))
+    const overdueAmc = amc.filter(a => a.amcEndDate && a.amcEndDate < today).map(a => ({ type: 'AMC', item: a.equipment, location: a.location, due: a.amcEndDate, detail: a.vendor }))
+    const overdueComp = comp.filter(c => c.expiryDate && c.expiryDate < today && c.status !== 'Not Applicable').map(c => ({ type: 'Compliance', item: c.requirement, location: c.location, due: c.expiryDate, detail: c.complianceType }))
+    const overdueProj = proj.filter(p => p.targetCompletionDate && p.targetCompletionDate < today && !['Completed', 'Closed', 'Cancelled'].includes(p.status)).map(p => ({ type: 'Project', item: p.projectName, location: p.location, due: p.targetCompletionDate, detail: p.status }))
+    return [...overdueMaint, ...overdueAmc, ...overdueComp, ...overdueProj].sort((a, b) => a.due.localeCompare(b.due))
+  }
+
+  const generate = async () => {
+    setGenerating(true)
+    try {
+      if (reportType === 'overdue') {
+        const rows = await fetchOverdue()
+        setPreview({ headers: ['Type', 'Item', 'Location', 'Due Date', 'Detail'], rows: rows.map(r => [r.type, r.item, r.location, fmtDate(r.due), r.detail || '-']) })
+        return
+      }
+      const endpointMap = {
+        electricity: 'utilities/electricity-readings', dg: 'utilities/dg-logs', maintenance: 'utilities/maintenance',
+        amc: 'utilities/amc', compliance: 'utilities/compliance', projects: 'utilities/projects', vendors: 'utilities/vendors',
+      }
+      const data = await api(endpointMap[reportType])
+      const filtered = data.filter(item => inRange(item, current.dateField) && matchesLocation(item))
+
+      const builders = {
+        electricity: { headers: ['Date', 'Meter', 'Location', 'Previous', 'Current', 'Units', 'Bill Amount', 'Payment'], rows: (r) => [fmtDate(r.readingDate), r.meterNumber, r.location, r.previousReading, r.currentReading, r.unitsConsumed, r.billAmount, r.paymentStatus] },
+        dg: { headers: ['Date', 'DG', 'Location', 'Running Hours', 'Diesel Consumed', 'Diesel Closing', 'Operator'], rows: (r) => [fmtDate(r.date), r.dgId, r.location, r.runningHours, r.dieselConsumed, r.dieselClosingBalance, r.operator || '-'] },
+        maintenance: { headers: ['Asset', 'Category', 'Location', 'Frequency', 'Last Done', 'Next Due', 'Vendor', 'Cost'], rows: (r) => [r.asset, r.category, r.location, r.frequency, fmtDate(r.lastMaintenanceDate), fmtDate(r.nextDueDate), r.vendor || '-', r.actualCost || r.estimatedCost] },
+        amc: { headers: ['Equipment', 'Location', 'Vendor', 'Start', 'End', 'Value', 'Visits Planned', 'Visits Completed'], rows: (r) => [r.equipment, r.location, r.vendor || '-', fmtDate(r.amcStartDate), fmtDate(r.amcEndDate), r.totalValue, r.visitsPlanned, r.visitsCompleted] },
+        compliance: { headers: ['Type', 'Requirement', 'Location', 'Authority', 'Cert No.', 'Issue', 'Expiry', 'Status'], rows: (r) => [r.complianceType, r.requirement, r.location, r.authority || '-', r.certificateNumber || '-', fmtDate(r.issueDate), fmtDate(r.expiryDate), r.status] },
+        projects: { headers: ['Project', 'Location', 'Category', 'Approved Budget', 'Actual Cost', 'Balance', 'Utilization %', 'Status'], rows: (r) => [r.projectName, r.location, r.category || '-', r.approvedBudget, r.actualCost, r.balanceBudget, r.capexUtilizationPercent, r.status] },
+        vendors: { headers: ['Vendor', 'Category', 'Contact', 'Mobile', 'Contract End', 'AMC Available', 'Status'], rows: (r) => [r.vendorName, r.serviceCategory, r.contactPerson || '-', r.mobile || '-', fmtDate(r.contractEnd), r.amcAvailable ? 'Yes' : 'No', r.vendorStatus] },
+      }
+      const b = builders[reportType]
+      setPreview({ headers: b.headers, rows: filtered.map(b.rows) })
+    } catch (e) { toast.error(e.message) }
+    finally { setGenerating(false) }
+  }
+
+  const exportExcel = async () => {
+    if (!preview) return
+    await exportXlsx(`CKC-Utilities-${current.label.replace(/\s+/g, '-')}-${new Date().toISOString().slice(0, 10)}.xlsx`, [
+      { name: current.label.slice(0, 30), headers: preview.headers, rows: preview.rows },
+    ])
+    toast.success('Excel downloaded')
+  }
+
+  return (
+    <div className="space-y-4">
+      <Card><CardContent className="p-4 space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
+          <div className="md:col-span-2">
+            <Label className="text-xs text-slate-500">Report Type</Label>
+            <Select value={reportType} onValueChange={v => { setReportType(v); setPreview(null) }}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>{reportTypes.map(r => <SelectItem key={r.id} value={r.id}>{r.label}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div><Label className="text-xs text-slate-500">Location</Label><Input value={location === 'all' ? '' : location} onChange={e => setLocation(e.target.value || 'all')} placeholder="All locations" /></div>
+          <Button onClick={generate} disabled={generating} className="bg-gradient-to-r from-[#7a0d0d] to-[#a01414] text-white h-10">
+            {generating ? '...' : 'Generate'}
+          </Button>
+        </div>
+        {current.dateField && (
+          <div className="grid grid-cols-2 gap-3 max-w-md">
+            <div><Label className="text-xs text-slate-500">From Date</Label><Input type="date" value={fromDate} onChange={e => setFromDate(e.target.value)} /></div>
+            <div><Label className="text-xs text-slate-500">To Date</Label><Input type="date" value={toDate} onChange={e => setToDate(e.target.value)} /></div>
+          </div>
+        )}
+      </CardContent></Card>
+
+      {preview && (
+        <Card><CardContent className="p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="text-sm text-slate-500">{preview.rows.length} records</div>
+            <Button size="sm" onClick={exportExcel} className="bg-emerald-600 hover:bg-emerald-700 text-white">
+              <FileSpreadsheet className="w-4 h-4 mr-1" /> Download Excel
+            </Button>
+          </div>
+          <div className="overflow-x-auto"><Table>
+            <TableHeader><TableRow>{preview.headers.map(h => <TableHead key={h}>{h}</TableHead>)}</TableRow></TableHeader>
+            <TableBody>
+              {preview.rows.slice(0, 100).map((row, i) => (
+                <TableRow key={i}>{row.map((c, j) => <TableCell key={j} className="text-xs">{c}</TableCell>)}</TableRow>
+              ))}
+              {preview.rows.length === 0 && <TableRow><TableCell colSpan={preview.headers.length} className="text-center text-slate-500 py-8">No records match these filters.</TableCell></TableRow>}
+            </TableBody>
+          </Table></div>
+          {preview.rows.length > 100 && <div className="text-xs text-slate-400">Showing first 100 rows — the Excel export includes all {preview.rows.length}.</div>}
+        </CardContent></Card>
+      )}
+    </div>
+  )
+}
 function VendorsModule() {
   const [items, setItems] = useState([])
   const [open, setOpen] = useState(false)
