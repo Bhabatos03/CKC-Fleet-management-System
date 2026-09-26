@@ -1119,7 +1119,7 @@ export async function DELETE(request, { params }) {
       return json({ error: 'Store admins have read-only access' }, 403)
     }
 
-    const map = { vehicles: 'vehicles', drivers: 'drivers', maintenance: 'maintenance' }
+    const map = { vehicles: 'vehicles', drivers: 'drivers', maintenance: 'maintenance', electricity_meters: 'electricity_meters', electricity_readings: 'electricity_readings' }
     if (!map[col]) return json({ error: 'Not found' }, 404)
     await db.collection(map[col]).deleteOne({ id })
     return json({ ok: true })
