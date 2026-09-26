@@ -3964,143 +3964,214 @@ function MeterDialog({ open, onOpenChange, onCreated }) {
 }
 
 function Utilities() {
-  const user = getUser()
-  const isAdmin = user.role === 'admin'
-  const [tab, setTab] = useState('readings')
-  const [meters, setMeters] = useState([])
-  const [month, setMonth] = useState(new Date().toISOString().slice(0, 7))
-  const [readings, setReadings] = useState([])
-  const [loading, setLoading] = useState(false)
-  const [edits, setEdits] = useState({})
-  const [meterDialogOpen, setMeterDialogOpen] = useState(false)
-  const [settingsOpen, setSettingsOpen] = useState(false)
-
-  const loadMeters = () => api('meters').then(setMeters).catch(e => toast.error(e.message))
-  const loadReadings = () => {
-    setLoading(true)
-    api(`meter-readings?month=${month}`).then(d => { setReadings(d.readings); setEdits({}) }).catch(e => toast.error(e.message)).finally(() => setLoading(false))
-  }
-  useEffect(() => { loadMeters() }, [])
-  useEffect(() => { loadReadings() }, [month])
-
-  const edit = (meterId, patch) => setEdits(x => ({ ...x, [meterId]: { ...x[meterId], ...patch } }))
-  const rowValue = (r, key) => edits[r.meterId]?.[key] ?? r[key]
-
-  const saveRow = async (r) => {
-    const e = edits[r.meterId]
-    if (!e || e.closing === undefined || e.closing === '') return toast.error('Enter closing reading first')
-    try {
-      await api('meter-readings', { method: 'POST', body: {
-        meterId: r.meterId, month, opening: r.opening ?? 0, closing: e.closing,
-        dieselLitres: e.dieselLitres, manualOverride: e.manualOverride || false,
-        unitsConsumed: e.unitsConsumed, enteredBy: user.name,
-      }})
-      toast.success(`${r.meterName} saved`)
-      loadReadings()
-    } catch (err) { toast.error(err.message) }
-  }
-
-  const saveAll = async () => {
-    const rows = readings.filter(r => edits[r.meterId]?.closing !== undefined && edits[r.meterId]?.closing !== '')
-    if (rows.length === 0) return toast.error('No new readings to save')
-    for (const r of rows) await saveRow(r)
-  }
-
+  const [tab, setTab] = useState('dashboard')
+  const tabs = [
+    { id: 'dashboard', label: 'Dashboard' },
+    { id: 'electricity', label: 'Electricity / EB' },
+    { id: 'dg', label: 'DG Management' },
+    { id: 'maintenance', label: 'Utility Maintenance' },
+    { id: 'amc', label: 'AMC' },
+    { id: 'compliance', label: 'Compliance' },
+    { id: 'projects', label: 'Projects & CAPEX' },
+    { id: 'vendors', label: 'Vendors' },
+    { id: 'reports', label: 'Reports' },
+  ]
   return (
     <div className="p-6 space-y-4">
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900 relative inline-block">Utilities<span className="absolute -bottom-1 left-0 w-16 h-1 bg-gradient-to-r from-[#7a0d0d] to-amber-500 rounded-full" /></h1>
-          <p className="text-slate-500 mt-2">Electricity & DG meter readings, per store</p>
-        </div>
-        <div className="flex gap-2">
-          {isAdmin && <Button variant="outline" onClick={() => setSettingsOpen(true)}>Tariff Rates</Button>}
-          {isAdmin && <Button onClick={() => setMeterDialogOpen(true)} className="bg-gradient-to-r from-[#7a0d0d] to-[#a01414] text-white"><Plus className="w-4 h-4 mr-1" /> Add Meter</Button>}
-        </div>
+      <div>
+        <h1 className="text-3xl font-bold text-slate-900 relative inline-block">Utilities<span className="absolute -bottom-1 left-0 w-16 h-1 bg-gradient-to-r from-[#7a0d0d] to-amber-500 rounded-full" /></h1>
+        <p className="text-slate-500 mt-2">Electricity, DG, maintenance, AMC, compliance & CAPEX</p>
       </div>
-
-      <div className="flex gap-2">
-        <button onClick={() => setTab('readings')} className={`px-4 py-2 rounded-lg text-sm font-medium border ${tab === 'readings' ? 'bg-[#7a0d0d] text-white border-[#7a0d0d]' : 'bg-white border-slate-200'}`}>Monthly Readings</button>
-        <button onClick={() => setTab('meters')} className={`px-4 py-2 rounded-lg text-sm font-medium border ${tab === 'meters' ? 'bg-[#7a0d0d] text-white border-[#7a0d0d]' : 'bg-white border-slate-200'}`}>Meters ({meters.length})</button>
-        <button onClick={() => setTab('bills')} className={`px-4 py-2 rounded-lg text-sm font-medium border ${tab === 'bills' ? 'bg-[#7a0d0d] text-white border-[#7a0d0d]' : 'bg-white border-slate-200'}`}>Tenant Bills</button>
+      <div className="flex flex-wrap gap-2 border-b pb-2">
+        {tabs.map(t => (
+          <button key={t.id} onClick={() => setTab(t.id)}
+            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${tab === t.id ? 'bg-[#7a0d0d] text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
+            {t.label}
+          </button>
+        ))}
       </div>
-
-      {tab === 'readings' && (
-        <Card><CardContent className="p-4 space-y-4">
-          <div className="flex items-center gap-3">
-            <Label className="text-xs text-slate-500">Month</Label>
-            <Input type="month" value={month} onChange={e => setMonth(e.target.value)} className="w-44" />
-            <Button size="sm" onClick={saveAll} className="bg-emerald-600 hover:bg-emerald-700 text-white ml-auto">Save All Entered</Button>
-          </div>
-          {loading ? <div className="text-center text-slate-400 py-8">Loading...</div> : (
-            <div className="overflow-x-auto"><Table>
-              <TableHeader><TableRow>
-                <TableHead>Meter</TableHead><TableHead>Type</TableHead><TableHead>Store</TableHead>
-                <TableHead>Opening</TableHead><TableHead>Closing</TableHead><TableHead>Units</TableHead>
-                <TableHead>Diesel (L)</TableHead><TableHead></TableHead>
-              </TableRow></TableHeader>
-              <TableBody>
-                {readings.map(r => {
-                  const closing = rowValue(r, 'closing')
-                  const opening = r.opening ?? 0
-                  const units = edits[r.meterId]?.manualOverride ? edits[r.meterId]?.unitsConsumed : (closing !== null && closing !== '' ? Number(closing) - Number(opening) : r.unitsConsumed)
-                  const negative = units !== null && units !== undefined && units < 0
-                  return (
-                    <TableRow key={r.meterId} className={negative ? 'bg-rose-50' : ''}>
-                      <TableCell className="font-medium text-sm">{r.meterName}</TableCell>
-                      <TableCell><Badge variant="outline">{r.meterType}</Badge></TableCell>
-                      <TableCell className="text-xs">{r.store}</TableCell>
-                      <TableCell className="text-sm">{opening ?? '-'}</TableCell>
-                      <TableCell>
-                        <Input type="number" className="w-28 h-8" value={closing ?? ''} onChange={e => edit(r.meterId, { closing: e.target.value })} placeholder={r.closing ?? 'Enter'} />
-                      </TableCell>
-                      <TableCell className={negative ? 'text-rose-600 font-semibold' : ''}>
-                        {units ?? '-'}
-                        {negative && <div className="text-[10px] text-rose-500">Check reading — meter may have been replaced</div>}
-                      </TableCell>
-                      <TableCell>
-                        {r.meterType === 'DG' && (
-                          <Input type="number" className="w-20 h-8" value={rowValue(r, 'dieselLitres') ?? ''} onChange={e => edit(r.meterId, { dieselLitres: e.target.value })} placeholder="L" />
-                        )}
-                      </TableCell>
-                      <TableCell><Button size="sm" variant="outline" onClick={() => saveRow(r)}>Save</Button></TableCell>
-                    </TableRow>
-                  )
-                })}
-                {readings.length === 0 && (
-                  <TableRow><TableCell colSpan={8} className="text-center text-slate-500 py-8">No meters yet. {isAdmin ? 'Click "Add Meter" to get started.' : 'Ask an Admin to add meters for your store.'}</TableCell></TableRow>
-                )}
-              </TableBody>
-            </Table></div>
-          )}
+      {tab === 'dashboard' && <UtilitiesDashboard />}
+      {tab === 'electricity' && <ElectricityModule />}
+      {['dg', 'maintenance', 'amc', 'compliance', 'projects', 'vendors', 'reports'].includes(tab) && (
+        <Card><CardContent className="p-10 text-center text-slate-400">
+          {tabs.find(t => t.id === tab)?.label} — coming in the next phase.
         </CardContent></Card>
       )}
-
-      {tab === 'meters' && (
-        <Card><CardContent className="p-4">
-          <div className="overflow-x-auto"><Table>
-            <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Type</TableHead><TableHead>Store</TableHead><TableHead>Tracks Diesel</TableHead></TableRow></TableHeader>
-            <TableBody>
-              {meters.map(m => (
-                <TableRow key={m.id}>
-                  <TableCell className="font-medium">{m.name}</TableCell>
-                  <TableCell><Badge variant="outline">{m.type}</Badge></TableCell>
-                  <TableCell>{m.store}</TableCell>
-                  <TableCell>{m.tracksDiesel ? 'Yes' : '-'}</TableCell>
-                </TableRow>
-              ))}
-              {meters.length === 0 && <TableRow><TableCell colSpan={4} className="text-center text-slate-500 py-8">No meters added yet.</TableCell></TableRow>}
-            </TableBody>
-          </Table></div>
-        </CardContent></Card>
-      )}
-
-      <MeterDialog open={meterDialogOpen} onOpenChange={setMeterDialogOpen} onCreated={loadMeters} />
-      <UtilitySettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
     </div>
   )
 }
 
+function UtilitiesDashboard() {
+  const [data, setData] = useState(null)
+  useEffect(() => { api('utilities/dashboard').then(setData).catch(e => toast.error(e.message)) }, [])
+  if (!data) return <div className="p-4">Loading...</div>
+  return (
+    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+      <Card><CardContent className="p-4"><div className="text-xs text-slate-500">Month Electricity Units</div><div className="text-2xl font-bold text-[#7a0d0d]">{data.electricity.monthUnits.toLocaleString()}</div></CardContent></Card>
+      <Card><CardContent className="p-4"><div className="text-xs text-slate-500">Month Electricity Cost</div><div className="text-2xl font-bold text-amber-600">{fmtINR(data.electricity.monthCost)}</div></CardContent></Card>
+      <Card><CardContent className="p-4"><div className="text-xs text-slate-500">Total Units (all time)</div><div className="text-2xl font-bold">{data.electricity.totalUnitsAllTime.toLocaleString()}</div></CardContent></Card>
+    </div>
+  )
+}
+
+function ElectricityModule() {
+  const [subtab, setSubtab] = useState('readings')
+  const [meters, setMeters] = useState([])
+  const [readings, setReadings] = useState([])
+  const [meterOpen, setMeterOpen] = useState(false)
+  const [readingOpen, setReadingOpen] = useState(false)
+  const load = () => {
+    api('utilities/electricity-meters').then(setMeters).catch(e => toast.error(e.message))
+    api('utilities/electricity-readings').then(setReadings).catch(e => toast.error(e.message))
+  }
+  useEffect(() => { load() }, [])
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div className="flex gap-2">
+          <button onClick={() => setSubtab('readings')} className={`px-3 py-1.5 rounded-lg text-sm ${subtab === 'readings' ? 'bg-slate-800 text-white' : 'bg-slate-100'}`}>Monthly Readings</button>
+          <button onClick={() => setSubtab('meters')} className={`px-3 py-1.5 rounded-lg text-sm ${subtab === 'meters' ? 'bg-slate-800 text-white' : 'bg-slate-100'}`}>Meter Master</button>
+        </div>
+        {subtab === 'meters'
+          ? <Button size="sm" onClick={() => setMeterOpen(true)} className="bg-gradient-to-r from-[#7a0d0d] to-[#a01414] text-white"><Plus className="w-4 h-4 mr-1" /> Add Meter</Button>
+          : <Button size="sm" onClick={() => setReadingOpen(true)} className="bg-gradient-to-r from-[#7a0d0d] to-[#a01414] text-white"><Plus className="w-4 h-4 mr-1" /> Log Reading</Button>}
+      </div>
+
+      {subtab === 'meters' && (
+        <Card><CardContent className="p-4"><div className="overflow-x-auto"><Table>
+          <TableHeader><TableRow>
+            <TableHead>Location</TableHead><TableHead>Meter No.</TableHead><TableHead>Type</TableHead>
+            <TableHead>Sanctioned Load</TableHead><TableHead>Tariff</TableHead><TableHead>Status</TableHead>
+          </TableRow></TableHeader>
+          <TableBody>
+            {meters.map(m => (
+              <TableRow key={m.id}>
+                <TableCell>{m.location}</TableCell>
+                <TableCell className="font-mono text-xs font-semibold">{m.meterNumber}</TableCell>
+                <TableCell>{m.meterType}</TableCell>
+                <TableCell>{m.sanctionedLoad}</TableCell>
+                <TableCell>{m.tariffCategory}</TableCell>
+                <TableCell><Badge>{m.status}</Badge></TableCell>
+              </TableRow>
+            ))}
+            {meters.length === 0 && <TableRow><TableCell colSpan={6} className="text-center text-slate-500 py-8">No meters yet.</TableCell></TableRow>}
+          </TableBody>
+        </Table></div></CardContent></Card>
+      )}
+
+      {subtab === 'readings' && (
+        <Card><CardContent className="p-4"><div className="overflow-x-auto"><Table>
+          <TableHeader><TableRow>
+            <TableHead>Date</TableHead><TableHead>Meter</TableHead><TableHead>Previous</TableHead>
+            <TableHead>Current</TableHead><TableHead>Units</TableHead><TableHead>Bill Amount</TableHead><TableHead>Payment</TableHead>
+          </TableRow></TableHeader>
+          <TableBody>
+            {readings.map(r => (
+              <TableRow key={r.id}>
+                <TableCell className="text-xs">{fmtDate(r.readingDate)}</TableCell>
+                <TableCell className="font-mono text-xs">{r.meterNumber}</TableCell>
+                <TableCell>{r.previousReading}</TableCell>
+                <TableCell>{r.currentReading}</TableCell>
+                <TableCell className="font-semibold">{r.unitsConsumed}</TableCell>
+                <TableCell>{fmtINR(r.billAmount)}</TableCell>
+                <TableCell><Badge variant={r.paymentStatus === 'Paid' ? 'default' : 'secondary'}>{r.paymentStatus}</Badge></TableCell>
+              </TableRow>
+            ))}
+            {readings.length === 0 && <TableRow><TableCell colSpan={7} className="text-center text-slate-500 py-8">No readings logged yet.</TableCell></TableRow>}
+          </TableBody>
+        </Table></div></CardContent></Card>
+      )}
+
+      <MeterFormDialog open={meterOpen} onOpenChange={setMeterOpen} onCreated={load} />
+      <ReadingFormDialog open={readingOpen} onOpenChange={setReadingOpen} onCreated={load} meters={meters} />
+    </div>
+  )
+}
+
+function MeterFormDialog({ open, onOpenChange, onCreated }) {
+  const [f, setF] = useState({})
+  useEffect(() => { setF({ location: '', meterNumber: '', meterType: '', meterMake: '', connectionType: '', sanctionedLoad: '', tariffCategory: '', installationDate: '', status: 'Active', remarks: '' }) }, [open])
+  const set = (k, v) => setF(x => ({ ...x, [k]: v }))
+  const submit = async () => {
+    try {
+      await api('utilities/electricity-meters', { method: 'POST', body: f })
+      toast.success('Meter added')
+      onOpenChange(false); onCreated()
+    } catch (e) { toast.error(e.message) }
+  }
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader><DialogTitle>Add Meter</DialogTitle></DialogHeader>
+        <div className="grid grid-cols-2 gap-3">
+          <div><Label>Location *</Label><Input value={f.location || ''} onChange={e => set('location', e.target.value)} /></div>
+          <div><Label>Meter Number *</Label><Input value={f.meterNumber || ''} onChange={e => set('meterNumber', e.target.value)} /></div>
+          <div><Label>Meter Type</Label><Input value={f.meterType || ''} onChange={e => set('meterType', e.target.value)} /></div>
+          <div><Label>Meter Make</Label><Input value={f.meterMake || ''} onChange={e => set('meterMake', e.target.value)} /></div>
+          <div><Label>Connection Type</Label><Input value={f.connectionType || ''} onChange={e => set('connectionType', e.target.value)} /></div>
+          <div><Label>Sanctioned Load</Label><Input type="number" value={f.sanctionedLoad || ''} onChange={e => set('sanctionedLoad', e.target.value)} /></div>
+          <div><Label>Tariff Category</Label><Input value={f.tariffCategory || ''} onChange={e => set('tariffCategory', e.target.value)} /></div>
+          <div><Label>Installation Date</Label><Input type="date" value={f.installationDate || ''} onChange={e => set('installationDate', e.target.value)} /></div>
+          <div className="col-span-2"><Label>Remarks</Label><Textarea value={f.remarks || ''} onChange={e => set('remarks', e.target.value)} /></div>
+        </div>
+        <DialogFooter><Button onClick={submit} disabled={!f.location || !f.meterNumber} className="bg-[#7a0d0d] hover:bg-[#5c0a0a]">Save</Button></DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+function ReadingFormDialog({ open, onOpenChange, onCreated, meters }) {
+  const [f, setF] = useState({})
+  useEffect(() => { setF({ meterNumber: '', location: '', readingDate: new Date().toISOString().slice(0, 10), previousReading: '', currentReading: '', billAmount: '', billNumber: '', billDate: '', dueDate: '', paymentStatus: 'Pending', remarks: '', meterResetConfirmed: false }) }, [open])
+  const set = (k, v) => setF(x => ({ ...x, [k]: v }))
+  const selectedMeter = meters.find(m => m.meterNumber === f.meterNumber)
+  useEffect(() => { if (selectedMeter) set('location', selectedMeter.location) }, [f.meterNumber])
+  const units = Number(f.currentReading || 0) - Number(f.previousReading || 0)
+  const submit = async () => {
+    try {
+      await api('utilities/electricity-readings', { method: 'POST', body: f })
+      toast.success('Reading logged')
+      onOpenChange(false); onCreated()
+    } catch (e) { toast.error(e.message) }
+  }
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader><DialogTitle>Log Monthly Reading</DialogTitle></DialogHeader>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="col-span-2">
+            <Label>Meter *</Label>
+            <Select value={f.meterNumber} onValueChange={v => set('meterNumber', v)}>
+              <SelectTrigger><SelectValue placeholder="Select meter" /></SelectTrigger>
+              <SelectContent>{meters.map(m => <SelectItem key={m.id} value={m.meterNumber}>{m.meterNumber} — {m.location}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div><Label>Reading Date</Label><Input type="date" value={f.readingDate || ''} onChange={e => set('readingDate', e.target.value)} /></div>
+          <div><Label>Previous Reading</Label><Input type="number" value={f.previousReading || ''} onChange={e => set('previousReading', e.target.value)} /></div>
+          <div><Label>Current Reading *</Label><Input type="number" value={f.currentReading || ''} onChange={e => set('currentReading', e.target.value)} /></div>
+          <div className="bg-slate-50 rounded p-2 text-sm"><span className="text-slate-500">Units: </span><b className={units < 0 ? 'text-rose-600' : ''}>{units}</b></div>
+          {units < 0 && (
+            <div className="col-span-2 flex items-center gap-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded p-2">
+              <input type="checkbox" checked={!!f.meterResetConfirmed} onChange={e => set('meterResetConfirmed', e.target.checked)} />
+              Current reading is lower than previous — confirm this is a meter reset/replacement
+            </div>
+          )}
+          <div><Label>Bill Amount</Label><Input type="number" value={f.billAmount || ''} onChange={e => set('billAmount', e.target.value)} /></div>
+          <div><Label>Bill Number</Label><Input value={f.billNumber || ''} onChange={e => set('billNumber', e.target.value)} /></div>
+          <div><Label>Due Date</Label><Input type="date" value={f.dueDate || ''} onChange={e => set('dueDate', e.target.value)} /></div>
+          <div><Label>Payment Status</Label>
+            <Select value={f.paymentStatus} onValueChange={v => set('paymentStatus', v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent><SelectItem value="Pending">Pending</SelectItem><SelectItem value="Paid">Paid</SelectItem></SelectContent>
+            </Select>
+          </div>
+        </div>
+        <DialogFooter><Button onClick={submit} disabled={!f.meterNumber || !f.currentReading} className="bg-[#7a0d0d] hover:bg-[#5c0a0a]">Save Reading</Button></DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
 function App() {
   const [user, setUser] = useState(null)
   const [active, setActive] = useState('dashboard')
