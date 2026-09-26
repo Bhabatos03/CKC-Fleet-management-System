@@ -3992,8 +3992,9 @@ function Utilities() {
       </div>
       {tab === 'dashboard' && <UtilitiesDashboard />}
       {tab === 'electricity' && <ElectricityModule />}
-      {tab === 'dg' && <DGModule />}
-{['maintenance', 'amc', 'compliance', 'projects', 'vendors', 'reports'].includes(tab) && (
+     {tab === 'dg' && <DGModule />}
+{tab === 'maintenance' && <UtilityMaintenanceModule />}
+{['amc', 'compliance', 'projects', 'vendors', 'reports'].includes(tab) && (
         <Card><CardContent className="p-10 text-center text-slate-400">
           {tabs.find(t => t.id === tab)?.label} — coming in the next phase.
         </CardContent></Card>
