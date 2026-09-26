@@ -4003,6 +4003,130 @@ function Utilities() {
     </div>
   )
 }
+function AMCModule() {
+  const [items, setItems] = useState([])
+  const [open, setOpen] = useState(false)
+  const [editing, setEditing] = useState(null)
+  const load = () => api('utilities/amc').then(setItems).catch(e => toast.error(e.message))
+  useEffect(() => { load() }, [])
+
+  const expiryStatus = (a) => {
+    const days = Math.round((new Date(a.amcEndDate) - new Date(todayLocal())) / 864e5)
+    if (days < 0) return { label: `Expired ${-days}d ago`, color: 'bg-rose-600' }
+    if (days <= 30) return { label: `Expiring in ${days}d`, color: 'bg-rose-500' }
+    if (days <= 60) return { label: `Expiring in ${days}d`, color: 'bg-amber-500' }
+    if (days <= 90) return { label: `Expiring in ${days}d`, color: 'bg-amber-400' }
+    return { label: 'Active', color: 'bg-emerald-500' }
+  }
+
+  const submit = async (data) => {
+    try {
+      if (editing) { await api(`utilities/amc/${editing.id}`, { method: 'PUT', body: data }); toast.success('Updated') }
+      else { await api('utilities/amc', { method: 'POST', body: data }); toast.success('Added') }
+      setOpen(false); setEditing(null); load()
+    } catch (e) { toast.error(e.message) }
+  }
+  const remove = async (id) => {
+    if (!confirm('Delete this AMC record?')) return
+    await api(`utilities/amc/${id}`, { method: 'DELETE' })
+    toast.success('Deleted'); load()
+  }
+
+  const expiring90 = items.filter(a => {
+    const days = Math.round((new Date(a.amcEndDate) - new Date(todayLocal())) / 864e5)
+    return days <= 90
+  }).length
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div className="text-sm text-slate-500">{items.length} AMC contracts{expiring90 > 0 ? ` · ${expiring90} expiring within 90 days` : ''}</div>
+        <Button size="sm" onClick={() => { setEditing(null); setOpen(true) }} className="bg-gradient-to-r from-[#7a0d0d] to-[#a01414] text-white">
+          <Plus className="w-4 h-4 mr-1" /> Add AMC
+        </Button>
+      </div>
+      <Card><CardContent className="p-4"><div className="overflow-x-auto"><Table>
+        <TableHeader><TableRow>
+          <TableHead>Equipment</TableHead><TableHead>Location</TableHead><TableHead>Vendor</TableHead>
+          <TableHead>End Date</TableHead><TableHead>Value</TableHead><TableHead>Visits</TableHead>
+          <TableHead>Status</TableHead><TableHead></TableHead>
+        </TableRow></TableHeader>
+        <TableBody>
+          {items.map(a => {
+            const s = expiryStatus(a)
+            return (
+              <TableRow key={a.id}>
+                <TableCell className="font-medium">{a.equipment}</TableCell>
+                <TableCell className="text-xs">{a.location}</TableCell>
+                <TableCell className="text-xs">{a.vendor || '-'}</TableCell>
+                <TableCell className="text-xs">{fmtDate(a.amcEndDate)}</TableCell>
+                <TableCell className="text-xs">{fmtINR(a.totalValue)}</TableCell>
+                <TableCell className="text-xs">{a.visitsCompleted}/{a.visitsPlanned}</TableCell>
+                <TableCell><Badge className={`${s.color} text-white`}>{s.label}</Badge></TableCell>
+                <TableCell className="text-right space-x-1">
+                  <Button size="sm" variant="outline" onClick={() => { setEditing(a); setOpen(true) }}>Edit</Button>
+                  <Button size="sm" variant="destructive" onClick={() => remove(a.id)}><Trash2 className="w-3 h-3" /></Button>
+                </TableCell>
+              </TableRow>
+            )
+          })}
+          {items.length === 0 && <TableRow><TableCell colSpan={8} className="text-center text-slate-500 py-8">No AMC contracts yet.</TableCell></TableRow>}
+        </TableBody>
+      </Table></div></CardContent></Card>
+      <AMCDialog open={open} onOpenChange={setOpen} onSubmit={submit} initial={editing} />
+    </div>
+  )
+}
+
+function AMCDialog({ open, onOpenChange, onSubmit, initial }) {
+  const [f, setF] = useState({})
+  useEffect(() => {
+    setF(initial || {
+      location: '', equipment: '', assetId: '', category: '', vendor: '',
+      amcStartDate: '', amcEndDate: '', amcValue: '', gst: '18',
+      serviceFrequency: 'Quarterly', visitsPlanned: '', visitsCompleted: '',
+      nextServiceDate: '', sla: '', contactPerson: '', contactNumber: '',
+      status: 'Active', remarks: '',
+    })
+  }, [initial, open])
+  const set = (k, v) => setF(x => ({ ...x, [k]: v }))
+  const frequencies = ['Monthly', 'Quarterly', 'Half-Yearly', 'Annual']
+  const totalValue = Number(f.amcValue || 0) + (Number(f.amcValue || 0) * Number(f.gst || 0) / 100)
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader><DialogTitle>{initial ? 'Edit' : 'Add'} AMC</DialogTitle></DialogHeader>
+        <div className="grid grid-cols-2 gap-3">
+          <div><Label>Location *</Label><Input value={f.location || ''} onChange={e => set('location', e.target.value)} /></div>
+          <div><Label>Category</Label><Input value={f.category || ''} onChange={e => set('category', e.target.value)} placeholder="e.g. HVAC, Lift, DG" /></div>
+          <div className="col-span-2"><Label>Equipment / Asset *</Label><Input value={f.equipment || ''} onChange={e => set('equipment', e.target.value)} /></div>
+          <div><Label>Asset ID</Label><Input value={f.assetId || ''} onChange={e => set('assetId', e.target.value)} /></div>
+          <div><Label>Vendor</Label><Input value={f.vendor || ''} onChange={e => set('vendor', e.target.value)} /></div>
+          <div><Label>AMC Start Date</Label><Input type="date" value={f.amcStartDate || ''} onChange={e => set('amcStartDate', e.target.value)} /></div>
+          <div><Label>AMC End Date *</Label><Input type="date" value={f.amcEndDate || ''} min={f.amcStartDate || undefined} onChange={e => set('amcEndDate', e.target.value)} /></div>
+          <div><Label>AMC Value (₹)</Label><Input type="number" value={f.amcValue || ''} onChange={e => set('amcValue', e.target.value)} /></div>
+          <div><Label>GST (%)</Label><Input type="number" value={f.gst || ''} onChange={e => set('gst', e.target.value)} /></div>
+          <div className="col-span-2 bg-slate-50 rounded p-2 text-sm"><span className="text-slate-500">Total Value: </span><b>{fmtINR(totalValue)}</b></div>
+          <div><Label>Service Frequency</Label>
+            <Select value={f.serviceFrequency} onValueChange={v => set('serviceFrequency', v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>{frequencies.map(fr => <SelectItem key={fr} value={fr}>{fr}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div><Label>Next Service Date</Label><Input type="date" value={f.nextServiceDate || ''} onChange={e => set('nextServiceDate', e.target.value)} /></div>
+          <div><Label>Visits Planned</Label><Input type="number" value={f.visitsPlanned || ''} onChange={e => set('visitsPlanned', e.target.value)} /></div>
+          <div><Label>Visits Completed</Label><Input type="number" value={f.visitsCompleted || ''} onChange={e => set('visitsCompleted', e.target.value)} /></div>
+          <div><Label>SLA</Label><Input value={f.sla || ''} onChange={e => set('sla', e.target.value)} placeholder="e.g. 24hr response" /></div>
+          <div><Label>Contact Person</Label><Input value={f.contactPerson || ''} onChange={e => set('contactPerson', e.target.value)} /></div>
+          <div><Label>Contact Number</Label><Input value={f.contactNumber || ''} onChange={e => set('contactNumber', e.target.value)} /></div>
+          <div className="col-span-2"><Label>Remarks</Label><Textarea value={f.remarks || ''} onChange={e => set('remarks', e.target.value)} /></div>
+        </div>
+        <DialogFooter><Button onClick={() => onSubmit(f)} disabled={!f.equipment || !f.location || !f.amcEndDate} className="bg-[#7a0d0d] hover:bg-[#5c0a0a]">Save</Button></DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
 function UtilityMaintenanceModule() {
   const [items, setItems] = useState([])
   const [open, setOpen] = useState(false)
