@@ -186,8 +186,8 @@ function Login({ onLogin }) {
               Every litre. <span className="text-amber-300 italic">Accounted for.</span>
             </h2>
             <p className="text-base xl:text-lg text-white/70 leading-relaxed max-w-md font-light mt-5">
-              An enterprise-grade fleet operations platform — real-time vehicle movement, fuel analytics, and mileage intelligence for the CKC fleet.
-            </p>
+  An enterprise-grade fleet & facility operations platform — real-time vehicle movement, fuel analytics, mileage intelligence, and utility operations for the CKC fleet.
+</p>
           </div>
 
           {/* Live rotating stat card */}
