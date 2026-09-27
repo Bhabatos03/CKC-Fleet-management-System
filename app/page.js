@@ -340,47 +340,67 @@ function Login({ onLogin }) {
 
 function AdminShell({ user, onLogout, children, active, setActive }) {
   const [drawerOpen, setDrawerOpen] = useState(false)
-        const fullNav = [
-  { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { id: 'utilities', label: 'Utilities', icon: Zap },
-  { id: 'vehicles', label: 'Vehicles', icon: Car },
-  { id: 'drivers', label: 'Drivers', icon: Users },
-  { id: 'trips', label: 'Trip Register', icon: ClipboardList },
-  { id: 'fuel', label: 'Fuel Register', icon: Fuel },
-  { id: 'maintenance', label: 'Maintenance', icon: Wrench },
-  { id: 'gatepass', label: 'Gate Pass', icon: ClipboardCheck },
-  { id: 'mileage', label: 'Mileage', icon: Gauge },
-  { id: 'reports', label: 'Reports', icon: Download },
-  { id: 'tracking', label: 'Track Vehicle', icon: MapPin },
-  { id: 'users', label: 'User Management', icon: UserCog },
-]
-  const nav = user.role === 'store_admin'
-  ? fullNav.filter(n => ['dashboard', 'vehicles', 'trips', 'maintenance', 'tracking', 'gatepass', 'utilities'].includes(n.id))
-  : fullNav
+  const fleetNav = [
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'vehicles', label: 'Vehicles', icon: Car },
+    { id: 'drivers', label: 'Drivers', icon: Users },
+    { id: 'trips', label: 'Trip Register', icon: ClipboardList },
+    { id: 'fuel', label: 'Fuel Register', icon: Fuel },
+    { id: 'maintenance', label: 'Maintenance', icon: Wrench },
+    { id: 'gatepass', label: 'Gate Pass', icon: ClipboardCheck },
+    { id: 'mileage', label: 'Mileage', icon: Gauge },
+    { id: 'reports', label: 'Reports', icon: Download },
+    { id: 'tracking', label: 'Track Vehicle', icon: MapPin },
+  ]
+  const utilityNav = [
+    { id: 'utilities', label: 'Utilities', icon: Zap },
+  ]
+  const adminOnlyNav = [
+    { id: 'users', label: 'User Management', icon: UserCog },
+  ]
+
+  const allowedIds = user.role === 'store_admin'
+    ? ['dashboard', 'vehicles', 'trips', 'maintenance', 'tracking', 'gatepass', 'utilities']
+    : null
+
+  const visibleFleetNav = allowedIds ? fleetNav.filter(n => allowedIds.includes(n.id)) : fleetNav
+  const visibleUtilityNav = allowedIds ? utilityNav.filter(n => allowedIds.includes(n.id)) : utilityNav
+  const visibleAdminNav = user.role === 'admin' ? adminOnlyNav : []
+
   const pick = (id) => { setActive(id); setDrawerOpen(false) }
+
+  const NavSection = ({ title, items }) => items.length === 0 ? null : (
+    <div className="mb-3">
+      <div className="px-3 pt-2 pb-1 text-[10px] tracking-[0.2em] text-slate-500 font-semibold">{title}</div>
+      {items.map(n => {
+        const Icon = n.icon
+        return (
+          <button key={n.id} onClick={() => pick(n.id)}
+            className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg text-sm transition ${active === n.id ? 'bg-amber-500 text-white font-semibold' : 'hover:bg-slate-800 text-slate-300'}`}>
+            <Icon className="w-4 h-4" /> {n.label}
+          </button>
+        )
+      })}
+    </div>
+  )
+
   const SidebarContent = () => (
     <>
       <div className="p-5 border-b border-slate-800 flex items-center gap-3">
         <img src="/ckc-logo.png" alt="CKC" className="w-11 h-11 object-contain" />
         <div className="flex-1 min-w-0">
-  <div className="font-semibold text-sm leading-tight truncate text-white" style={{fontFamily: '"Times New Roman", Georgia, serif'}}>C. Krishniah Chetty</div>
-  <div className="text-[8px] tracking-[0.25em] text-amber-200/80 font-medium mt-0.5 whitespace-nowrap">GROUP OF JEWELLERS</div>
-  <div className="text-[10px] text-amber-200/60 tracking-[0.2em] mt-0.5">
-    FleetPulse · {user.role === 'store_admin' ? (user.name || 'STORE') : 'ADMIN'}
-  </div>
-</div>
+          <div className="font-semibold text-sm leading-tight truncate text-white" style={{fontFamily: '"Times New Roman", Georgia, serif'}}>C. Krishniah Chetty</div>
+          <div className="text-[8px] tracking-[0.25em] text-amber-200/80 font-medium mt-0.5 whitespace-nowrap">GROUP OF JEWELLERS</div>
+          <div className="text-[10px] text-amber-200/60 tracking-[0.2em] mt-0.5">
+            FleetPulse · {user.role === 'store_admin' ? (user.name || 'STORE') : 'ADMIN'}
+          </div>
+        </div>
         <button onClick={() => setDrawerOpen(false)} className="md:hidden text-slate-300 hover:text-white p-1"><X className="w-5 h-5" /></button>
       </div>
-      <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
-        {nav.map(n => {
-          const Icon = n.icon
-          return (
-            <button key={n.id} onClick={() => pick(n.id)}
-              className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg text-sm transition ${active === n.id ? 'bg-amber-500 text-white font-semibold' : 'hover:bg-slate-800 text-slate-300'}`}>
-              <Icon className="w-4 h-4" /> {n.label}
-            </button>
-          )
-        })}
+      <nav className="flex-1 p-3 overflow-y-auto">
+        <NavSection title="FLEET" items={visibleFleetNav} />
+        <NavSection title="UTILITIES" items={visibleUtilityNav} />
+        <NavSection title="ADMIN" items={visibleAdminNav} />
       </nav>
       <div className="p-3 border-t border-slate-800">
         <div className="px-3 py-2 text-xs text-slate-400">Signed in as</div>
