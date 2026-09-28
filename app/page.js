@@ -4286,8 +4286,11 @@ function ProjectsModule() {
   }
   const remove = async (id) => {
     if (!confirm('Delete this project?')) return
-    await api(`utilities/projects/${id}`, { method: 'DELETE' })
-    toast.success('Deleted'); load()
+    try {
+      await api(`utilities/projects/${id}`, { method: 'DELETE' })
+      toast.success('Deleted')
+      load()
+    } catch (e) { toast.error(e.message) }
   }
 
   const overBudgetCount = items.filter(p => p.actualCost > p.approvedBudget && p.approvedBudget > 0).length
