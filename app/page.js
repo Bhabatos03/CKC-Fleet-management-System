@@ -4445,8 +4445,11 @@ function ComplianceModule() {
   }
   const remove = async (id) => {
     if (!confirm('Delete this compliance record?')) return
-    await api(`utilities/compliance/${id}`, { method: 'DELETE' })
-    toast.success('Deleted'); load()
+    try {
+      await api(`utilities/compliance/${id}`, { method: 'DELETE' })
+      toast.success('Deleted')
+      load()
+    } catch (e) { toast.error(e.message) }
   }
 
   const overdueCount = items.filter(c => complianceStatus(c).label.startsWith('Overdue')).length
