@@ -1335,8 +1335,44 @@ export async function PUT(request, { params }) {
       return json({ error: 'Store admins have read-only access' }, 403)
     }
 
-   const map = { vehicles: 'vehicles', drivers: 'drivers', maintenance: 'maintenance', electricity_meters: 'electricity_meters', electricity_readings: 'electricity_readings', dg_units: 'dg_units', dg_logs: 'dg_logs', utility_maintenance: 'utility_maintenance', utility_amc: 'utility_amc', utility_compliance: 'utility_compliance', utility_projects: 'utility_projects', utility_vendors: 'utility_vendors' }
-if (!map[col]) return json({ error: 'Not found' }, 404)
+    if (col === 'utilities') {
+      const sub = pathArr[1]
+      const uid = pathArr[2]
+      const utilMap = {
+        'electricity-meters': 'electricity_meters',
+        'electricity-readings': 'electricity_readings',
+        'dg-units': 'dg_units',
+        'dg-logs': 'dg_logs',
+        maintenance: 'utility_maintenance',
+        amc: 'utility_amc',
+        compliance: 'utility_compliance',
+        projects: 'utility_projects',
+        vendors: 'utility_vendors',
+      }
+      if (!utilMap[sub] || !uid) return json({ error: 'Not found' }, 404)
+      delete body._id
+      delete body.id
+      if (sub === 'amc') {
+        const amcValue = Number(body.amcValue || 0)
+        const gst = Number(body.gst || 0)
+        body.amcValue = amcValue
+        body.gst = gst
+        body.totalValue = amcValue + (amcValue * gst / 100)
+      }
+      if (sub === 'projects') {
+        const approvedBudget = Number(body.approvedBudget || 0)
+        const actualCost = Number(body.actualCost || 0)
+        body.approvedBudget = approvedBudget
+        body.actualCost = actualCost
+        body.balanceBudget = approvedBudget - actualCost
+        body.capexUtilizationPercent = approvedBudget > 0 ? Number(((actualCost / approvedBudget) * 100).toFixed(1)) : 0
+      }
+      await db.collection(utilMap[sub]).updateOne({ id: uid }, { $set: body })
+      return json({ ok: true })
+    }
+
+    const map = { vehicles: 'vehicles', drivers: 'drivers', maintenance: 'maintenance' }
+    if (!map[col]) return json({ error: 'Not found' }, 404)
     delete body._id
     delete body.id
     await db.collection(map[col]).updateOne({ id }, { $set: body })
