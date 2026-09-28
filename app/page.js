@@ -4172,8 +4172,11 @@ function VendorsModule() {
   }
   const remove = async (id) => {
     if (!confirm('Delete this vendor?')) return
-    await api(`utilities/vendors/${id}`, { method: 'DELETE' })
-    toast.success('Deleted'); load()
+    try {
+      await api(`utilities/vendors/${id}`, { method: 'DELETE' })
+      toast.success('Deleted')
+      load()
+    } catch (e) { toast.error(e.message) }
   }
 
   return (
