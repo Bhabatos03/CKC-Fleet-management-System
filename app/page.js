@@ -22,6 +22,13 @@ import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid,
   PieChart, Pie, Cell, Legend
 } from 'recharts'
+const BRAND = {
+  bg: '#231F20',       // near-black background
+  bgSoft: '#2C2728',   // slightly lighter black for layered panels
+  red: '#E60000',      // accent red
+  redDeep: '#B30000',  // darker red for hover/gradients
+  ivory: '#FFF5E3',    // warm off-white for headings
+}
 
 // Get the currently logged-in user from localStorage
 const getUser = () => { try { return JSON.parse(localStorage.getItem('ckc_user') || '{}') } catch { return {} } }
