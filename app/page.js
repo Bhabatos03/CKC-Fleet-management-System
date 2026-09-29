@@ -4024,6 +4024,143 @@ function Utilities() {
 </div>
   )
 }
+function WaterModule() {
+  const [items, setItems] = useState([])
+  const [open, setOpen] = useState(false)
+  const [editing, setEditing] = useState(null)
+  const load = () => api('utilities/water-readings').then(setItems).catch(e => toast.error(e.message))
+  useEffect(() => { load() }, [])
+
+  const submit = async (data) => {
+    try {
+      if (editing) { await api(`utilities/water-readings/${editing.id}`, { method: 'PUT', body: data }); toast.success('Updated') }
+      else { await api('utilities/water-readings', { method: 'POST', body: data }); toast.success('Added') }
+      setOpen(false); setEditing(null); load()
+    } catch (e) { toast.error(e.message) }
+  }
+  const remove = async (id) => {
+    if (!confirm('Delete this water reading?')) return
+    try {
+      await api(`utilities/water-readings/${id}`, { method: 'DELETE' })
+      toast.success('Deleted')
+      load()
+    } catch (e) { toast.error(e.message) }
+  }
+
+  const totalConsumption = items.reduce((s, r) => s + (r.consumption || 0), 0)
+  const totalCost = items.reduce((s, r) => s + (r.amount || 0), 0)
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div className="flex gap-4 text-sm">
+          <div><span className="text-slate-500">Entries: </span><b>{items.length}</b></div>
+          <div><span className="text-slate-500">Total Consumption: </span><b>{totalConsumption.toLocaleString()}</b></div>
+          <div><span className="text-slate-500">Total Charges: </span><b>{fmtINR(totalCost)}</b></div>
+        </div>
+        <Button size="sm" onClick={() => { setEditing(null); setOpen(true) }} className="bg-gradient-to-r from-[#7a0d0d] to-[#a01414] text-white">
+          <Plus className="w-4 h-4 mr-1" /> Log Reading
+        </Button>
+      </div>
+      <Card><CardContent className="p-4"><div className="overflow-x-auto"><Table>
+        <TableHeader><TableRow>
+          <TableHead>Date</TableHead><TableHead>Location</TableHead><TableHead>Previous</TableHead>
+          <TableHead>Current</TableHead><TableHead>Consumption</TableHead><TableHead>Amount</TableHead>
+          <TableHead>Bill No.</TableHead><TableHead>Payment</TableHead><TableHead></TableHead>
+        </TableRow></TableHeader>
+        <TableBody>
+          {items.map(r => (
+            <TableRow key={r.id}>
+              <TableCell className="text-xs">{fmtDate(r.readingDate)}</TableCell>
+              <TableCell>{r.location}</TableCell>
+              <TableCell>{r.previousReading}</TableCell>
+              <TableCell>{r.currentReading}</TableCell>
+              <TableCell className="font-semibold">{r.consumption} {r.unit}</TableCell>
+              <TableCell>{fmtINR(r.amount)}</TableCell>
+              <TableCell className="text-xs">{r.billNumber || '-'}</TableCell>
+              <TableCell><Badge variant={r.paymentStatus === 'Paid' ? 'default' : 'secondary'}>{r.paymentStatus}</Badge></TableCell>
+              <TableCell className="text-right space-x-1">
+                <Button size="sm" variant="outline" onClick={() => { setEditing(r); setOpen(true) }}>Edit</Button>
+                <Button size="sm" variant="destructive" onClick={() => remove(r.id)}><Trash2 className="w-3 h-3" /></Button>
+              </TableCell>
+            </TableRow>
+          ))}
+          {items.length === 0 && <TableRow><TableCell colSpan={9} className="text-center text-slate-500 py-8">No water readings logged yet.</TableCell></TableRow>}
+        </TableBody>
+      </Table></div></CardContent></Card>
+      <WaterReadingDialog open={open} onOpenChange={setOpen} onSubmit={submit} initial={editing} />
+    </div>
+  )
+}
+
+function WaterReadingDialog({ open, onOpenChange, onSubmit, initial }) {
+  const [f, setF] = useState({})
+  useEffect(() => {
+    setF(initial || {
+      location: '', readingDate: new Date().toISOString().slice(0, 10),
+      previousReading: '', currentReading: '', unit: 'KL',
+      amount: '', billNumber: '', dueDate: '', paymentStatus: 'Pending',
+      remarks: '', meterResetConfirmed: false,
+    })
+  }, [initial, open])
+  const set = (k, v) => setF(x => ({ ...x, [k]: v }))
+  const consumption = Number(f.currentReading || 0) - Number(f.previousReading || 0)
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-xl">
+        <DialogHeader><DialogTitle>{initial ? 'Edit' : 'Log'} Water Reading</DialogTitle></DialogHeader>
+        <div className="space-y-4">
+          <div>
+            <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Consumption Details</div>
+            <div className="grid grid-cols-2 gap-3">
+              <div><Label>Location *</Label><Input value={f.location || ''} onChange={e => set('location', e.target.value)} /></div>
+              <div><Label>Reading Date</Label><Input type="date" value={f.readingDate || ''} onChange={e => set('readingDate', e.target.value)} /></div>
+              <div><Label>Previous Reading</Label><Input type="number" value={f.previousReading || ''} onChange={e => set('previousReading', e.target.value)} /></div>
+              <div><Label>Current Reading *</Label><Input type="number" value={f.currentReading || ''} onChange={e => set('currentReading', e.target.value)} /></div>
+              <div><Label>Unit</Label>
+                <Select value={f.unit} onValueChange={v => set('unit', v)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent><SelectItem value="KL">KL (kilolitres)</SelectItem><SelectItem value="Litres">Litres</SelectItem></SelectContent>
+                </Select>
+              </div>
+              <div className="bg-slate-50 rounded p-2 text-sm flex items-end"><span className="text-slate-500 mr-1">Consumption: </span><b className={consumption < 0 ? 'text-rose-600' : ''}>{consumption} {f.unit}</b></div>
+            </div>
+            {consumption < 0 && (
+              <div className="mt-2 flex items-center gap-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded p-2">
+                <input type="checkbox" checked={!!f.meterResetConfirmed} onChange={e => set('meterResetConfirmed', e.target.checked)} />
+                Current reading is lower than previous — confirm this is a meter reset/replacement
+              </div>
+            )}
+          </div>
+
+          <div>
+            <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Charges</div>
+            <div className="grid grid-cols-2 gap-3">
+              <div><Label>Amount (₹)</Label><Input type="number" value={f.amount || ''} onChange={e => set('amount', e.target.value)} /></div>
+              <div><Label>Bill Number</Label><Input value={f.billNumber || ''} onChange={e => set('billNumber', e.target.value)} /></div>
+              <div><Label>Due Date</Label><Input type="date" value={f.dueDate || ''} onChange={e => set('dueDate', e.target.value)} /></div>
+              <div><Label>Payment Status</Label>
+                <Select value={f.paymentStatus} onValueChange={v => set('paymentStatus', v)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent><SelectItem value="Pending">Pending</SelectItem><SelectItem value="Paid">Paid</SelectItem></SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+
+          <div><Label>Remarks</Label><Textarea value={f.remarks || ''} onChange={e => set('remarks', e.target.value)} /></div>
+        </div>
+        <DialogFooter>
+          <Button onClick={() => onSubmit(f)} disabled={!f.location || !f.currentReading || (consumption < 0 && !f.meterResetConfirmed)} className="bg-[#7a0d0d] hover:bg-[#5c0a0a]">
+            Save
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
 function UtilitiesReportsModule() {
   const [reportType, setReportType] = useState('electricity')
   const [fromDate, setFromDate] = useState('')
