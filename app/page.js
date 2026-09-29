@@ -3988,6 +3988,7 @@ function Utilities() {
   const tabs = [
     { id: 'dashboard', label: 'Dashboard' },
     { id: 'electricity', label: 'Electricity / EB' },
+    { id: 'water', label: 'Water' },
     { id: 'dg', label: 'DG Management' },
     { id: 'maintenance', label: 'Utility Maintenance' },
     { id: 'amc', label: 'AMC' },
@@ -4011,14 +4012,15 @@ function Utilities() {
         ))}
       </div>
     {tab === 'dashboard' && <UtilitiesDashboard onNavigate={setTab} />}
-      {tab === 'electricity' && <ElectricityModule />}
-     {tab === 'dg' && <DGModule />}
-{tab === 'maintenance' && <UtilityMaintenanceModule />}
-{tab === 'amc' && <AMCModule />}
-{tab === 'compliance' && <ComplianceModule />}
-{tab === 'projects' && <ProjectsModule />}
-{tab === 'vendors' && <VendorsModule />}
-{tab === 'reports' && <UtilitiesReportsModule />}
+    {tab === 'electricity' && <ElectricityModule />}
+    {tab === 'water' && <WaterModule />}
+    {tab === 'dg' && <DGModule />}
+    {tab === 'maintenance' && <UtilityMaintenanceModule />}
+    {tab === 'amc' && <AMCModule />}
+    {tab === 'compliance' && <ComplianceModule />}
+    {tab === 'projects' && <ProjectsModule />}
+    {tab === 'vendors' && <VendorsModule />}
+    {tab === 'reports' && <UtilitiesReportsModule />}
 </div>
   )
 }
