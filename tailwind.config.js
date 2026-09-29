@@ -18,6 +18,13 @@ module.exports = {
       },
       extend: {
         colors: {
+          // CKC brand overrides — text-slate-900 becomes CKC Black,
+          // bg-slate-50 becomes CKC Ivory. Other slate shades (100-800)
+          // are untouched and keep Tailwind's defaults.
+          slate: {
+            900: '#231F20',
+            50: '#FFF5E3',
+          },
           border: 'hsl(var(--border))',
           input: 'hsl(var(--input))',
           ring: 'hsl(var(--ring))',
