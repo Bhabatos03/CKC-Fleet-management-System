@@ -176,10 +176,10 @@ function Login({ onLogin }) {
   <span className="text-base lg:text-lg align-super ml-1" style={{color: 'rgba(255,245,227,0.6)'}}>™</span>
 </h1>
 
-  <div className="flex items-center gap-3">
-    <div className="h-px w-8 bg-amber-400/60" />
-    <div className="text-[11px] lg:text-xs tracking-[0.4em] text-amber-100/70 font-medium">GROUP OF JEWELLERS</div>
-  </div>
+ <div className="flex items-center gap-3">
+  <div className="h-px w-8" style={{background: BRAND.red}} />
+  <div className="text-[11px] lg:text-xs tracking-[0.4em] font-medium" style={{color: 'rgba(255,245,227,0.7)'}}>GROUP OF JEWELLERS</div>
+</div>
 </div>
 </div>
 
