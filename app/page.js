@@ -311,10 +311,10 @@ function Login({ onLogin }) {
                     </div>
                   </div>
                   <Button
-                    type="submit"
-                    disabled={loading}
-                    className="w-full h-12 bg-gradient-to-r from-[#E60000] via-[#E60000] to-[#E60000] hover:brightness-110 text-white font-semibold tracking-[0.15em] shadow-lg shadow-red-900/40 transition-all group"
-                  >
+                  type="submit"
+                  disabled={loading}
+                  className="w-full h-12 bg-gradient-to-r from-[#7a0d0d] via-[#a01414] to-[#7a0d0d] hover:brightness-110 text-white font-semibold tracking-[0.15em] shadow-lg shadow-red-900/40 transition-all group"
+>
                     {loading ? (
                       <span className="flex items-center gap-2">
                         <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
