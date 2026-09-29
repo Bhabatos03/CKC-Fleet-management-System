@@ -179,11 +179,11 @@ function Login({ onLogin }) {
     textTransform: 'uppercase',
   }}
 >
-  <span style={{ fontSize: '54px' }}>C.</span>
-  <span style={{ fontSize: '44px', marginLeft: '10px' }}>K</span>
-  <span style={{ fontSize: '38px' }}>rishniah</span>
-  <span style={{ fontSize: '54px', marginLeft: '16px' }}>C</span>
-  <span style={{ fontSize: '38px' }}>hetty</span>
+  <span style={{ fontSize: '74px' }}>C.</span>
+  <span style={{ fontSize: '64px', marginLeft: '10px' }}>K</span>
+  <span style={{ fontSize: '58px' }}>RISHNIAH</span>
+  <span style={{ fontSize: '74px', marginLeft: '16px' }}>C</span>
+  <span style={{ fontSize: '58px' }}>HETTY</span>
   <span
     style={{
       fontSize: '10px',
