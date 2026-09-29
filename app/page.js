@@ -171,10 +171,10 @@ function Login({ onLogin }) {
   <span className="text-[10px] tracking-[0.2em] font-semibold uppercase" style={{color: BRAND.red}}>Live</span>
 </div>
 
-  <h1 className="text-3xl lg:text-4xl xl:text-5xl font-semibold leading-tight tracking-wide whitespace-nowrap text-white" style={{fontFamily: '"Times New Roman", Georgia, serif'}}>
-    C. Krishniah Chetty
-    <span className="text-base lg:text-lg text-white/70 align-super ml-1">™</span>
-  </h1>
+ <h1 className="text-3xl lg:text-4xl xl:text-5xl font-semibold leading-tight tracking-wide whitespace-nowrap" style={{fontFamily: '"Times New Roman", Georgia, serif', color: BRAND.ivory}}>
+  C. Krishniah Chetty
+  <span className="text-base lg:text-lg align-super ml-1" style={{color: 'rgba(255,245,227,0.6)'}}>™</span>
+</h1>
 
   <div className="flex items-center gap-3">
     <div className="h-px w-8 bg-amber-400/60" />
