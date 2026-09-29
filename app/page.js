@@ -187,10 +187,10 @@ function Login({ onLogin }) {
         <div className="hidden lg:block space-y-8 my-10">
           <div>
             <div className="w-16 h-[2px] bg-gradient-to-r from-amber-400 to-transparent mb-5" />
-            <h2 className="text-3xl xl:text-5xl font-light leading-tight text-white/95" style={{fontFamily: 'Georgia, serif'}}>
-              Every kilometre.<br />
-              Every litre. <span className="text-amber-300 italic">Accounted for.</span>
-            </h2>
+           <h2 className="text-3xl xl:text-5xl font-light leading-tight" style={{fontFamily: 'Georgia, serif', color: BRAND.ivory}}>
+          Every kilometre.<br />
+          Every litre. <span className="italic" style={{color: BRAND.red}}>Accounted for.</span>
+          </h2>
             <p className="text-base xl:text-lg text-white/70 leading-relaxed max-w-md font-light mt-5">
   An enterprise-grade fleet & facility operations platform — real-time vehicle movement, fuel analytics, mileage intelligence, and utility operations for the CKC fleet.
 </p>
