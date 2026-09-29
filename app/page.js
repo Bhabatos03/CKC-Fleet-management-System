@@ -127,10 +127,9 @@ function Login({ onLogin }) {
   return (
    <div className="min-h-screen flex flex-col lg:flex-row relative overflow-hidden" style={{background: `radial-gradient(1400px 900px at 20% 15%, ${BRAND.bgSoft} 0%, ${BRAND.bg} 55%, #100e0e 100%)`}}>
       {/* Ambient gradients */}
-      <div className="absolute -top-40 -left-40 w-[520px] h-[520px] rounded-full bg-[#E60000]/20 blur-3xl pointer-events-none animate-pulse" style={{animationDuration: '5s'}} />
-      <div className="absolute -bottom-60 -right-40 w-[700px] h-[700px] rounded-full bg-amber-600/10 blur-3xl pointer-events-none animate-pulse" style={{animationDuration: '7s'}} />
-      <div className="absolute top-1/3 left-1/2 w-[320px] h-[320px] rounded-full bg-[#231F20]/50 blur-3xl pointer-events-none" />
-
+      <div className="absolute -top-40 -left-40 w-[520px] h-[520px] rounded-full bg-red-700/20 blur-3xl pointer-events-none animate-pulse" style={{animationDuration: '5s'}} />
+<div className="absolute -bottom-60 -right-40 w-[700px] h-[700px] rounded-full bg-amber-600/10 blur-3xl pointer-events-none animate-pulse" style={{animationDuration: '7s'}} />
+<div className="absolute top-1/3 left-1/2 w-[320px] h-[320px] rounded-full bg-red-950/50 blur-3xl pointer-events-none" />
       {/* Fine noise/grid texture */}
       <div className="absolute inset-0 opacity-[0.035] pointer-events-none" style={{
         backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)',
