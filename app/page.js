@@ -5440,7 +5440,7 @@ function ReadingFormDialog({ open, onOpenChange, onCreated, meters }) {
   if (!loaded) return null
   if (!user) return <><Login onLogin={setUser} /><OfflineBanner /></>
   if (user.role === 'security') return <><SecurityHome user={user} onLogout={logout} /><OfflineBanner /></>
-  ...
+
 
   // Store admins get the same shell, but only a subset of pages/tabs
   const allowedForStoreAdmin = ['dashboard', 'vehicles', 'trips', 'maintenance', 'tracking', 'gatepass', 'utilities']
