@@ -118,11 +118,11 @@ function Login({ onLogin }) {
   ]
   const Rot = rotating[tick].icon
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row relative overflow-hidden" style={{background: 'radial-gradient(1200px 800px at 15% 20%, #E60000 0%, #3a0606 45%, #1a0303 100%)'}}>
+    <div className="min-h-screen flex flex-col lg:flex-row relative overflow-hidden" style={{background: 'radial-gradient(1200px 800px at 15% 20%, #E60000 0%, #231F20 45%, #231F20 100%)'}}>
       {/* Ambient gradients */}
-      <div className="absolute -top-40 -left-40 w-[520px] h-[520px] rounded-full bg-red-700/20 blur-3xl pointer-events-none animate-pulse" style={{animationDuration: '5s'}} />
+      <div className="absolute -top-40 -left-40 w-[520px] h-[520px] rounded-full bg-[#E60000]/20 blur-3xl pointer-events-none animate-pulse" style={{animationDuration: '5s'}} />
       <div className="absolute -bottom-60 -right-40 w-[700px] h-[700px] rounded-full bg-amber-600/10 blur-3xl pointer-events-none animate-pulse" style={{animationDuration: '7s'}} />
-      <div className="absolute top-1/3 left-1/2 w-[320px] h-[320px] rounded-full bg-red-950/50 blur-3xl pointer-events-none" />
+      <div className="absolute top-1/3 left-1/2 w-[320px] h-[320px] rounded-full bg-[#231F20]/50 blur-3xl pointer-events-none" />
 
       {/* Fine noise/grid texture */}
       <div className="absolute inset-0 opacity-[0.035] pointer-events-none" style={{
@@ -264,7 +264,7 @@ function Login({ onLogin }) {
 
               <div className="p-8 space-y-6">
                 <div>
-                  <h2 className="text-2xl font-bold text-[#2d0505]" style={{fontFamily: 'Georgia, serif'}}>Welcome Back</h2>
+                  <h2 className="text-2xl font-bold text-[#231F20]" style={{fontFamily: 'Georgia, serif'}}>Welcome Back</h2>
                   <p className="text-sm text-slate-500 mt-1">Sign in to access the Fleet Management System.</p>
                 </div>
 
@@ -452,7 +452,7 @@ function Dashboard() {
     { label: 'Total Vehicles', value: data.fleet.total, icon: Car, color: 'bg-gradient-to-br from-[#E60000] to-[#E60000]' },
     { label: 'Available', value: data.fleet.available, icon: Truck, color: 'bg-gradient-to-br from-emerald-600 to-emerald-700' },
     { label: 'Outside', value: data.fleet.outside, icon: ArrowRightCircle, color: 'bg-gradient-to-br from-amber-500 to-amber-600' },
-    { label: 'Maintenance', value: data.fleet.maintenance, icon: AlertTriangle, color: 'bg-gradient-to-br from-[#4a0808] to-[#E60000]' },
+    { label: 'Maintenance', value: data.fleet.maintenance, icon: AlertTriangle, color: 'bg-gradient-to-br from-[#E60000] to-[#E60000]' },
   ]
   const today = [
     { label: "Today's Trips", value: data.today.trips },
@@ -3189,7 +3189,7 @@ function SecurityHome({ user, onLogout }) {
     { id: 'gatepass', label: 'Gate Pass', icon: ClipboardCheck, color: 'from-indigo-500 to-indigo-600' },
   ]
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#3d0808] via-[#E60000] to-[#2d0505] text-white">
+    <div className="min-h-screen bg-gradient-to-br from-[#3d0808] via-[#E60000] to-[#231F20] text-white">
       <header className="p-4 flex items-center justify-between border-b border-red-900/50 bg-black/20 backdrop-blur">
         <div className="flex items-center gap-2">
           {screen !== 'home' && <Button variant="ghost" size="sm" onClick={() => setScreen('home')} className="text-white hover:bg-white/10"><ArrowLeft className="w-4 h-4" /></Button>}
