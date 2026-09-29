@@ -626,7 +626,7 @@ function Vehicles() {
                 <TableCell>{driverName(v.assignedDriverId)}</TableCell>
                 <TableCell>{v.currentOdometer?.toLocaleString()} km</TableCell>
                 <TableCell>{v.expectedMileage} km/L</TableCell>
-                    <TableCell><Badge variant={v.status === 'Available' ? 'default' : v.status === 'Outside' ? 'secondary' : 'destructive'} className={v.status === 'Available' ? 'bg-[#E60000] hover:bg-[#E60000]' : ''}>{v.status}</Badge></TableCell>
+                    <TableCell><Badge variant={v.status === 'Available' ? 'default' : v.status === 'Outside' ? 'secondary' : 'destructive'} className={v.status === 'Available' ? 'bg-[#E60000] hover:bg-[#E60000] hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90' : ''}>{v.status}</Badge></TableCell>
                 <TableCell className="text-right space-x-2">
                   {canEdit && (
                     <>
@@ -744,7 +744,7 @@ function Drivers() {
         <TableCell>{d.empId}</TableCell><TableCell>{d.mobile}</TableCell><TableCell>{d.licence}</TableCell>
         <TableCell className={expiring ? 'text-rose-600 font-semibold' : ''}>{fmtDate(d.licenceExpiry)}</TableCell>
         <TableCell>{d.assignedLocation || '-'}</TableCell>
-        <TableCell><Badge className="bg-[#E60000] hover:bg-[#E60000]">{d.status}</Badge></TableCell>
+        <TableCell><Badge className="bg-[#E60000] hover:bg-[#E60000] hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90">{d.status}</Badge></TableCell>
         <TableCell>
           <Button size="sm" variant="outline" onClick={() => setPairingDriver(d)}>
             <QrCode className="w-3 h-3 mr-1" /> Get Code
@@ -1063,7 +1063,7 @@ function Trips() {
                     <TableCell className="text-xs">{fmtDT(t.timeIn)}</TableCell>
                     <TableCell className="font-semibold">{t.kmRun || '-'}</TableCell>
                     <TableCell className="text-xs">{t.destination}</TableCell>
-                    <TableCell><Badge variant={t.status === 'Outside' ? 'secondary' : 'default'} className={t.status === 'Returned' ? 'bg-[#E60000] hover:bg-[#E60000]' : ''}>{t.status}</Badge></TableCell>
+                    <TableCell><Badge variant={t.status === 'Outside' ? 'secondary' : 'default'} className={t.status === 'Returned' ? 'bg-[#E60000] hover:bg-[#E60000] hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90' : ''}>{t.status}</Badge></TableCell>
                   </TableRow>
                 ))}
                 {filtered.length === 0 && (
@@ -1595,7 +1595,7 @@ function MaintenanceDialog({ open, onOpenChange, onSubmit, initial, vehicles }) 
           </div>
         </div>
         <DialogFooter>
-          <Button onClick={() => onSubmit(f)} className="bg-[#E60000] hover:bg-[#E60000]" disabled={!f.vehicleId || !f.serviceDate}>
+          <Button onClick={() => onSubmit(f)} className="bg-[#E60000] hover:bg-[#E60000] hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90" disabled={!f.vehicleId || !f.serviceDate}>
             {initial ? 'Update Record' : 'Save Service Record'}
           </Button>
         </DialogFooter>
@@ -1702,7 +1702,7 @@ function UserManagement() {
                 <TableCell className="font-mono text-xs">{u.username}</TableCell>
                 <TableCell><Badge variant="outline">{roleLabel(u.role)}</Badge></TableCell>
                 <TableCell>
-                  <Badge className={u.status === 'Active' ? 'bg-[#E60000] hover:bg-[#E60000]' : ''} variant={u.status === 'Active' ? 'default' : 'secondary'}>
+                  <Badge className={u.status === 'Active' ? 'bg-[#E60000] hover:bg-[#E60000] hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90' : ''} variant={u.status === 'Active' ? 'default' : 'secondary'}>
                     {u.status || 'Active'}
                   </Badge>
                 </TableCell>
@@ -3649,7 +3649,7 @@ const ask = async (q) => {
               className="text-sm"
               disabled={asking}
             />
-            <Button size="sm" onClick={() => ask()} disabled={asking || !input.trim()} className="bg-[#E60000] hover:bg-[#E60000]">
+            <Button size="sm" onClick={() => ask()} disabled={asking || !input.trim()} className="bg-[#E60000] hover:bg-[#E60000] hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90">
               Send
             </Button>
           </div>
@@ -3682,7 +3682,7 @@ function UtilitySettingsDialog({ open, onOpenChange }) {
           <div><Label>DG Unit Rate (₹/unit)</Label><Input type="number" step="0.01" value={f.dgUnitRate ?? ''} onChange={e => set('dgUnitRate', e.target.value)} /></div>
           <div><Label>DG Tax (₹/unit)</Label><Input type="number" step="0.01" value={f.dgTaxPerUnit ?? ''} onChange={e => set('dgTaxPerUnit', e.target.value)} /></div>
         </div>
-        <DialogFooter><Button onClick={save} className="bg-[#E60000] hover:bg-[#E60000]">Save Rates</Button></DialogFooter>
+        <DialogFooter><Button onClick={save} className="bg-[#E60000] hover:bg-[#E60000] hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90">Save Rates</Button></DialogFooter>
       </DialogContent>
     </Dialog>
   )
@@ -3735,7 +3735,7 @@ function TenantDialog({ open, onOpenChange, onCreated, meters }) {
             </div>
           </div>
         </div>
-        <DialogFooter><Button onClick={submit} disabled={!f.name || !f.kva} className="bg-[#E60000] hover:bg-[#E60000]">Add Tenant</Button></DialogFooter>
+        <DialogFooter><Button onClick={submit} disabled={!f.name || !f.kva} className="bg-[#E60000] hover:bg-[#E60000] hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90">Add Tenant</Button></DialogFooter>
       </DialogContent>
     </Dialog>
   )
@@ -3977,7 +3977,7 @@ function MeterDialog({ open, onOpenChange, onCreated }) {
             </label>
           )}
         </div>
-        <DialogFooter><Button onClick={submit} disabled={!f.name} className="bg-[#E60000] hover:bg-[#E60000]">Add Meter</Button></DialogFooter>
+        <DialogFooter><Button onClick={submit} disabled={!f.name} className="bg-[#E60000] hover:bg-[#E60000] hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90">Add Meter</Button></DialogFooter>
       </DialogContent>
     </Dialog>
   )
@@ -4152,7 +4152,7 @@ function WaterReadingDialog({ open, onOpenChange, onSubmit, initial }) {
           <div><Label>Remarks</Label><Textarea value={f.remarks || ''} onChange={e => set('remarks', e.target.value)} /></div>
         </div>
         <DialogFooter>
-          <Button onClick={() => onSubmit(f)} disabled={!f.location || !f.currentReading || (consumption < 0 && !f.meterResetConfirmed)} className="bg-[#E60000] hover:bg-[#E60000]">
+          <Button onClick={() => onSubmit(f)} disabled={!f.location || !f.currentReading || (consumption < 0 && !f.meterResetConfirmed)} className="bg-[#E60000] hover:bg-[#E60000] hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90">
             Save
           </Button>
         </DialogFooter>
@@ -4404,7 +4404,7 @@ function VendorDialog({ open, onOpenChange, onSubmit, initial }) {
           </div>
           <div className="col-span-2"><Label>Remarks</Label><Textarea value={f.remarks || ''} onChange={e => set('remarks', e.target.value)} /></div>
         </div>
-        <DialogFooter><Button onClick={() => onSubmit(f)} disabled={!f.vendorName || !f.serviceCategory} className="bg-[#E60000] hover:bg-[#E60000]">Save</Button></DialogFooter>
+        <DialogFooter><Button onClick={() => onSubmit(f)} disabled={!f.vendorName || !f.serviceCategory} className="bg-[#E60000] hover:bg-[#E60000] hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90">Save</Button></DialogFooter>
       </DialogContent>
     </Dialog>
   )
@@ -4551,7 +4551,7 @@ function ProjectDialog({ open, onOpenChange, onSubmit, initial }) {
           <div className="col-span-2"><Label>Remarks</Label><Textarea value={f.remarks || ''} onChange={e => set('remarks', e.target.value)} /></div>
         </div>
         <DialogFooter>
-          <Button onClick={() => onSubmit(f)} disabled={!f.projectName || !f.location} className="bg-[#E60000] hover:bg-[#E60000]">
+          <Button onClick={() => onSubmit(f)} disabled={!f.projectName || !f.location} className="bg-[#E60000] hover:bg-[#E60000] hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90">
             Save
           </Button>
         </DialogFooter>
@@ -4678,7 +4678,7 @@ function ComplianceDialog({ open, onOpenChange, onSubmit, initial }) {
           </div>
           <div className="col-span-2"><Label>Remarks</Label><Textarea value={f.remarks || ''} onChange={e => set('remarks', e.target.value)} /></div>
         </div>
-        <DialogFooter><Button onClick={() => onSubmit(f)} disabled={!f.location || !f.requirement} className="bg-[#E60000] hover:bg-[#E60000]">Save</Button></DialogFooter>
+        <DialogFooter><Button onClick={() => onSubmit(f)} disabled={!f.location || !f.requirement} className="bg-[#E60000] hover:bg-[#E60000] hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90">Save</Button></DialogFooter>
       </DialogContent>
     </Dialog>
   )
@@ -4805,7 +4805,7 @@ function AMCDialog({ open, onOpenChange, onSubmit, initial }) {
           <div><Label>Contact Number</Label><Input value={f.contactNumber || ''} onChange={e => set('contactNumber', e.target.value)} /></div>
           <div className="col-span-2"><Label>Remarks</Label><Textarea value={f.remarks || ''} onChange={e => set('remarks', e.target.value)} /></div>
         </div>
-        <DialogFooter><Button onClick={() => onSubmit(f)} disabled={!f.equipment || !f.location || !f.amcEndDate} className="bg-[#E60000] hover:bg-[#E60000]">Save</Button></DialogFooter>
+        <DialogFooter><Button onClick={() => onSubmit(f)} disabled={!f.equipment || !f.location || !f.amcEndDate} className="bg-[#E60000] hover:bg-[#E60000] hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90">Save</Button></DialogFooter>
       </DialogContent>
     </Dialog>
   )
@@ -4927,7 +4927,7 @@ function UtilityMaintenanceDialog({ open, onOpenChange, onSubmit, initial }) {
           <div><Label>Actual Cost</Label><Input type="number" value={f.actualCost || ''} onChange={e => set('actualCost', e.target.value)} /></div>
           <div className="col-span-2"><Label>Remarks</Label><Textarea value={f.remarks || ''} onChange={e => set('remarks', e.target.value)} /></div>
         </div>
-        <DialogFooter><Button onClick={() => onSubmit(f)} disabled={!f.asset || !f.location} className="bg-[#E60000] hover:bg-[#E60000]">Save</Button></DialogFooter>
+        <DialogFooter><Button onClick={() => onSubmit(f)} disabled={!f.asset || !f.location} className="bg-[#E60000] hover:bg-[#E60000] hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90">Save</Button></DialogFooter>
       </DialogContent>
     </Dialog>
   )
@@ -5037,7 +5037,7 @@ function DGUnitFormDialog({ open, onOpenChange, onCreated }) {
           <div><Label>AMC Status</Label><Input value={f.amcStatus || ''} onChange={e => set('amcStatus', e.target.value)} /></div>
           <div className="col-span-2"><Label>Remarks</Label><Textarea value={f.remarks || ''} onChange={e => set('remarks', e.target.value)} /></div>
         </div>
-        <DialogFooter><Button onClick={submit} disabled={!f.dgId || !f.location} className="bg-[#E60000] hover:bg-[#E60000]">Save</Button></DialogFooter>
+        <DialogFooter><Button onClick={submit} disabled={!f.dgId || !f.location} className="bg-[#E60000] hover:bg-[#E60000] hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90">Save</Button></DialogFooter>
       </DialogContent>
     </Dialog>
   )
@@ -5102,7 +5102,7 @@ function DGLogFormDialog({ open, onOpenChange, onCreated, units, logs }) {
           <div className="col-span-2"><Label>Reason for Running</Label><Input value={f.reasonForRunning || ''} onChange={e => set('reasonForRunning', e.target.value)} placeholder="e.g. Power outage, scheduled test run" /></div>
           <div className="col-span-2"><Label>Remarks</Label><Textarea value={f.remarks || ''} onChange={e => set('remarks', e.target.value)} /></div>
         </div>
-        <DialogFooter><Button onClick={submit} disabled={!f.dgId || !f.closingHourMeter || dieselClosing < 0} className="bg-[#E60000] hover:bg-[#E60000]">Save Log</Button></DialogFooter>
+        <DialogFooter><Button onClick={submit} disabled={!f.dgId || !f.closingHourMeter || dieselClosing < 0} className="bg-[#E60000] hover:bg-[#E60000] hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90">Save Log</Button></DialogFooter>
       </DialogContent>
     </Dialog>
   )
@@ -5340,7 +5340,7 @@ function MeterFormDialog({ open, onOpenChange, onCreated }) {
           <div><Label>Installation Date</Label><Input type="date" value={f.installationDate || ''} onChange={e => set('installationDate', e.target.value)} /></div>
           <div className="col-span-2"><Label>Remarks</Label><Textarea value={f.remarks || ''} onChange={e => set('remarks', e.target.value)} /></div>
         </div>
-        <DialogFooter><Button onClick={submit} disabled={!f.location || !f.meterNumber} className="bg-[#E60000] hover:bg-[#E60000]">Save</Button></DialogFooter>
+        <DialogFooter><Button onClick={submit} disabled={!f.location || !f.meterNumber} className="bg-[#E60000] hover:bg-[#E60000] hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90">Save</Button></DialogFooter>
       </DialogContent>
     </Dialog>
   )
@@ -5392,7 +5392,7 @@ function ReadingFormDialog({ open, onOpenChange, onCreated, meters }) {
             </Select>
           </div>
         </div>
-        <DialogFooter><Button onClick={submit} disabled={!f.meterNumber || !f.currentReading} className="bg-[#E60000] hover:bg-[#E60000]">Save Reading</Button></DialogFooter>
+        <DialogFooter><Button onClick={submit} disabled={!f.meterNumber || !f.currentReading} className="bg-[#E60000] hover:bg-[#E60000] hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90">Save Reading</Button></DialogFooter>
       </DialogContent>
     </Dialog>
   )
