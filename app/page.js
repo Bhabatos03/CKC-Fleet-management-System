@@ -186,7 +186,7 @@ function Login({ onLogin }) {
         {/* Middle: Fleet-focused tagline */}
         <div className="hidden lg:block space-y-8 my-10">
           <div>
-            <div className="w-16 h-[2px] bg-gradient-to-r from-amber-400 to-transparent mb-5" />
+       <div className="w-16 h-[2px] mb-5" style={{background: `linear-gradient(to right, ${BRAND.red}, transparent)`}} />
            <h2 className="text-3xl xl:text-5xl font-light leading-tight" style={{fontFamily: 'Georgia, serif', color: BRAND.ivory}}>
           Every kilometre.<br />
           Every litre. <span className="italic" style={{color: BRAND.red}}>Accounted for.</span>
