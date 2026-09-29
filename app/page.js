@@ -412,28 +412,34 @@ function AdminShell({ user, onLogout, children, active, setActive }) {
   const SidebarContent = () => (
     <>
    <div className="px-4 py-5 border-b border-slate-800 flex items-center gap-3">
-        <img src="/ckc-logo.png" alt="CKC" className="w-11 h-11 object-contain" />
-        <div className="flex-1 min-w-0">
-          <div
-  className="flex items-baseline flex-nowrap whitespace-nowrap"
-  style={{ fontFamily: '"Bodoni MT", "Bodoni Moda", Didot, Georgia, serif', color: '#ffffff', textTransform: 'uppercase' }}
->
-  <span style={{ fontSize: '18px' }}>C.</span>
-  <span style={{ fontSize: '15px', marginLeft: '4px' }}>K</span>
-  <span style={{ fontSize: '13px' }}>rishniah</span>
-  <span style={{ fontSize: '18px', marginLeft: '6px' }}>C</span>
-  <span style={{ fontSize: '13px' }}>hetty</span>
+  <img src="/ckc-logo.png" alt="CKC" className="w-11 h-11 object-contain flex-shrink-0" />
+  <div className="flex-1 min-w-0">
+    <div
+      className="flex items-baseline flex-nowrap whitespace-nowrap"
+      style={{ fontFamily: '"Bodoni MT", "Bodoni Moda", Didot, Georgia, serif', color: '#ffffff', textTransform: 'uppercase' }}
+    >
+      <span style={{ fontSize: '18px' }}>C.</span>
+      <span style={{ fontSize: '15px', marginLeft: '4px' }}>K</span>
+      <span style={{ fontSize: '13px' }}>rishniah</span>
+      <span style={{ fontSize: '18px', marginLeft: '6px' }}>C</span>
+      <span style={{ fontSize: '13px' }}>hetty</span>
+      <span style={{ fontSize: '9px', alignSelf: 'flex-start', marginLeft: '2px', lineHeight: 1 }}>™</span>
+    </div>
+    <div
+      style={{ fontFamily: '"Cinzel", serif', fontSize: '9px', letterSpacing: '0.2em', color: 'rgba(252,211,153,0.8)' }}
+      className="mt-0.5 whitespace-nowrap"
+    >
+      GROUP OF JEWELLERS
+    </div>
+    <div className="text-[10px] text-amber-200/60 tracking-[0.2em] mt-0.5">
+      FleetPulse · {user.role === 'store_admin' ? (user.name || 'STORE') : 'ADMIN'}
+    </div>
+  </div>
+  <button onClick={() => setDrawerOpen(false)} className="md:hidden text-slate-300 hover:text-white p-1">
+    <X className="w-5 h-5" />
+  </button>
 </div>
-<div style={{ fontFamily: '"Cinzel", serif', fontSize: '9px', letterSpacing: '0.2em', color: 'rgba(252,211,153,0.8)' }} className="mt-0.5 whitespace-nowrap">
-  GROUP OF JEWELLERS
-</div>
-      <div className="text-[10px] text-amber-200/60 tracking-[0.2em] mt-0.5">
-            FleetPulse · {user.role === 'store_admin' ? (user.name || 'STORE') : 'ADMIN'}
-          </div>
-        </div>
-        <button onClick={() => setDrawerOpen(false)} className="md:hidden text-slate-300 hover:text-white p-1"><X className="w-5 h-5" /></button>
-      </div>
-      <nav className="flex-1 p-3 overflow-y-auto">
+<nav className="flex-1 p-3 overflow-y-auto">
         <NavSection title="FLEET" items={visibleFleetNav} />
         <NavSection title="UTILITIES" items={visibleUtilityNav} />
         <NavSection title="ADMIN" items={visibleAdminNav} />
