@@ -248,8 +248,7 @@ function Login({ onLogin }) {
               Design &amp; Developed by <span className="text-amber-200/60 font-semibold">Bhabatos Mohanty</span>
             </div>
           </div>
-      </div>
-
+      
       {/* RIGHT: Login Card */}
       <div className="relative w-full lg:w-[500px] flex items-center justify-center p-6 lg:p-12 z-10">
         <div className="w-full max-w-sm">
