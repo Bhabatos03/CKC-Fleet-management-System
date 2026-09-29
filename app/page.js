@@ -414,9 +414,20 @@ function AdminShell({ user, onLogout, children, active, setActive }) {
       <div className="p-5 border-b border-slate-800 flex items-center gap-3">
         <img src="/ckc-logo.png" alt="CKC" className="w-11 h-11 object-contain" />
         <div className="flex-1 min-w-0">
-          <div className="font-semibold text-sm leading-tight truncate text-white" style={{fontFamily: '"Times New Roman", Georgia, serif'}}>C. KRISHNIAH CHETTY</div>
-          <div className="text-[8px] tracking-[0.25em] text-amber-200/80 font-medium mt-0.5 whitespace-nowrap">GROUP OF JEWELLERS</div>
-          <div className="text-[10px] text-amber-200/60 tracking-[0.2em] mt-0.5">
+          <div
+  className="flex items-baseline flex-wrap overflow-hidden"
+  style={{ fontFamily: '"Bodoni MT", "Bodoni Moda", Didot, Georgia, serif', color: '#ffffff', textTransform: 'uppercase' }}
+>
+  <span style={{ fontSize: '18px' }}>C.</span>
+  <span style={{ fontSize: '15px', marginLeft: '4px' }}>K</span>
+  <span style={{ fontSize: '13px' }}>rishniah</span>
+  <span style={{ fontSize: '18px', marginLeft: '6px' }}>C</span>
+  <span style={{ fontSize: '13px' }}>hetty</span>
+</div>
+<div style={{ fontFamily: '"Cinzel", serif', fontSize: '9px', letterSpacing: '0.2em', color: 'rgba(252,211,153,0.8)' }} className="mt-0.5 whitespace-nowrap">
+  GROUP OF JEWELLERS
+</div>
+      <div className="text-[10px] text-amber-200/60 tracking-[0.2em] mt-0.5">
             FleetPulse · {user.role === 'store_admin' ? (user.name || 'STORE') : 'ADMIN'}
           </div>
         </div>
