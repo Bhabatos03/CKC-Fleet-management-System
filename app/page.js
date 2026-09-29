@@ -419,7 +419,7 @@ function AdminShell({ user, onLogout, children, active, setActive }) {
       style={{ fontFamily: '"Bodoni MT", "Bodoni Moda", Didot, Georgia, serif', color: '#ffffff', textTransform: 'uppercase' }}
     >
       <span style={{ fontSize: '18px' }}>C.</span>
-      <span style={{ fontSize: '15px', marginLeft: '4px' }}>K</span>
+      <span style={{ fontSize: '18px', marginLeft: '4px' }}>K</span>
       <span style={{ fontSize: '13px' }}>rishniah</span>
       <span style={{ fontSize: '18px', marginLeft: '6px' }}>C</span>
       <span style={{ fontSize: '13px' }}>hetty</span>
