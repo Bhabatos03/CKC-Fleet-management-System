@@ -238,12 +238,11 @@ function Login({ onLogin }) {
 
                  {/* Bottom: Footer */}
           <div className="hidden lg:flex flex-col gap-1 text-[10px] text-amber-100/40 font-medium tracking-[0.2em]">
-            <div className="flex items-center justify-between">
-              <div>© 2026 C KRISHNIAH CHETTY JEWELLERS PVT. LTD.</div>
-              <div className="flex items-center gap-2">
-                <span className="w-1 h-1 rounded-full bg-emerald-400 animate-pulse" />
-                FleetPulse · v1.0
-              </div>
+          <div style={{color: 'rgba(255,245,227,0.4)'}}>© 2026 C KRISHNIAH CHETTY JEWELLERS PVT. LTD.</div>
+          <div className="flex items-center gap-2" style={{color: 'rgba(255,245,227,0.4)'}}>
+          <span className="w-1 h-1 rounded-full animate-pulse" style={{background: BRAND.red}} />
+          FleetPulse · v1.0
+          </div>
             </div>
             <div className="text-right text-amber-100/30 tracking-[0.15em] normal-case">
               Design &amp; Developed by <span className="text-amber-200/60 font-semibold">Bhabatos Mohanty</span>
