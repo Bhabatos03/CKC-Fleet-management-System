@@ -171,13 +171,29 @@ function Login({ onLogin }) {
   <span className="text-[10px] tracking-[0.2em] font-semibold uppercase" style={{color: BRAND.red}}>Live</span>
 </div>
 
-<h1 className="flex items-baseline" style={{ fontFamily: '"Bodoni MT", "Bodoni Moda", Didot, Georgia, serif', color: BRAND.ivory }}>
-  <span style={{ fontSize: '54px' }}>C.</span>{' '}
-  <span style={{ fontSize: '44px' }}>K</span>
-  <span style={{ fontSize: '38px' }}>rishniah</span>{' '}
-  <span style={{ fontSize: '54px' }}>C</span>
+<h1
+  className="flex items-baseline flex-wrap"
+  style={{
+    fontFamily: '"Bodoni MT", "Bodoni Moda", Didot, Georgia, serif',
+    color: BRAND.ivory,
+    textTransform: 'uppercase',
+  }}
+>
+  <span style={{ fontSize: '54px' }}>C.</span>
+  <span style={{ fontSize: '44px', marginLeft: '10px' }}>K</span>
+  <span style={{ fontSize: '38px' }}>rishniah</span>
+  <span style={{ fontSize: '54px', marginLeft: '16px' }}>C</span>
   <span style={{ fontSize: '38px' }}>hetty</span>
-  <span style={{ fontSize: '10px', verticalAlign: 'super', color: 'rgba(255,245,227,0.6)' }}>™</span>
+  <span
+    style={{
+      fontSize: '10px',
+      verticalAlign: 'super',
+      color: 'rgba(255,245,227,0.6)',
+      textTransform: 'none',
+    }}
+  >
+    ™
+  </span>
 </h1>
 
  <div className="flex items-center gap-3">
