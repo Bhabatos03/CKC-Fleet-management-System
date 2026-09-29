@@ -415,7 +415,7 @@ function AdminShell({ user, onLogout, children, active, setActive }) {
         <img src="/ckc-logo.png" alt="CKC" className="w-11 h-11 object-contain" />
         <div className="flex-1 min-w-0">
           <div
-  className="flex items-baseline flex-wrap overflow-hidden"
+  className="flex items-baseline flex-nowrap whitespace-nowrap"
   style={{ fontFamily: '"Bodoni MT", "Bodoni Moda", Didot, Georgia, serif', color: '#ffffff', textTransform: 'uppercase' }}
 >
   <span style={{ fontSize: '18px' }}>C.</span>
