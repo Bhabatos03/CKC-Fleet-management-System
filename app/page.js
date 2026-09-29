@@ -437,8 +437,24 @@ function AdminShell({ user, onLogout, children, active, setActive }) {
           <div className="flex items-center gap-2">
   <img src="/ckc-logo.png" alt="CKC" className="w-8 h-8 object-contain" />
   <div className="leading-tight">
-    <div className="font-semibold text-sm text-white" style={{fontFamily: '"Times New Roman", Georgia, serif'}}>C. Krishniah Chetty</div>
-    <div className="text-[7px] tracking-[0.3em] text-amber-200/80 mt-0.5 whitespace-nowrap">GROUP OF JEWELLERS</div>
+   <div
+  className="font-semibold text-white flex items-baseline"
+  style={{ fontFamily: '"Bodoni MT", "Bodoni Moda", Didot, Georgia, serif' }}
+>
+  <span style={{ fontSize: '54px' }}>C.</span>{' '}
+  <span style={{ fontSize: '44px' }}>K</span>
+  <span style={{ fontSize: '38px' }}>rishniah</span>{' '}
+  <span style={{ fontSize: '54px' }}>C</span>
+  <span style={{ fontSize: '38px' }}>hetty</span>
+  <span style={{ fontSize: '10px', verticalAlign: 'super' }}>™</span>
+</div>
+
+<div
+  className="text-amber-200/80 mt-0.5 whitespace-nowrap"
+  style={{ fontFamily: '"Cinzel", serif', fontSize: '20px', letterSpacing: '0.3em' }}
+>
+  GROUP OF JEWELLERS
+</div>
   </div>
 </div>
           <Button variant="ghost" size="sm" onClick={onLogout} className="text-white p-2 hover:bg-white/10"><LogOut className="w-4 h-4" /></Button>
