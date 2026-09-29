@@ -426,7 +426,7 @@ function AdminShell({ user, onLogout, children, active, setActive }) {
      <span style={{ fontSize: '12px', marginLeft: '2px', lineHeight: 1 }}>™</span>
     </div>
     <div
-      style={{ fontFamily: '"Cinzel", serif', fontSize: '19px', letterSpacing: '0.2em', color: 'rgba(252,211,153,0.8)' }}
+      style={{ fontFamily: '"Cinzel", serif', fontSize: '10px', letterSpacing: '0.2em', color: 'rgba(252,211,153,0.8)' }}
       className="mt-0.5 whitespace-nowrap"
     >
       GROUP OF JEWELLERS
