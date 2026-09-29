@@ -350,6 +350,10 @@ if (path === 'utilities/dg-logs') {
   const items = await db.collection('utility_vendors').find({}).sort({ name: 1 }).toArray()
   return json(items.map(clean))
 }
+    if (path === 'utilities/water-readings') {
+  const items = await db.collection('utility_water_readings').find({}).sort({ readingDate: -1 }).limit(500).toArray()
+  return json(items.map(clean))
+}
 
     if (path === 'utilities/dashboard') {
       const now = new Date()
