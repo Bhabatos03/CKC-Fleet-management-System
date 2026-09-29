@@ -260,13 +260,13 @@ function Login({ onLogin }) {
 
             <div className="relative bg-white/98 backdrop-blur-xl rounded-2xl shadow-2xl overflow-hidden border border-amber-200/50">
               {/* Ribbon */}
-              <div className="bg-gradient-to-r from-[#E60000] via-[#E60000] to-[#E60000] px-6 py-3 flex items-center gap-2">
-                <Truck className="w-3.5 h-3.5 text-amber-300" />
-                               <span className="text-lg tracking-[0.15em] text-amber-100 font-bold">FleetPulse</span>
-                <div className="ml-auto flex items-center gap-1.5 text-[9px] tracking-widest text-emerald-300">
-                  <span className="w-4 h-4 rounded-full bg-emerald-400 animate-pulse" /> LIVE
-                </div>
-              </div>
+              <div className="px-6 py-3 flex items-center gap-2" style={{background: `linear-gradient(to right, ${BRAND.bg}, ${BRAND.red}, ${BRAND.bg})`}}>
+  <Truck className="w-3.5 h-3.5" style={{color: BRAND.ivory}} />
+  <span className="text-lg tracking-[0.15em] font-bold" style={{color: BRAND.ivory}}>FleetPulse</span>
+  <div className="ml-auto flex items-center gap-1.5 text-[9px] tracking-widest" style={{color: BRAND.ivory}}>
+    <span className="w-2 h-2 rounded-full animate-pulse" style={{background: BRAND.ivory}} /> LIVE
+  </div>
+</div>
 
               <div className="p-8 space-y-6">
                 <div>
