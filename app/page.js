@@ -118,7 +118,7 @@ function Login({ onLogin }) {
   ]
   const Rot = rotating[tick].icon
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row relative overflow-hidden" style={{background: 'radial-gradient(1200px 800px at 15% 20%, #5c0a0a 0%, #3a0606 45%, #1a0303 100%)'}}>
+    <div className="min-h-screen flex flex-col lg:flex-row relative overflow-hidden" style={{background: 'radial-gradient(1200px 800px at 15% 20%, #E60000 0%, #3a0606 45%, #1a0303 100%)'}}>
       {/* Ambient gradients */}
       <div className="absolute -top-40 -left-40 w-[520px] h-[520px] rounded-full bg-red-700/20 blur-3xl pointer-events-none animate-pulse" style={{animationDuration: '5s'}} />
       <div className="absolute -bottom-60 -right-40 w-[700px] h-[700px] rounded-full bg-amber-600/10 blur-3xl pointer-events-none animate-pulse" style={{animationDuration: '7s'}} />
@@ -254,7 +254,7 @@ function Login({ onLogin }) {
 
             <div className="relative bg-white/98 backdrop-blur-xl rounded-2xl shadow-2xl overflow-hidden border border-amber-200/50">
               {/* Ribbon */}
-              <div className="bg-gradient-to-r from-[#5c0a0a] via-[#7a0d0d] to-[#5c0a0a] px-6 py-3 flex items-center gap-2">
+              <div className="bg-gradient-to-r from-[#E60000] via-[#E60000] to-[#E60000] px-6 py-3 flex items-center gap-2">
                 <Truck className="w-3.5 h-3.5 text-amber-300" />
                                <span className="text-lg tracking-[0.15em] text-amber-100 font-bold">FleetPulse</span>
                 <div className="ml-auto flex items-center gap-1.5 text-[9px] tracking-widest text-emerald-300">
@@ -307,7 +307,7 @@ function Login({ onLogin }) {
                   <Button
                     type="submit"
                     disabled={loading}
-                    className="w-full h-12 bg-gradient-to-r from-[#7a0d0d] via-[#a01414] to-[#7a0d0d] hover:brightness-110 text-white font-semibold tracking-[0.15em] shadow-lg shadow-red-900/40 transition-all group"
+                    className="w-full h-12 bg-gradient-to-r from-[#E60000] via-[#E60000] to-[#E60000] hover:brightness-110 text-white font-semibold tracking-[0.15em] shadow-lg shadow-red-900/40 transition-all group"
                   >
                     {loading ? (
                       <span className="flex items-center gap-2">
@@ -427,7 +427,7 @@ function AdminShell({ user, onLogout, children, active, setActive }) {
         </>
       )}
       <main className="flex-1 overflow-auto min-w-0">
-        <header className="md:hidden bg-gradient-to-r from-[#5c0a0a] via-[#7a0d0d] to-[#5c0a0a] text-white p-3 flex items-center justify-between sticky top-0 z-30 shadow-lg">
+        <header className="md:hidden bg-gradient-to-r from-[#E60000] via-[#E60000] to-[#E60000] text-white p-3 flex items-center justify-between sticky top-0 z-30 shadow-lg">
           <button onClick={() => setDrawerOpen(true)} className="p-1"><Menu className="w-6 h-6" /></button>
           <div className="flex items-center gap-2">
   <img src="/ckc-logo.png" alt="CKC" className="w-8 h-8 object-contain" />
@@ -449,10 +449,10 @@ function Dashboard() {
   useEffect(() => { api('dashboard').then(setData).catch(e => toast.error(e.message)) }, [])
   if (!data) return <div className="p-8">Loading...</div>
   const kpis = [
-    { label: 'Total Vehicles', value: data.fleet.total, icon: Car, color: 'bg-gradient-to-br from-[#7a0d0d] to-[#a01414]' },
+    { label: 'Total Vehicles', value: data.fleet.total, icon: Car, color: 'bg-gradient-to-br from-[#E60000] to-[#E60000]' },
     { label: 'Available', value: data.fleet.available, icon: Truck, color: 'bg-gradient-to-br from-emerald-600 to-emerald-700' },
     { label: 'Outside', value: data.fleet.outside, icon: ArrowRightCircle, color: 'bg-gradient-to-br from-amber-500 to-amber-600' },
-    { label: 'Maintenance', value: data.fleet.maintenance, icon: AlertTriangle, color: 'bg-gradient-to-br from-[#4a0808] to-[#7a0d0d]' },
+    { label: 'Maintenance', value: data.fleet.maintenance, icon: AlertTriangle, color: 'bg-gradient-to-br from-[#4a0808] to-[#E60000]' },
   ]
   const today = [
     { label: "Today's Trips", value: data.today.trips },
@@ -470,14 +470,14 @@ function Dashboard() {
   const statusPie = [
     { name: 'Available', value: data.fleet.available, color: '#10b981' },
     { name: 'Outside', value: data.fleet.outside, color: '#d97706' },
-    { name: 'Maintenance', value: data.fleet.maintenance, color: '#7a0d0d' },
+    { name: 'Maintenance', value: data.fleet.maintenance, color: '#E60000' },
     { name: 'Inactive', value: data.fleet.inactive, color: '#94a3b8' },
   ].filter(s => s.value > 0)
   return (
     <div className="p-6 space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-slate-900 relative inline-block">Fleet Dashboard
-          <span className="absolute -bottom-1 left-0 w-16 h-1 bg-gradient-to-r from-[#7a0d0d] to-amber-500 rounded-full" />
+          <span className="absolute -bottom-1 left-0 w-16 h-1 bg-gradient-to-r from-[#E60000] to-amber-500 rounded-full" />
         </h1>
         <p className="text-slate-500 mt-2">Real-time overview of fleet operations</p>
       </div>
@@ -485,7 +485,7 @@ function Dashboard() {
         {kpis.map(k => {
           const Icon = k.icon
           return (
-            <Card key={k.label} className="border-t-4 border-t-[#7a0d0d] hover:shadow-lg transition-shadow"><CardContent className="p-5 flex items-center gap-4">
+            <Card key={k.label} className="border-t-4 border-t-[#E60000] hover:shadow-lg transition-shadow"><CardContent className="p-5 flex items-center gap-4">
               <div className={`${k.color} w-12 h-12 rounded-lg flex items-center justify-center text-white shadow-md`}><Icon className="w-6 h-6" /></div>
               <div><div className="text-2xl font-bold">{k.value}</div><div className="text-xs text-slate-500">{k.label}</div></div>
             </CardContent></Card>
@@ -515,7 +515,7 @@ function Dashboard() {
                 <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
                 <XAxis dataKey="date" fontSize={12} /><YAxis yAxisId="l" fontSize={12} /><YAxis yAxisId="r" orientation="right" fontSize={12} />
                 <Tooltip /><Legend />
-                <Bar yAxisId="l" dataKey="trips" fill="#7a0d0d" name="Trips" radius={[4, 4, 0, 0]} />
+                <Bar yAxisId="l" dataKey="trips" fill="#E60000" name="Trips" radius={[4, 4, 0, 0]} />
                 <Bar yAxisId="r" dataKey="fuelCost" fill="#d97706" name="Fuel ₹" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
@@ -600,9 +600,9 @@ function Vehicles() {
   return (
     <div className="p-6 space-y-4">
       <div className="flex items-center justify-between">
-        <div><h1 className="text-3xl font-bold text-slate-900 relative inline-block">Vehicle Master<span className="absolute -bottom-1 left-0 w-16 h-1 bg-gradient-to-r from-[#7a0d0d] to-amber-500 rounded-full" /></h1><p className="text-slate-500 mt-2">Manage fleet vehicles</p></div>
+        <div><h1 className="text-3xl font-bold text-slate-900 relative inline-block">Vehicle Master<span className="absolute -bottom-1 left-0 w-16 h-1 bg-gradient-to-r from-[#E60000] to-amber-500 rounded-full" /></h1><p className="text-slate-500 mt-2">Manage fleet vehicles</p></div>
         {canEdit && (
-          <Button onClick={() => { setEditing(null); setOpen(true) }} className="bg-gradient-to-r from-[#7a0d0d] to-[#a01414] hover:brightness-110 text-white shadow-md">+ Add Vehicle</Button>
+          <Button onClick={() => { setEditing(null); setOpen(true) }} className="bg-gradient-to-r from-[#E60000] to-[#E60000] hover:brightness-110 text-white shadow-md">+ Add Vehicle</Button>
         )}
       </div>
       <Card><CardContent className="p-4">
@@ -626,7 +626,7 @@ function Vehicles() {
                 <TableCell>{driverName(v.assignedDriverId)}</TableCell>
                 <TableCell>{v.currentOdometer?.toLocaleString()} km</TableCell>
                 <TableCell>{v.expectedMileage} km/L</TableCell>
-                    <TableCell><Badge variant={v.status === 'Available' ? 'default' : v.status === 'Outside' ? 'secondary' : 'destructive'} className={v.status === 'Available' ? 'bg-[#7a0d0d] hover:bg-[#5c0a0a]' : ''}>{v.status}</Badge></TableCell>
+                    <TableCell><Badge variant={v.status === 'Available' ? 'default' : v.status === 'Outside' ? 'secondary' : 'destructive'} className={v.status === 'Available' ? 'bg-[#E60000] hover:bg-[#E60000]' : ''}>{v.status}</Badge></TableCell>
                 <TableCell className="text-right space-x-2">
                   {canEdit && (
                     <>
@@ -699,7 +699,7 @@ function VehicleDialog({ open, onOpenChange, onSubmit, initial, drivers }) {
           <div><Label>Assigned Location</Label><Input value={f.assignedLocation || ''} onChange={e => set('assignedLocation', e.target.value)} /></div>
           <div className="col-span-2"><Label>Remarks</Label><Textarea value={f.remarks || ''} onChange={e => set('remarks', e.target.value)} /></div>
         </div>
-        <DialogFooter><Button onClick={() => onSubmit(f)} className="bg-gradient-to-r from-[#7a0d0d] to-[#a01414] hover:brightness-110 text-white">Save</Button></DialogFooter>
+        <DialogFooter><Button onClick={() => onSubmit(f)} className="bg-gradient-to-r from-[#E60000] to-[#E60000] hover:brightness-110 text-white">Save</Button></DialogFooter>
       </DialogContent>
     </Dialog>
   )
@@ -725,9 +725,9 @@ function Drivers() {
   return (
     <div className="p-6 space-y-4">
       <div className="flex items-center justify-between">
-        <div><h1 className="text-3xl font-bold text-slate-900 relative inline-block">Driver Master<span className="absolute -bottom-1 left-0 w-16 h-1 bg-gradient-to-r from-[#7a0d0d] to-amber-500 rounded-full" /></h1><p className="text-slate-500 mt-2">Manage drivers</p></div>
+        <div><h1 className="text-3xl font-bold text-slate-900 relative inline-block">Driver Master<span className="absolute -bottom-1 left-0 w-16 h-1 bg-gradient-to-r from-[#E60000] to-amber-500 rounded-full" /></h1><p className="text-slate-500 mt-2">Manage drivers</p></div>
         {canEdit && (
-          <Button onClick={() => { setEditing(null); setOpen(true) }} className="bg-gradient-to-r from-[#7a0d0d] to-[#a01414] hover:brightness-110 text-white shadow-md">+ Add Driver</Button>
+          <Button onClick={() => { setEditing(null); setOpen(true) }} className="bg-gradient-to-r from-[#E60000] to-[#E60000] hover:brightness-110 text-white shadow-md">+ Add Driver</Button>
         )}
       </div>
       <Card><CardContent className="p-4"><div className="overflow-x-auto"><Table>
@@ -744,7 +744,7 @@ function Drivers() {
         <TableCell>{d.empId}</TableCell><TableCell>{d.mobile}</TableCell><TableCell>{d.licence}</TableCell>
         <TableCell className={expiring ? 'text-rose-600 font-semibold' : ''}>{fmtDate(d.licenceExpiry)}</TableCell>
         <TableCell>{d.assignedLocation || '-'}</TableCell>
-        <TableCell><Badge className="bg-[#7a0d0d] hover:bg-[#5c0a0a]">{d.status}</Badge></TableCell>
+        <TableCell><Badge className="bg-[#E60000] hover:bg-[#E60000]">{d.status}</Badge></TableCell>
         <TableCell>
           <Button size="sm" variant="outline" onClick={() => setPairingDriver(d)}>
             <QrCode className="w-3 h-3 mr-1" /> Get Code
@@ -824,7 +824,7 @@ function DriverDialog({ open, onOpenChange, onSubmit, initial }) {
         </div>
           <div className="col-span-2"><Label>Remarks</Label><Textarea value={f.remarks || ''} onChange={e => set('remarks', e.target.value)} /></div>
         </div>
-        <DialogFooter><Button onClick={() => onSubmit(f)} className="bg-gradient-to-r from-[#7a0d0d] to-[#a01414] hover:brightness-110 text-white">Save</Button></DialogFooter>
+        <DialogFooter><Button onClick={() => onSubmit(f)} className="bg-gradient-to-r from-[#E60000] to-[#E60000] hover:brightness-110 text-white">Save</Button></DialogFooter>
       </DialogContent>
     </Dialog>
   )
@@ -1002,11 +1002,11 @@ function Trips() {
   return (
     <div className="p-6 space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <div><h1 className="text-3xl font-bold text-slate-900 relative inline-block">Trip Register<span className="absolute -bottom-1 left-0 w-16 h-1 bg-gradient-to-r from-[#7a0d0d] to-amber-500 rounded-full" /></h1><p className="text-slate-500 mt-2">Select a date range and generate the trip register.</p></div>
+        <div><h1 className="text-3xl font-bold text-slate-900 relative inline-block">Trip Register<span className="absolute -bottom-1 left-0 w-16 h-1 bg-gradient-to-r from-[#E60000] to-amber-500 rounded-full" /></h1><p className="text-slate-500 mt-2">Select a date range and generate the trip register.</p></div>
                 {submitted && (
           <div className="flex gap-2">
             <Button onClick={exportCsv} variant="outline"><Download className="w-4 h-4 mr-2" /> CSV</Button>
-            <Button onClick={generatePDF} disabled={generating} className="bg-gradient-to-r from-[#7a0d0d] to-[#a01414] hover:brightness-110 text-white"><FileText className="w-4 h-4 mr-2" /> {generating ? '...' : 'PDF'}</Button>
+            <Button onClick={generatePDF} disabled={generating} className="bg-gradient-to-r from-[#E60000] to-[#E60000] hover:brightness-110 text-white"><FileText className="w-4 h-4 mr-2" /> {generating ? '...' : 'PDF'}</Button>
             <Button onClick={exportExcel} variant="outline" className="border-emerald-600 text-emerald-700 hover:bg-emerald-50"><FileSpreadsheet className="w-4 h-4 mr-2" /> Excel</Button>
           </div>
         )}
@@ -1031,7 +1031,7 @@ function Trips() {
               </SelectContent>
             </Select>
           </div>
-          <Button onClick={generate} className="bg-gradient-to-r from-[#7a0d0d] to-[#a01414] hover:brightness-110 text-white h-10">
+          <Button onClick={generate} className="bg-gradient-to-r from-[#E60000] to-[#E60000] hover:brightness-110 text-white h-10">
             <ClipboardList className="w-4 h-4 mr-2" /> Generate
           </Button>
         </div>
@@ -1063,7 +1063,7 @@ function Trips() {
                     <TableCell className="text-xs">{fmtDT(t.timeIn)}</TableCell>
                     <TableCell className="font-semibold">{t.kmRun || '-'}</TableCell>
                     <TableCell className="text-xs">{t.destination}</TableCell>
-                    <TableCell><Badge variant={t.status === 'Outside' ? 'secondary' : 'default'} className={t.status === 'Returned' ? 'bg-[#7a0d0d] hover:bg-[#5c0a0a]' : ''}>{t.status}</Badge></TableCell>
+                    <TableCell><Badge variant={t.status === 'Outside' ? 'secondary' : 'default'} className={t.status === 'Returned' ? 'bg-[#E60000] hover:bg-[#E60000]' : ''}>{t.status}</Badge></TableCell>
                   </TableRow>
                 ))}
                 {filtered.length === 0 && (
@@ -1217,11 +1217,11 @@ function FuelRegister() {
   return (
     <div className="p-6 space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <div><h1 className="text-3xl font-bold text-slate-900 relative inline-block">Fuel Register<span className="absolute -bottom-1 left-0 w-16 h-1 bg-gradient-to-r from-[#7a0d0d] to-amber-500 rounded-full" /></h1><p className="text-slate-500 mt-2">Select a date range and generate the fuel register.</p></div>
+        <div><h1 className="text-3xl font-bold text-slate-900 relative inline-block">Fuel Register<span className="absolute -bottom-1 left-0 w-16 h-1 bg-gradient-to-r from-[#E60000] to-amber-500 rounded-full" /></h1><p className="text-slate-500 mt-2">Select a date range and generate the fuel register.</p></div>
                 {submitted && (
           <div className="flex gap-2">
             <Button onClick={exportCsv} variant="outline"><Download className="w-4 h-4 mr-2" /> CSV</Button>
-            <Button onClick={generatePDF} disabled={generating} className="bg-gradient-to-r from-[#7a0d0d] to-[#a01414] hover:brightness-110 text-white"><FileText className="w-4 h-4 mr-2" /> {generating ? '...' : 'PDF'}</Button>
+            <Button onClick={generatePDF} disabled={generating} className="bg-gradient-to-r from-[#E60000] to-[#E60000] hover:brightness-110 text-white"><FileText className="w-4 h-4 mr-2" /> {generating ? '...' : 'PDF'}</Button>
             <Button onClick={exportExcel} variant="outline" className="border-emerald-600 text-emerald-700 hover:bg-emerald-50"><FileSpreadsheet className="w-4 h-4 mr-2" /> Excel</Button>
           </div>
         )}
@@ -1246,7 +1246,7 @@ function FuelRegister() {
               </SelectContent>
             </Select>
           </div>
-          <Button onClick={generate} className="bg-gradient-to-r from-[#7a0d0d] to-[#a01414] hover:brightness-110 text-white h-10">
+          <Button onClick={generate} className="bg-gradient-to-r from-[#E60000] to-[#E60000] hover:brightness-110 text-white h-10">
             <Fuel className="w-4 h-4 mr-2" /> Generate
           </Button>
         </div>
@@ -1346,9 +1346,9 @@ function Maintenance() {
   return (
     <div className="p-6 space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <div><h1 className="text-3xl font-bold text-slate-900 relative inline-block">Maintenance<span className="absolute -bottom-1 left-0 w-16 h-1 bg-gradient-to-r from-[#7a0d0d] to-amber-500 rounded-full" /></h1><p className="text-slate-500 mt-2">Service history · parts · workshops · next-service reminders</p></div>
+        <div><h1 className="text-3xl font-bold text-slate-900 relative inline-block">Maintenance<span className="absolute -bottom-1 left-0 w-16 h-1 bg-gradient-to-r from-[#E60000] to-amber-500 rounded-full" /></h1><p className="text-slate-500 mt-2">Service history · parts · workshops · next-service reminders</p></div>
         {canEdit && (
-          <Button onClick={() => { setEditing(null); setOpen(true) }} className="bg-gradient-to-r from-[#7a0d0d] to-[#a01414] text-white"><Plus className="w-4 h-4 mr-1" /> Add Service Record</Button>
+          <Button onClick={() => { setEditing(null); setOpen(true) }} className="bg-gradient-to-r from-[#E60000] to-[#E60000] text-white"><Plus className="w-4 h-4 mr-1" /> Add Service Record</Button>
         )}
       </div>
 
@@ -1571,7 +1571,7 @@ function MaintenanceDialog({ open, onOpenChange, onSubmit, initial, vehicles }) 
             </div>
             <div className="bg-red-50 border border-red-100 rounded-lg p-3">
               <Label className="text-xs">Total Cost</Label>
-              <div className="text-xl font-bold text-[#7a0d0d]">{fmtINR(grandTotal)}</div>
+              <div className="text-xl font-bold text-[#E60000]">{fmtINR(grandTotal)}</div>
             </div>
           </div>
 
@@ -1595,7 +1595,7 @@ function MaintenanceDialog({ open, onOpenChange, onSubmit, initial, vehicles }) 
           </div>
         </div>
         <DialogFooter>
-          <Button onClick={() => onSubmit(f)} className="bg-[#7a0d0d] hover:bg-[#5c0a0a]" disabled={!f.vehicleId || !f.serviceDate}>
+          <Button onClick={() => onSubmit(f)} className="bg-[#E60000] hover:bg-[#E60000]" disabled={!f.vehicleId || !f.serviceDate}>
             {initial ? 'Update Record' : 'Save Service Record'}
           </Button>
         </DialogFooter>
@@ -1675,10 +1675,10 @@ function UserManagement() {
     <div className="p-6 space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900 relative inline-block">User Management<span className="absolute -bottom-1 left-0 w-16 h-1 bg-gradient-to-r from-[#7a0d0d] to-amber-500 rounded-full" /></h1>
+          <h1 className="text-3xl font-bold text-slate-900 relative inline-block">User Management<span className="absolute -bottom-1 left-0 w-16 h-1 bg-gradient-to-r from-[#E60000] to-amber-500 rounded-full" /></h1>
           <p className="text-slate-500 mt-2">Manage administrator, store admin, and security accounts</p>
         </div>
-        <Button onClick={() => { setEditing(null); setOpen(true) }} className="bg-gradient-to-r from-[#7a0d0d] to-[#a01414] hover:brightness-110 text-white shadow-md">
+        <Button onClick={() => { setEditing(null); setOpen(true) }} className="bg-gradient-to-r from-[#E60000] to-[#E60000] hover:brightness-110 text-white shadow-md">
           <Plus className="w-4 h-4 mr-1" /> Add User
         </Button>
       </div>
@@ -1702,7 +1702,7 @@ function UserManagement() {
                 <TableCell className="font-mono text-xs">{u.username}</TableCell>
                 <TableCell><Badge variant="outline">{roleLabel(u.role)}</Badge></TableCell>
                 <TableCell>
-                  <Badge className={u.status === 'Active' ? 'bg-[#7a0d0d] hover:bg-[#5c0a0a]' : ''} variant={u.status === 'Active' ? 'default' : 'secondary'}>
+                  <Badge className={u.status === 'Active' ? 'bg-[#E60000] hover:bg-[#E60000]' : ''} variant={u.status === 'Active' ? 'default' : 'secondary'}>
                     {u.status || 'Active'}
                   </Badge>
                 </TableCell>
@@ -1800,7 +1800,7 @@ function UserDialog({ open, onOpenChange, onSubmit, initial }) {
         </div>
         {initial && <p className="text-xs text-slate-500">Username can't be changed. Use "Password" from the table to reset the login password.</p>}
         <DialogFooter>
-          <Button onClick={() => onSubmit(f)} disabled={!canSave} className="bg-gradient-to-r from-[#7a0d0d] to-[#a01414] hover:brightness-110 text-white">
+          <Button onClick={() => onSubmit(f)} disabled={!canSave} className="bg-gradient-to-r from-[#E60000] to-[#E60000] hover:brightness-110 text-white">
             {initial ? 'Save Changes' : 'Create User'}
           </Button>
         </DialogFooter>
@@ -1828,7 +1828,7 @@ function ChangePasswordDialog({ user, onClose, onSubmit }) {
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={() => onSubmit(pwd)} disabled={!canSave} className="bg-gradient-to-r from-[#7a0d0d] to-[#a01414] hover:brightness-110 text-white">
+          <Button onClick={() => onSubmit(pwd)} disabled={!canSave} className="bg-gradient-to-r from-[#E60000] to-[#E60000] hover:brightness-110 text-white">
             Update Password
           </Button>
         </DialogFooter>
@@ -2043,7 +2043,7 @@ function Mileage() {
   return (
     <div className="p-6 space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <div><h1 className="text-3xl font-bold text-slate-900 relative inline-block">Mileage Analytics<span className="absolute -bottom-1 left-0 w-16 h-1 bg-gradient-to-r from-[#7a0d0d] to-amber-500 rounded-full" /></h1><p className="text-slate-500 mt-2">Select a date range and generate the mileage analysis.</p></div>
+        <div><h1 className="text-3xl font-bold text-slate-900 relative inline-block">Mileage Analytics<span className="absolute -bottom-1 left-0 w-16 h-1 bg-gradient-to-r from-[#E60000] to-amber-500 rounded-full" /></h1><p className="text-slate-500 mt-2">Select a date range and generate the mileage analysis.</p></div>
       </div>
 
       <Card>
@@ -2067,7 +2067,7 @@ function Mileage() {
                 </SelectContent>
               </Select>
             </div>
-            <Button onClick={generate} className="h-10 bg-gradient-to-r from-[#7a0d0d] to-[#a01414] hover:brightness-110 text-white">
+            <Button onClick={generate} className="h-10 bg-gradient-to-r from-[#E60000] to-[#E60000] hover:brightness-110 text-white">
               <Gauge className="w-4 h-4 mr-2" /> Generate
             </Button>
           </div>
@@ -2075,7 +2075,7 @@ function Mileage() {
           {submitted && (
             <>
               <div className="flex gap-2">
-                <Button onClick={generatePDF} disabled={generating} className="h-10 bg-gradient-to-r from-[#7a0d0d] to-[#a01414] hover:brightness-110 text-white">
+                <Button onClick={generatePDF} disabled={generating} className="h-10 bg-gradient-to-r from-[#E60000] to-[#E60000] hover:brightness-110 text-white">
                   <FileText className="w-4 h-4 mr-1" /> {generating ? '...' : 'PDF'}
                 </Button>
                 <Button onClick={exportExcel} className="h-10 bg-emerald-600 hover:bg-emerald-700 text-white">
@@ -2083,7 +2083,7 @@ function Mileage() {
                 </Button>
               </div>
               <div className="grid grid-cols-2 md:grid-cols-5 gap-3 pt-3 border-t">
-                <div className="p-3 bg-red-50 border border-red-100 rounded-lg"><div className="text-xs text-slate-500">Total KM</div><div className="text-xl font-bold text-[#7a0d0d]">{totalKm.toLocaleString()}</div></div>
+                <div className="p-3 bg-red-50 border border-red-100 rounded-lg"><div className="text-xs text-slate-500">Total KM</div><div className="text-xl font-bold text-[#E60000]">{totalKm.toLocaleString()}</div></div>
                 <div className="p-3 bg-amber-50 border border-amber-100 rounded-lg"><div className="text-xs text-slate-500">Fuel (L)</div><div className="text-xl font-bold text-amber-700">{totalLit.toFixed(1)}</div></div>
                 <div className="p-3 bg-amber-50 border border-amber-100 rounded-lg"><div className="text-xs text-slate-500">Fuel Cost</div><div className="text-xl font-bold text-amber-700">{fmtINR(totalCost)}</div></div>
                 <div className="p-3 bg-slate-50 rounded-lg"><div className="text-xs text-slate-500">Avg Mileage</div><div className="text-xl font-bold">{avgMileage}<span className="text-sm text-slate-500 ml-1">km/L</span></div></div>
@@ -2436,7 +2436,7 @@ function Reports() {
   return (
     <div className="p-6 space-y-4">
       <div>
-        <h1 className="text-3xl font-bold text-slate-900 relative inline-block">Reports<span className="absolute -bottom-1 left-0 w-16 h-1 bg-gradient-to-r from-[#7a0d0d] to-amber-500 rounded-full" /></h1>
+        <h1 className="text-3xl font-bold text-slate-900 relative inline-block">Reports<span className="absolute -bottom-1 left-0 w-16 h-1 bg-gradient-to-r from-[#E60000] to-amber-500 rounded-full" /></h1>
         <p className="text-slate-500 mt-2">Select a date range and generate branded PDF & Excel reports.</p>
       </div>
       <Card>
@@ -2444,7 +2444,7 @@ function Reports() {
           <div className="flex flex-wrap gap-2">
             {presets.map(p => (
               <button key={p.id} onClick={() => applyPreset(p.id)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition border ${preset === p.id ? 'bg-[#7a0d0d] text-white border-[#7a0d0d]' : 'bg-white text-slate-700 border-slate-200 hover:border-red-300'}`}>
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition border ${preset === p.id ? 'bg-[#E60000] text-white border-[#E60000]' : 'bg-white text-slate-700 border-slate-200 hover:border-red-300'}`}>
                 {p.label}
               </button>
             ))}
@@ -2469,7 +2469,7 @@ function Reports() {
               </Select>
             </div>
             <div className="flex items-end">
-              <Button onClick={handleGenerate} className="w-full h-10 bg-gradient-to-r from-[#7a0d0d] to-[#a01414] hover:brightness-110 text-white">
+              <Button onClick={handleGenerate} className="w-full h-10 bg-gradient-to-r from-[#E60000] to-[#E60000] hover:brightness-110 text-white">
                 <ClipboardList className="w-4 h-4 mr-1" /> Generate Report
               </Button>
             </div>
@@ -2487,8 +2487,8 @@ function Reports() {
           </CardHeader>
           <CardContent className="space-y-5">
             <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-              <div className="p-3 bg-red-50 border border-red-100 rounded-lg"><div className="text-xs text-slate-500">Trips</div><div className="text-xl font-bold text-[#7a0d0d]">{filteredTrips.length}</div></div>
-              <div className="p-3 bg-red-50 border border-red-100 rounded-lg"><div className="text-xs text-slate-500">KM Travelled</div><div className="text-xl font-bold text-[#7a0d0d]">{kmTotal.toLocaleString()}</div></div>
+              <div className="p-3 bg-red-50 border border-red-100 rounded-lg"><div className="text-xs text-slate-500">Trips</div><div className="text-xl font-bold text-[#E60000]">{filteredTrips.length}</div></div>
+              <div className="p-3 bg-red-50 border border-red-100 rounded-lg"><div className="text-xs text-slate-500">KM Travelled</div><div className="text-xl font-bold text-[#E60000]">{kmTotal.toLocaleString()}</div></div>
               <div className="p-3 bg-amber-50 border border-amber-100 rounded-lg"><div className="text-xs text-slate-500">Fuel (L)</div><div className="text-xl font-bold text-amber-700">{litTotal.toFixed(1)}</div></div>
               <div className="p-3 bg-amber-50 border border-amber-100 rounded-lg"><div className="text-xs text-slate-500">Fuel Cost</div><div className="text-xl font-bold text-amber-700">{fmtINR(costTotal)}</div></div>
               <div className="p-3 bg-slate-50 rounded-lg"><div className="text-xs text-slate-500">Avg Mileage</div><div className="text-xl font-bold">{avgMileage}<span className="text-sm text-slate-500 ml-1">km/L</span></div></div>
@@ -2499,7 +2499,7 @@ function Reports() {
             )}
 
             <div className="flex gap-2">
-              <Button onClick={generatePDF} disabled={generating} className="flex-1 h-10 bg-gradient-to-r from-[#7a0d0d] to-[#a01414] hover:brightness-110 text-white">
+              <Button onClick={generatePDF} disabled={generating} className="flex-1 h-10 bg-gradient-to-r from-[#E60000] to-[#E60000] hover:brightness-110 text-white">
                 <FileText className="w-4 h-4 mr-1" /> {generating ? 'Generating...' : 'Download PDF'}
               </Button>
               <Button onClick={exportExcel} className="flex-1 h-10 bg-emerald-600 hover:bg-emerald-700 text-white">
@@ -2638,7 +2638,7 @@ function GatePassFormDialog({ open, onOpenChange, onCreated, isAdmin }) {
           </div>
         </div>
         <DialogFooter>
-          <Button onClick={submit} disabled={!canSave} className="bg-gradient-to-r from-[#7a0d0d] to-[#a01414] hover:brightness-110 text-white">Save Gate Pass (Draft)</Button>
+          <Button onClick={submit} disabled={!canSave} className="bg-gradient-to-r from-[#E60000] to-[#E60000] hover:brightness-110 text-white">Save Gate Pass (Draft)</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -2918,18 +2918,18 @@ const overdueCount = items.filter(g => returnInfo(g)?.key === 'overdue').length
     <div className="p-6 space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900 relative inline-block">Gate Pass Register<span className="absolute -bottom-1 left-0 w-16 h-1 bg-gradient-to-r from-[#7a0d0d] to-amber-500 rounded-full" /></h1>
+          <h1 className="text-3xl font-bold text-slate-900 relative inline-block">Gate Pass Register<span className="absolute -bottom-1 left-0 w-16 h-1 bg-gradient-to-r from-[#E60000] to-amber-500 rounded-full" /></h1>
           <p className="text-slate-500 mt-2">Material / Asset movement tracking</p>
         </div>
         {canPrepare && (
-  <Button onClick={() => setOpen(true)} className="bg-gradient-to-r from-[#7a0d0d] to-[#a01414] hover:brightness-110 text-white shadow-md">
+  <Button onClick={() => setOpen(true)} className="bg-gradient-to-r from-[#E60000] to-[#E60000] hover:brightness-110 text-white shadow-md">
     <Plus className="w-4 h-4 mr-1" /> New Gate Pass
   </Button>
 )} 
   </div>
 
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-  <Card><CardContent className="p-4"><div className="text-xs text-slate-500">Total Gate Passes</div><div className="text-2xl font-bold text-[#7a0d0d]">{items.length}</div></CardContent></Card>
+  <Card><CardContent className="p-4"><div className="text-xs text-slate-500">Total Gate Passes</div><div className="text-2xl font-bold text-[#E60000]">{items.length}</div></CardContent></Card>
   <Card><CardContent className="p-4"><div className="text-xs text-slate-500">Pending</div><div className="text-2xl font-bold text-amber-600">{pendingCount}</div></CardContent></Card>
   <Card><CardContent className="p-4"><div className="text-xs text-slate-500">Completed</div><div className="text-2xl font-bold text-emerald-600">{items.length - pendingCount}</div></CardContent></Card>
   <Card><CardContent className="p-4"><div className="text-xs text-slate-500">Items Out</div><div className="text-2xl font-bold text-blue-600">{outCount}</div></CardContent></Card>
@@ -2940,7 +2940,7 @@ const overdueCount = items.filter(g => returnInfo(g)?.key === 'overdue').length
   <div className="flex flex-wrap gap-2 mb-3">
     {[['all', 'All'], ['out', `Items Out (${outCount})`], ['overdue', `Overdue (${overdueCount})`]].map(([id, label]) => (
       <button key={id} onClick={() => setView(id)}
-        className={`px-3 py-1.5 rounded-full text-xs font-medium border transition ${view === id ? 'bg-[#7a0d0d] text-white border-[#7a0d0d]' : 'bg-white text-slate-700 border-slate-200 hover:border-red-300'}`}>
+        className={`px-3 py-1.5 rounded-full text-xs font-medium border transition ${view === id ? 'bg-[#E60000] text-white border-[#E60000]' : 'bg-white text-slate-700 border-slate-200 hover:border-red-300'}`}>
         {label}
       </button>
     ))}
@@ -3080,11 +3080,11 @@ function LiveTracking() {
           className: '',
           html: `
             <div style="display:flex;flex-direction:column;align-items:center;">
-              <div style="width:34px;height:34px;background:#7a0d0d;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,0.45);border:2px solid #ffffff;">
+              <div style="width:34px;height:34px;background:#E60000;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,0.45);border:2px solid #ffffff;">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M4 16v-3.2a1 1 0 0 1 .1-.44l1.6-3.6A2 2 0 0 1 7.5 7.5h9a2 2 0 0 1 1.8 1.26l1.6 3.6a1 1 0 0 1 .1.44V16a1 1 0 0 1-1 1h-1a1 1 0 0 1-1-1v-.5H7v.5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1Z" fill="#ffffff"/>
-                  <circle cx="7.5" cy="14.5" r="1.5" fill="#7a0d0d"/>
-                  <circle cx="16.5" cy="14.5" r="1.5" fill="#7a0d0d"/>
+                  <circle cx="7.5" cy="14.5" r="1.5" fill="#E60000"/>
+                  <circle cx="16.5" cy="14.5" r="1.5" fill="#E60000"/>
                 </svg>
               </div>
               <div style="margin-top:2px;background:#ffffff;color:#1e293b;padding:1px 6px;border-radius:6px;font-size:10px;font-weight:700;white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,0.3);">${t.vehicleNumber}</div>
@@ -3122,13 +3122,13 @@ function LiveTracking() {
     <div className="p-6 space-y-4">
       <div>
         <h1 className="text-3xl font-bold text-slate-900 relative inline-block">Track Vehicle
-          <span className="absolute -bottom-1 left-0 w-16 h-1 bg-gradient-to-r from-[#7a0d0d] to-amber-500 rounded-full" />
+          <span className="absolute -bottom-1 left-0 w-16 h-1 bg-gradient-to-r from-[#E60000] to-amber-500 rounded-full" />
         </h1>
         <p className="text-slate-500 mt-2">Vehicles currently outside, sharing location from the security app.</p>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        <Card><CardContent className="p-4"><div className="text-xs text-slate-500">Outside Now</div><div className="text-2xl font-bold text-[#7a0d0d]">{trips.length}</div></CardContent></Card>
+        <Card><CardContent className="p-4"><div className="text-xs text-slate-500">Outside Now</div><div className="text-2xl font-bold text-[#E60000]">{trips.length}</div></CardContent></Card>
         <Card><CardContent className="p-4"><div className="text-xs text-slate-500">Sharing Location</div><div className="text-2xl font-bold text-emerald-600">{trackedCount}</div></CardContent></Card>
         <Card><CardContent className="p-4"><div className="text-xs text-slate-500">Not Sharing</div><div className="text-2xl font-bold text-slate-400">{trips.length - trackedCount}</div></CardContent></Card>
       </div>
@@ -3189,7 +3189,7 @@ function SecurityHome({ user, onLogout }) {
     { id: 'gatepass', label: 'Gate Pass', icon: ClipboardCheck, color: 'from-indigo-500 to-indigo-600' },
   ]
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#3d0808] via-[#5c0a0a] to-[#2d0505] text-white">
+    <div className="min-h-screen bg-gradient-to-br from-[#3d0808] via-[#E60000] to-[#2d0505] text-white">
       <header className="p-4 flex items-center justify-between border-b border-red-900/50 bg-black/20 backdrop-blur">
         <div className="flex items-center gap-2">
           {screen !== 'home' && <Button variant="ghost" size="sm" onClick={() => setScreen('home')} className="text-white hover:bg-white/10"><ArrowLeft className="w-4 h-4" /></Button>}
@@ -3591,11 +3591,11 @@ const ask = async (q) => {
     <>
     <button
   onClick={() => setOpen(x => !x)}
-  className="fixed bottom-5 right-5 z-[90] w-16 h-16 rounded-full bg-white shadow-xl flex items-center justify-center hover:scale-105 transition-transform overflow-hidden border-2 border-white ring-2 ring-[#7a0d0d]/20"
+  className="fixed bottom-5 right-5 z-[90] w-16 h-16 rounded-full bg-white shadow-xl flex items-center justify-center hover:scale-105 transition-transform overflow-hidden border-2 border-white ring-2 ring-[#E60000]/20"
   title="Ask FleetPulse"
 >
   {open ? (
-    <div className="w-full h-full bg-gradient-to-br from-[#7a0d0d] to-[#a01414] flex items-center justify-center">
+    <div className="w-full h-full bg-gradient-to-br from-[#E60000] to-[#E60000] flex items-center justify-center">
       <X className="w-6 h-6 text-white" />
     </div>
   ) : (<img src="/fleetpulse-bot.png" alt="Ask FleetPulse" className="w-full h-full object-cover" />
@@ -3604,7 +3604,7 @@ const ask = async (q) => {
 
       {open && (
         <div className="fixed bottom-24 right-5 z-[90] w-[360px] max-w-[92vw] h-[500px] max-h-[75vh] bg-white rounded-2xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden">
-       <div className="bg-gradient-to-r from-[#5c0a0a] via-[#7a0d0d] to-[#5c0a0a] text-white px-4 py-3 flex items-center gap-2">
+       <div className="bg-gradient-to-r from-[#E60000] via-[#E60000] to-[#E60000] text-white px-4 py-3 flex items-center gap-2">
   <img src="/fleetpulse-bot.png" alt="" className="w-9 h-9 rounded-full flex-shrink-0" />
   <div>
     <div className="font-semibold text-sm">Ask FleetPulse</div>
@@ -3625,7 +3625,7 @@ const ask = async (q) => {
             )}
             {messages.map((m, i) => (
               <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[85%] rounded-xl px-3 py-2 text-sm whitespace-pre-wrap ${m.role === 'user' ? 'bg-[#7a0d0d] text-white' : 'bg-white border border-slate-200 text-slate-800'}`}>
+                <div className={`max-w-[85%] rounded-xl px-3 py-2 text-sm whitespace-pre-wrap ${m.role === 'user' ? 'bg-[#E60000] text-white' : 'bg-white border border-slate-200 text-slate-800'}`}>
                   {m.text}
                 </div>
               </div>
@@ -3649,7 +3649,7 @@ const ask = async (q) => {
               className="text-sm"
               disabled={asking}
             />
-            <Button size="sm" onClick={() => ask()} disabled={asking || !input.trim()} className="bg-[#7a0d0d] hover:bg-[#5c0a0a]">
+            <Button size="sm" onClick={() => ask()} disabled={asking || !input.trim()} className="bg-[#E60000] hover:bg-[#E60000]">
               Send
             </Button>
           </div>
@@ -3682,7 +3682,7 @@ function UtilitySettingsDialog({ open, onOpenChange }) {
           <div><Label>DG Unit Rate (₹/unit)</Label><Input type="number" step="0.01" value={f.dgUnitRate ?? ''} onChange={e => set('dgUnitRate', e.target.value)} /></div>
           <div><Label>DG Tax (₹/unit)</Label><Input type="number" step="0.01" value={f.dgTaxPerUnit ?? ''} onChange={e => set('dgTaxPerUnit', e.target.value)} /></div>
         </div>
-        <DialogFooter><Button onClick={save} className="bg-[#7a0d0d] hover:bg-[#5c0a0a]">Save Rates</Button></DialogFooter>
+        <DialogFooter><Button onClick={save} className="bg-[#E60000] hover:bg-[#E60000]">Save Rates</Button></DialogFooter>
       </DialogContent>
     </Dialog>
   )
@@ -3735,7 +3735,7 @@ function TenantDialog({ open, onOpenChange, onCreated, meters }) {
             </div>
           </div>
         </div>
-        <DialogFooter><Button onClick={submit} disabled={!f.name || !f.kva} className="bg-[#7a0d0d] hover:bg-[#5c0a0a]">Add Tenant</Button></DialogFooter>
+        <DialogFooter><Button onClick={submit} disabled={!f.name || !f.kva} className="bg-[#E60000] hover:bg-[#E60000]">Add Tenant</Button></DialogFooter>
       </DialogContent>
     </Dialog>
   )
@@ -3887,7 +3887,7 @@ function TenantBills() {
               <SelectContent>{tenants.map(t => <SelectItem key={t.id} value={t.id}>{t.name} ({t.store})</SelectItem>)}</SelectContent>
             </Select>
           </div>
-          <Button onClick={generate} disabled={generating} className="mt-5 bg-gradient-to-r from-[#7a0d0d] to-[#a01414] text-white">
+          <Button onClick={generate} disabled={generating} className="mt-5 bg-gradient-to-r from-[#E60000] to-[#E60000] text-white">
             {generating ? 'Generating...' : 'Generate Bill'}
           </Button>
         </div>
@@ -3904,7 +3904,7 @@ function TenantBills() {
             <div className="grid grid-cols-2 gap-3">
               <div className="p-3 bg-slate-50 rounded-lg"><div className="text-xs text-slate-500">EB Units</div><div className="text-lg font-bold">{bill.ebUnits}</div></div>
               <div className="p-3 bg-slate-50 rounded-lg"><div className="text-xs text-slate-500">DG Units</div><div className="text-lg font-bold">{bill.dgUnits}</div></div>
-              <div className="p-3 bg-red-50 rounded-lg"><div className="text-xs text-slate-500">Total EB Amount</div><div className="text-lg font-bold text-[#7a0d0d]">{fmtINR(bill.totalEB)}</div></div>
+              <div className="p-3 bg-red-50 rounded-lg"><div className="text-xs text-slate-500">Total EB Amount</div><div className="text-lg font-bold text-[#E60000]">{fmtINR(bill.totalEB)}</div></div>
               <div className="p-3 bg-amber-50 rounded-lg"><div className="text-xs text-slate-500">Total DG Amount</div><div className="text-lg font-bold text-amber-700">{fmtINR(bill.totalDG)}</div></div>
             </div>
             <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg flex justify-between items-center">
@@ -3977,7 +3977,7 @@ function MeterDialog({ open, onOpenChange, onCreated }) {
             </label>
           )}
         </div>
-        <DialogFooter><Button onClick={submit} disabled={!f.name} className="bg-[#7a0d0d] hover:bg-[#5c0a0a]">Add Meter</Button></DialogFooter>
+        <DialogFooter><Button onClick={submit} disabled={!f.name} className="bg-[#E60000] hover:bg-[#E60000]">Add Meter</Button></DialogFooter>
       </DialogContent>
     </Dialog>
   )
@@ -4000,13 +4000,13 @@ function Utilities() {
   return (
     <div className="p-6 space-y-4">
       <div>
-        <h1 className="text-3xl font-bold text-slate-900 relative inline-block">Utilities<span className="absolute -bottom-1 left-0 w-16 h-1 bg-gradient-to-r from-[#7a0d0d] to-amber-500 rounded-full" /></h1>
+        <h1 className="text-3xl font-bold text-slate-900 relative inline-block">Utilities<span className="absolute -bottom-1 left-0 w-16 h-1 bg-gradient-to-r from-[#E60000] to-amber-500 rounded-full" /></h1>
         <p className="text-slate-500 mt-2">Electricity, DG, maintenance, AMC, compliance & CAPEX</p>
       </div>
       <div className="flex flex-wrap gap-2 border-b pb-2">
         {tabs.map(t => (
           <button key={t.id} onClick={() => setTab(t.id)}
-            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${tab === t.id ? 'bg-[#7a0d0d] text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
+            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${tab === t.id ? 'bg-[#E60000] text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
             {t.label}
           </button>
         ))}
@@ -4058,7 +4058,7 @@ function WaterModule() {
           <div><span className="text-slate-500">Total Consumption: </span><b>{totalConsumption.toLocaleString()}</b></div>
           <div><span className="text-slate-500">Total Charges: </span><b>{fmtINR(totalCost)}</b></div>
         </div>
-        <Button size="sm" onClick={() => { setEditing(null); setOpen(true) }} className="bg-gradient-to-r from-[#7a0d0d] to-[#a01414] text-white">
+        <Button size="sm" onClick={() => { setEditing(null); setOpen(true) }} className="bg-gradient-to-r from-[#E60000] to-[#E60000] text-white">
           <Plus className="w-4 h-4 mr-1" /> Log Reading
         </Button>
       </div>
@@ -4152,7 +4152,7 @@ function WaterReadingDialog({ open, onOpenChange, onSubmit, initial }) {
           <div><Label>Remarks</Label><Textarea value={f.remarks || ''} onChange={e => set('remarks', e.target.value)} /></div>
         </div>
         <DialogFooter>
-          <Button onClick={() => onSubmit(f)} disabled={!f.location || !f.currentReading || (consumption < 0 && !f.meterResetConfirmed)} className="bg-[#7a0d0d] hover:bg-[#5c0a0a]">
+          <Button onClick={() => onSubmit(f)} disabled={!f.location || !f.currentReading || (consumption < 0 && !f.meterResetConfirmed)} className="bg-[#E60000] hover:bg-[#E60000]">
             Save
           </Button>
         </DialogFooter>
@@ -4253,7 +4253,7 @@ function UtilitiesReportsModule() {
             </Select>
           </div>
           <div><Label className="text-xs text-slate-500">Location</Label><Input value={location === 'all' ? '' : location} onChange={e => setLocation(e.target.value || 'all')} placeholder="All locations" /></div>
-          <Button onClick={generate} disabled={generating} className="bg-gradient-to-r from-[#7a0d0d] to-[#a01414] text-white h-10">
+          <Button onClick={generate} disabled={generating} className="bg-gradient-to-r from-[#E60000] to-[#E60000] text-white h-10">
             {generating ? '...' : 'Generate'}
           </Button>
         </div>
@@ -4325,7 +4325,7 @@ function VendorsModule() {
           <Search className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
           <Input placeholder="Search vendor or category..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
         </div>
-        <Button size="sm" onClick={() => { setEditing(null); setOpen(true) }} className="bg-gradient-to-r from-[#7a0d0d] to-[#a01414] text-white">
+        <Button size="sm" onClick={() => { setEditing(null); setOpen(true) }} className="bg-gradient-to-r from-[#E60000] to-[#E60000] text-white">
           <Plus className="w-4 h-4 mr-1" /> Add Vendor
         </Button>
       </div>
@@ -4404,7 +4404,7 @@ function VendorDialog({ open, onOpenChange, onSubmit, initial }) {
           </div>
           <div className="col-span-2"><Label>Remarks</Label><Textarea value={f.remarks || ''} onChange={e => set('remarks', e.target.value)} /></div>
         </div>
-        <DialogFooter><Button onClick={() => onSubmit(f)} disabled={!f.vendorName || !f.serviceCategory} className="bg-[#7a0d0d] hover:bg-[#5c0a0a]">Save</Button></DialogFooter>
+        <DialogFooter><Button onClick={() => onSubmit(f)} disabled={!f.vendorName || !f.serviceCategory} className="bg-[#E60000] hover:bg-[#E60000]">Save</Button></DialogFooter>
       </DialogContent>
     </Dialog>
   )
@@ -4451,7 +4451,7 @@ function ProjectsModule() {
           <div><span className="text-slate-500">Actual Spend: </span><b>{fmtINR(totalActual)}</b></div>
           {overBudgetCount > 0 && <div className="text-rose-600"><b>{overBudgetCount} over budget</b></div>}
         </div>
-        <Button size="sm" onClick={() => { setEditing(null); setOpen(true) }} className="bg-gradient-to-r from-[#7a0d0d] to-[#a01414] text-white">
+        <Button size="sm" onClick={() => { setEditing(null); setOpen(true) }} className="bg-gradient-to-r from-[#E60000] to-[#E60000] text-white">
           <Plus className="w-4 h-4 mr-1" /> Add Project
         </Button>
       </div>
@@ -4551,7 +4551,7 @@ function ProjectDialog({ open, onOpenChange, onSubmit, initial }) {
           <div className="col-span-2"><Label>Remarks</Label><Textarea value={f.remarks || ''} onChange={e => set('remarks', e.target.value)} /></div>
         </div>
         <DialogFooter>
-          <Button onClick={() => onSubmit(f)} disabled={!f.projectName || !f.location} className="bg-[#7a0d0d] hover:bg-[#5c0a0a]">
+          <Button onClick={() => onSubmit(f)} disabled={!f.projectName || !f.location} className="bg-[#E60000] hover:bg-[#E60000]">
             Save
           </Button>
         </DialogFooter>
@@ -4597,7 +4597,7 @@ function ComplianceModule() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="text-sm text-slate-500">{items.length} compliance items{overdueCount > 0 ? ` · ${overdueCount} overdue` : ''}</div>
-        <Button size="sm" onClick={() => { setEditing(null); setOpen(true) }} className="bg-gradient-to-r from-[#7a0d0d] to-[#a01414] text-white">
+        <Button size="sm" onClick={() => { setEditing(null); setOpen(true) }} className="bg-gradient-to-r from-[#E60000] to-[#E60000] text-white">
           <Plus className="w-4 h-4 mr-1" /> Add Compliance Record
         </Button>
       </div>
@@ -4678,7 +4678,7 @@ function ComplianceDialog({ open, onOpenChange, onSubmit, initial }) {
           </div>
           <div className="col-span-2"><Label>Remarks</Label><Textarea value={f.remarks || ''} onChange={e => set('remarks', e.target.value)} /></div>
         </div>
-        <DialogFooter><Button onClick={() => onSubmit(f)} disabled={!f.location || !f.requirement} className="bg-[#7a0d0d] hover:bg-[#5c0a0a]">Save</Button></DialogFooter>
+        <DialogFooter><Button onClick={() => onSubmit(f)} disabled={!f.location || !f.requirement} className="bg-[#E60000] hover:bg-[#E60000]">Save</Button></DialogFooter>
       </DialogContent>
     </Dialog>
   )
@@ -4724,7 +4724,7 @@ function AMCModule() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="text-sm text-slate-500">{items.length} AMC contracts{expiring90 > 0 ? ` · ${expiring90} expiring within 90 days` : ''}</div>
-        <Button size="sm" onClick={() => { setEditing(null); setOpen(true) }} className="bg-gradient-to-r from-[#7a0d0d] to-[#a01414] text-white">
+        <Button size="sm" onClick={() => { setEditing(null); setOpen(true) }} className="bg-gradient-to-r from-[#E60000] to-[#E60000] text-white">
           <Plus className="w-4 h-4 mr-1" /> Add AMC
         </Button>
       </div>
@@ -4805,7 +4805,7 @@ function AMCDialog({ open, onOpenChange, onSubmit, initial }) {
           <div><Label>Contact Number</Label><Input value={f.contactNumber || ''} onChange={e => set('contactNumber', e.target.value)} /></div>
           <div className="col-span-2"><Label>Remarks</Label><Textarea value={f.remarks || ''} onChange={e => set('remarks', e.target.value)} /></div>
         </div>
-        <DialogFooter><Button onClick={() => onSubmit(f)} disabled={!f.equipment || !f.location || !f.amcEndDate} className="bg-[#7a0d0d] hover:bg-[#5c0a0a]">Save</Button></DialogFooter>
+        <DialogFooter><Button onClick={() => onSubmit(f)} disabled={!f.equipment || !f.location || !f.amcEndDate} className="bg-[#E60000] hover:bg-[#E60000]">Save</Button></DialogFooter>
       </DialogContent>
     </Dialog>
   )
@@ -4848,7 +4848,7 @@ function UtilityMaintenanceModule() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="text-sm text-slate-500">{items.length} assets tracked{overdueCount > 0 ? ` · ${overdueCount} overdue` : ''}</div>
-        <Button size="sm" onClick={() => { setEditing(null); setOpen(true) }} className="bg-gradient-to-r from-[#7a0d0d] to-[#a01414] text-white">
+        <Button size="sm" onClick={() => { setEditing(null); setOpen(true) }} className="bg-gradient-to-r from-[#E60000] to-[#E60000] text-white">
           <Plus className="w-4 h-4 mr-1" /> Add Maintenance Record
         </Button>
       </div>
@@ -4927,7 +4927,7 @@ function UtilityMaintenanceDialog({ open, onOpenChange, onSubmit, initial }) {
           <div><Label>Actual Cost</Label><Input type="number" value={f.actualCost || ''} onChange={e => set('actualCost', e.target.value)} /></div>
           <div className="col-span-2"><Label>Remarks</Label><Textarea value={f.remarks || ''} onChange={e => set('remarks', e.target.value)} /></div>
         </div>
-        <DialogFooter><Button onClick={() => onSubmit(f)} disabled={!f.asset || !f.location} className="bg-[#7a0d0d] hover:bg-[#5c0a0a]">Save</Button></DialogFooter>
+        <DialogFooter><Button onClick={() => onSubmit(f)} disabled={!f.asset || !f.location} className="bg-[#E60000] hover:bg-[#E60000]">Save</Button></DialogFooter>
       </DialogContent>
     </Dialog>
   )
@@ -4952,8 +4952,8 @@ function DGModule() {
           <button onClick={() => setSubtab('units')} className={`px-3 py-1.5 rounded-lg text-sm ${subtab === 'units' ? 'bg-slate-800 text-white' : 'bg-slate-100'}`}>DG Master</button>
         </div>
         {subtab === 'units'
-          ? <Button size="sm" onClick={() => setUnitOpen(true)} className="bg-gradient-to-r from-[#7a0d0d] to-[#a01414] text-white"><Plus className="w-4 h-4 mr-1" /> Add DG</Button>
-          : <Button size="sm" onClick={() => setLogOpen(true)} className="bg-gradient-to-r from-[#7a0d0d] to-[#a01414] text-white"><Plus className="w-4 h-4 mr-1" /> Log Entry</Button>}
+          ? <Button size="sm" onClick={() => setUnitOpen(true)} className="bg-gradient-to-r from-[#E60000] to-[#E60000] text-white"><Plus className="w-4 h-4 mr-1" /> Add DG</Button>
+          : <Button size="sm" onClick={() => setLogOpen(true)} className="bg-gradient-to-r from-[#E60000] to-[#E60000] text-white"><Plus className="w-4 h-4 mr-1" /> Log Entry</Button>}
       </div>
 
       {subtab === 'units' && (
@@ -5037,7 +5037,7 @@ function DGUnitFormDialog({ open, onOpenChange, onCreated }) {
           <div><Label>AMC Status</Label><Input value={f.amcStatus || ''} onChange={e => set('amcStatus', e.target.value)} /></div>
           <div className="col-span-2"><Label>Remarks</Label><Textarea value={f.remarks || ''} onChange={e => set('remarks', e.target.value)} /></div>
         </div>
-        <DialogFooter><Button onClick={submit} disabled={!f.dgId || !f.location} className="bg-[#7a0d0d] hover:bg-[#5c0a0a]">Save</Button></DialogFooter>
+        <DialogFooter><Button onClick={submit} disabled={!f.dgId || !f.location} className="bg-[#E60000] hover:bg-[#E60000]">Save</Button></DialogFooter>
       </DialogContent>
     </Dialog>
   )
@@ -5102,7 +5102,7 @@ function DGLogFormDialog({ open, onOpenChange, onCreated, units, logs }) {
           <div className="col-span-2"><Label>Reason for Running</Label><Input value={f.reasonForRunning || ''} onChange={e => set('reasonForRunning', e.target.value)} placeholder="e.g. Power outage, scheduled test run" /></div>
           <div className="col-span-2"><Label>Remarks</Label><Textarea value={f.remarks || ''} onChange={e => set('remarks', e.target.value)} /></div>
         </div>
-        <DialogFooter><Button onClick={submit} disabled={!f.dgId || !f.closingHourMeter || dieselClosing < 0} className="bg-[#7a0d0d] hover:bg-[#5c0a0a]">Save Log</Button></DialogFooter>
+        <DialogFooter><Button onClick={submit} disabled={!f.dgId || !f.closingHourMeter || dieselClosing < 0} className="bg-[#E60000] hover:bg-[#E60000]">Save Log</Button></DialogFooter>
       </DialogContent>
     </Dialog>
   )
@@ -5164,7 +5164,7 @@ function UtilitiesDashboard({ onNavigate }) {
     { label: 'Electricity This Month', value: `${electricityThisMonth.reduce((s, r) => s + (r.unitsConsumed || 0), 0).toLocaleString()} units`, sub: fmtINR(electricityThisMonth.reduce((s, r) => s + (r.billAmount || 0), 0)), icon: Zap, color: 'bg-gradient-to-br from-amber-500 to-amber-600' },
     { label: 'DG Running Hours', value: `${dgThisMonth.reduce((s, r) => s + (r.runningHours || 0), 0)} hrs`, sub: `${dgThisMonth.reduce((s, r) => s + (r.dieselConsumed || 0), 0)} L diesel`, icon: Gauge, color: 'bg-gradient-to-br from-slate-600 to-slate-700' },
     { label: 'Active AMCs', value: amc.filter(a => a.amcEndDate >= today).length, sub: `${amc.filter(a => in30(a.amcEndDate)).length} expiring <30d`, icon: ClipboardCheck, color: 'bg-gradient-to-br from-blue-500 to-blue-600' },
-    { label: 'Compliance Due <30d', value: compliance.filter(c => c.status !== 'Not Applicable' && in30(c.expiryDate)).length, sub: `${compliance.filter(c => c.status !== 'Not Applicable' && isOverdue(c.expiryDate)).length} overdue`, icon: ShieldAlert, color: 'bg-gradient-to-br from-[#7a0d0d] to-[#a01414]' },
+    { label: 'Compliance Due <30d', value: compliance.filter(c => c.status !== 'Not Applicable' && in30(c.expiryDate)).length, sub: `${compliance.filter(c => c.status !== 'Not Applicable' && isOverdue(c.expiryDate)).length} overdue`, icon: ShieldAlert, color: 'bg-gradient-to-br from-[#E60000] to-[#E60000]' },
     { label: 'Overdue Maintenance', value: maintenance.filter(m => isOverdue(m.nextDueDate)).length, sub: `${maintenance.length} assets tracked`, icon: Wrench, color: 'bg-gradient-to-br from-rose-500 to-rose-600' },
     { label: 'Active Projects', value: projects.filter(p => !['Completed', 'Closed', 'Cancelled'].includes(p.status)).length, sub: `${projects.filter(p => p.actualCost > p.approvedBudget && p.approvedBudget > 0).length} over budget`, icon: ClipboardList, color: 'bg-gradient-to-br from-emerald-600 to-emerald-700' },
   ]
@@ -5209,7 +5209,7 @@ function UtilitiesDashboard({ onNavigate }) {
         {kpis.map(k => {
           const Icon = k.icon
           return (
-            <Card key={k.label} className="border-t-4 border-t-[#7a0d0d] hover:shadow-lg transition-shadow"><CardContent className="p-5 flex items-center gap-4">
+            <Card key={k.label} className="border-t-4 border-t-[#E60000] hover:shadow-lg transition-shadow"><CardContent className="p-5 flex items-center gap-4">
               <div className={`${k.color} w-12 h-12 rounded-lg flex items-center justify-center text-white shadow-md flex-shrink-0`}><Icon className="w-6 h-6" /></div>
               <div className="min-w-0">
                 <div className="text-xl font-bold truncate">{k.value}</div>
@@ -5259,8 +5259,8 @@ function ElectricityModule() {
           <button onClick={() => setSubtab('meters')} className={`px-3 py-1.5 rounded-lg text-sm ${subtab === 'meters' ? 'bg-slate-800 text-white' : 'bg-slate-100'}`}>Meter Master</button>
         </div>
         {subtab === 'meters'
-          ? <Button size="sm" onClick={() => setMeterOpen(true)} className="bg-gradient-to-r from-[#7a0d0d] to-[#a01414] text-white"><Plus className="w-4 h-4 mr-1" /> Add Meter</Button>
-          : <Button size="sm" onClick={() => setReadingOpen(true)} className="bg-gradient-to-r from-[#7a0d0d] to-[#a01414] text-white"><Plus className="w-4 h-4 mr-1" /> Log Reading</Button>}
+          ? <Button size="sm" onClick={() => setMeterOpen(true)} className="bg-gradient-to-r from-[#E60000] to-[#E60000] text-white"><Plus className="w-4 h-4 mr-1" /> Add Meter</Button>
+          : <Button size="sm" onClick={() => setReadingOpen(true)} className="bg-gradient-to-r from-[#E60000] to-[#E60000] text-white"><Plus className="w-4 h-4 mr-1" /> Log Reading</Button>}
       </div>
 
       {subtab === 'meters' && (
@@ -5340,7 +5340,7 @@ function MeterFormDialog({ open, onOpenChange, onCreated }) {
           <div><Label>Installation Date</Label><Input type="date" value={f.installationDate || ''} onChange={e => set('installationDate', e.target.value)} /></div>
           <div className="col-span-2"><Label>Remarks</Label><Textarea value={f.remarks || ''} onChange={e => set('remarks', e.target.value)} /></div>
         </div>
-        <DialogFooter><Button onClick={submit} disabled={!f.location || !f.meterNumber} className="bg-[#7a0d0d] hover:bg-[#5c0a0a]">Save</Button></DialogFooter>
+        <DialogFooter><Button onClick={submit} disabled={!f.location || !f.meterNumber} className="bg-[#E60000] hover:bg-[#E60000]">Save</Button></DialogFooter>
       </DialogContent>
     </Dialog>
   )
@@ -5392,7 +5392,7 @@ function ReadingFormDialog({ open, onOpenChange, onCreated, meters }) {
             </Select>
           </div>
         </div>
-        <DialogFooter><Button onClick={submit} disabled={!f.meterNumber || !f.currentReading} className="bg-[#7a0d0d] hover:bg-[#5c0a0a]">Save Reading</Button></DialogFooter>
+        <DialogFooter><Button onClick={submit} disabled={!f.meterNumber || !f.currentReading} className="bg-[#E60000] hover:bg-[#E60000]">Save Reading</Button></DialogFooter>
       </DialogContent>
     </Dialog>
   )
