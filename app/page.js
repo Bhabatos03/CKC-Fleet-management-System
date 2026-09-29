@@ -396,7 +396,7 @@ function AdminShell({ user, onLogout, children, active, setActive }) {
 
   const NavSection = ({ title, items }) => items.length === 0 ? null : (
     <div className="mb-3">
-      <div className="px-3 pt-2 pb-1 text-[10px] tracking-[0.2em] text-slate-500 font-semibold">{title}</div>
+     <div className="px-3 pt-3 pb-2 text-xs tracking-[0.2em] text-slate-400 font-semibold">{title}</div>
       {items.map(n => {
         const Icon = n.icon
         return (
