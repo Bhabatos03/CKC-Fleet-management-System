@@ -182,7 +182,7 @@ function Login({ onLogin }) {
 
  <div className="flex items-center gap-3">
   <div className="h-px w-8" style={{background: BRAND.red}} />
-  <div className="text-[11px] lg:text-xs tracking-[0.4em] font-medium" style={{color: 'rgba(255,245,227,0.7)'}}>GROUP OF JEWELLERS</div>
+  <div style={{ fontFamily: '"Cinzel", serif', fontSize: '20px', letterSpacing: '0.3em', color: 'rgba(255,245,227,0.7)' }}>GROUP OF JEWELLERS</div>
 </div>
 </div>
 </div>
