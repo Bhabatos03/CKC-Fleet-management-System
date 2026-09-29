@@ -418,20 +418,20 @@ function AdminShell({ user, onLogout, children, active, setActive }) {
       className="flex items-baseline flex-nowrap whitespace-nowrap"
       style={{ fontFamily: '"Bodoni MT", "Bodoni Moda", Didot, Georgia, serif', color: '#ffffff', textTransform: 'uppercase' }}
     >
-      <span style={{ fontSize: '18px' }}>C.</span>
-      <span style={{ fontSize: '18px', marginLeft: '4px' }}>K</span>
-      <span style={{ fontSize: '13px' }}>rishniah</span>
-      <span style={{ fontSize: '18px', marginLeft: '6px' }}>C</span>
-      <span style={{ fontSize: '13px' }}>hetty</span>
-     <span style={{ fontSize: '9px', marginLeft: '2px', lineHeight: 1 }}>™</span>
+      <span style={{ fontSize: '28px' }}>C.</span>
+      <span style={{ fontSize: '28px', marginLeft: '4px' }}>K</span>
+      <span style={{ fontSize: '23px' }}>rishniah</span>
+      <span style={{ fontSize: '28px', marginLeft: '6px' }}>C</span>
+      <span style={{ fontSize: '23px' }}>hetty</span>
+     <span style={{ fontSize: '19px', marginLeft: '2px', lineHeight: 1 }}>™</span>
     </div>
     <div
-      style={{ fontFamily: '"Cinzel", serif', fontSize: '9px', letterSpacing: '0.2em', color: 'rgba(252,211,153,0.8)' }}
+      style={{ fontFamily: '"Cinzel", serif', fontSize: '19px', letterSpacing: '0.2em', color: 'rgba(252,211,153,0.8)' }}
       className="mt-0.5 whitespace-nowrap"
     >
       GROUP OF JEWELLERS
     </div>
-    <div className="text-[10px] text-amber-200/60 tracking-[0.2em] mt-0.5">
+    <div className="text-[20px] text-amber-200/60 tracking-[0.2em] mt-0.5">
       FleetPulse · {user.role === 'store_admin' ? (user.name || 'STORE') : 'ADMIN'}
     </div>
   </div>
