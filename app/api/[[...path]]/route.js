@@ -1371,16 +1371,17 @@ export async function PUT(request, { params }) {
       const sub = pathArr[1]
       const uid = pathArr[2]
       const utilMap = {
-        'electricity-meters': 'electricity_meters',
-        'electricity-readings': 'electricity_readings',
-        'dg-units': 'dg_units',
-        'dg-logs': 'dg_logs',
-        maintenance: 'utility_maintenance',
-        amc: 'utility_amc',
-        compliance: 'utility_compliance',
-        projects: 'utility_projects',
-        vendors: 'utility_vendors',
-      }
+  'electricity-meters': 'electricity_meters',
+  'electricity-readings': 'electricity_readings',
+  'water-readings': 'utility_water_readings',
+  'dg-units': 'dg_units',
+  'dg-logs': 'dg_logs',
+  maintenance: 'utility_maintenance',
+  amc: 'utility_amc',
+  compliance: 'utility_compliance',
+  projects: 'utility_projects',
+  vendors: 'utility_vendors',
+}
       if (!utilMap[sub] || !uid) return json({ error: 'Not found' }, 404)
       delete body._id
       delete body.id
