@@ -395,19 +395,22 @@ function AdminShell({ user, onLogout, children, active, setActive }) {
   const pick = (id) => { setActive(id); setDrawerOpen(false) }
 
   const NavSection = ({ title, items }) => items.length === 0 ? null : (
-    <div className="mb-3">
-     <div className="px-3 pt-3 pb-2 text-xs tracking-[0.2em] text-slate-400 font-semibold">{title}</div>
-      {items.map(n => {
-        const Icon = n.icon
-        return (
-          <button key={n.id} onClick={() => pick(n.id)}
-            className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg text-sm transition ${active === n.id ? 'bg-amber-500 text-white font-semibold' : 'hover:bg-slate-800 text-slate-300'}`}>
-            <Icon className="w-4 h-4" /> {n.label}
-          </button>
-        )
-      })}
+  <div className="mb-3">
+    <div className="px-3 pt-3 pb-2 flex items-center gap-2 text-[13px] tracking-[0.2em] text-amber-400 font-bold uppercase">
+      <span className="w-1 h-4 rounded-full bg-amber-500" />
+      {title}
     </div>
-  )
+    {items.map(n => {
+      const Icon = n.icon
+      return (
+        <button key={n.id} onClick={() => pick(n.id)}
+          className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg text-sm transition ${active === n.id ? 'bg-amber-500 text-white font-semibold' : 'hover:bg-slate-800 text-slate-300'}`}>
+          <Icon className="w-4 h-4" /> {n.label}
+        </button>
+      )
+    })}
+  </div>
+)
 
   const SidebarContent = () => (
     <>
