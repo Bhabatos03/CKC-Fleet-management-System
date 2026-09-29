@@ -188,7 +188,7 @@ function Login({ onLogin }) {
     style={{
       fontSize: '20px',
       verticalAlign: 'super',
-      color: 'rgba(255,245,227,0.6)',
+      color: 'BRAND.ivory',
       textTransform: 'none',
     }}
   >
