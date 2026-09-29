@@ -411,7 +411,7 @@ function AdminShell({ user, onLogout, children, active, setActive }) {
 
   const SidebarContent = () => (
     <>
-      <div className="p-5 border-b border-slate-800 flex items-center gap-3">
+   <div className="px-4 py-5 border-b border-slate-800 flex items-center gap-3">
         <img src="/ckc-logo.png" alt="CKC" className="w-11 h-11 object-contain" />
         <div className="flex-1 min-w-0">
           <div
