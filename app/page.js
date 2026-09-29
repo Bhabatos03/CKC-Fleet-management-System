@@ -5427,6 +5427,30 @@ function App() {
     if (u) setUser(JSON.parse(u))
     setLoaded(true)
   }, [])
+  export default function Page() {
+  return (
+    <>
+      <link
+        href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Bodoni+Moda:ital,wght@0,400;1,400&display=swap"
+        rel="stylesheet"
+      />
+
+      {/* rest of your existing page content */}
+      <div ...>
+        ...
+      </div>
+    </>
+  );
+}
+   useEffect(() => {
+    if (document.getElementById('ckc-brand-fonts')) return // avoid adding it twice
+    const link = document.createElement('link')
+    link.id = 'ckc-brand-fonts'
+    link.rel = 'stylesheet'
+    link.href = 'https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Bodoni+Moda:ital,wght@0,400;1,400&display=swap'
+    document.head.appendChild(link)
+  }, [])
+  
   const logout = () => { localStorage.removeItem('ckc_user'); setUser(null) }
   if (!loaded) return null
   if (!user) return <><Login onLogin={setUser} /><OfflineBanner /></>
