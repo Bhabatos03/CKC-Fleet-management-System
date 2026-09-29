@@ -423,7 +423,7 @@ function AdminShell({ user, onLogout, children, active, setActive }) {
       <span style={{ fontSize: '13px' }}>rishniah</span>
       <span style={{ fontSize: '18px', marginLeft: '6px' }}>C</span>
       <span style={{ fontSize: '13px' }}>hetty</span>
-      <span style={{ fontSize: '9px', alignSelf: 'flex-start', marginLeft: '2px', lineHeight: 1 }}>™</span>
+     <span style={{ fontSize: '9px', marginLeft: '2px', lineHeight: 1 }}>™</span>
     </div>
     <div
       style={{ fontFamily: '"Cinzel", serif', fontSize: '9px', letterSpacing: '0.2em', color: 'rgba(252,211,153,0.8)' }}
