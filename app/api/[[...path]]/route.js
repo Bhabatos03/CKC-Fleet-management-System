@@ -947,6 +947,34 @@ if (path === 'utilities/dg-logs') {
   await db.collection('utility_vendors').insertOne(item)
   return json(clean(item))
 }
+    if (path === 'utilities/water-readings') {
+  if (!body.location || body.currentReading === undefined) {
+    return json({ error: 'Location and current reading are required' }, 400)
+  }
+  const current = Number(body.currentReading)
+  const previous = Number(body.previousReading || 0)
+  const consumption = current - previous
+  if (consumption < 0 && !body.meterResetConfirmed) {
+    return json({ error: 'Current reading is lower than previous — confirm meter reset if this is intentional' }, 400)
+  }
+  const item = {
+    id: uuidv4(),
+    location: body.location,
+    readingDate: body.readingDate || new Date().toISOString(),
+    previousReading: previous,
+    currentReading: current,
+    consumption: consumption < 0 ? current : consumption,
+    unit: body.unit || 'KL',
+    amount: Number(body.amount || 0),
+    billNumber: body.billNumber || '',
+    dueDate: body.dueDate || null,
+    paymentStatus: body.paymentStatus || 'Pending',
+    remarks: body.remarks || '',
+    createdAt: new Date().toISOString(),
+  }
+  await db.collection('utility_water_readings').insertOne(item)
+  return json(clean(item))
+}
     if (path === 'meters') {
   if (role !== 'admin') return json({ error: 'Only Admin can add meters' }, 403)
   if (!body.name || !body.type || !body.store) return json({ error: 'Name, type and store are required' }, 400)
