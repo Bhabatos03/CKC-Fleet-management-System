@@ -2025,30 +2025,27 @@ function Mileage() {
         logoDataUrl = await new Promise((r) => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(blob) })
       } catch {}
 
-      doc.setFillColor(230, 0, 0); doc.rect(0, 0, pageW, 110, 'F')
-      doc.setDrawColor(217, 119, 6); doc.setLineWidth(1.5); doc.line(0, 108, pageW, 108)
-      if (logoDataUrl) {
-        doc.setFillColor(255, 255, 255); doc.circle(60, 55, 32, 'F')
-        doc.addImage(logoDataUrl, 'PNG', 32, 27, 56, 56)
-      }
-      const brandX = 108
-      doc.setTextColor(255, 255, 255); doc.setFont('times', 'bold'); doc.setFontSize(22)
-      doc.text('C. Krishniah Chetty', brandX, 46)
-      const w1 = doc.getTextWidth('C. Krishniah Chetty')
-      doc.setFont('helvetica', 'bold'); doc.setFontSize(8)
-      doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(252, 211, 77)
-      doc.text('G R O U P    O F    J E W E L L E R S', brandX, 62)
-      doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(255, 255, 255)
-      doc.text('FleetPulse — Mileage Report', brandX, 86)
-      doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(252, 211, 77)
-      doc.text(`Period:  ${rangeStr}`, pageW - 30, 36, { align: 'right' })
-      doc.text(`Vehicle: ${vehLabel}`, pageW - 30, 50, { align: 'right' })
-      doc.text(`Generated: ${now.toLocaleString('en-IN')}`, pageW - 30, 64, { align: 'right' })
-      doc.setTextColor(255, 255, 255); doc.setFontSize(7)
-      doc.text('EST. 1869  ·  HERITAGE JEWELLERS', pageW - 30, 86, { align: 'right' })
-
+      doc.setFillColor(230, 0, 0); doc.rect(0, 0, pageW, 76, 'F')
+doc.setDrawColor(217, 119, 6); doc.setLineWidth(1); doc.line(0, 74, pageW, 74)
+if (logoDataUrl) {
+  doc.setFillColor(255, 255, 255); doc.circle(42, 38, 22, 'F')
+  doc.addImage(logoDataUrl, 'PNG', 24, 20, 38, 38)
+}
+const brandX = 76
+const nameEndX = drawBrandName(doc, brandX, 32, { baseSize: 18, color: [255, 255, 255] })
+doc.setFont('helvetica', 'normal'); doc.setFontSize(6.5); doc.setTextColor(252, 211, 77)
+doc.text('G R O U P    O F    J E W E L L E R S', brandX, 43)
+doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(255, 255, 255)
+doc.text('FleetPulse — [Report Title]', brandX, 60)
+doc.setFont('helvetica', 'normal'); doc.setFontSize(7); doc.setTextColor(252, 211, 77)
+doc.text(`Period:  ${rangeStr}`, pageW - 30, 26, { align: 'right' })
+doc.text(`Vehicle: ...`, pageW - 30, 38, { align: 'right' })
+doc.text(`Generated: ${now.toLocaleString('en-IN')}`, pageW - 30, 50, { align: 'right' })
+doc.setTextColor(255, 255, 255); doc.setFontSize(6)
+doc.text('EST. 1869  ·  HERITAGE JEWELLERS', pageW - 30, 62, { align: 'right' })
+      
       doc.setTextColor(15, 23, 42)
-      let y = 135
+      let y = 96
 
       doc.setFontSize(13); doc.setFont('helvetica', 'bold')
       doc.text('Fleet Mileage Summary', 30, y); y += 8
