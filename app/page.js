@@ -193,7 +193,7 @@ function Login({ onLogin }) {
   className="relative flex-1 flex flex-col justify-between p-6 lg:p-10 xl:p-12 z-10"
   style={{ color: BRAND.bg }}
 >
-        <div className="space-y-8">
+        <div className="space-y-5">
           <div>
             <div className="text-[10px] tracking-[0.3em] font-semibold" style={{ color: BRAND.red }}>EST. 1869</div>
             <div className="text-[10px] tracking-[0.2em] mt-1" style={{ color: 'rgba(35,31,32,0.55)' }}>HERITAGE JEWELLERS</div>
