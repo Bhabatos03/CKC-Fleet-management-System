@@ -189,7 +189,10 @@ function Login({ onLogin }) {
       </div>
 
       {/* LEFT: Brand & Value Prop */}
-      <div className="relative flex-1 flex flex-col justify-between p-8 lg:p-16 z-10" style={{ color: BRAND.bg }}>
+      <div
+  className="relative flex-1 flex flex-col justify-between p-6 lg:p-10 xl:p-12 z-10"
+  style={{ color: BRAND.bg }}
+>
         <div className="space-y-8">
           <div>
             <div className="text-[10px] tracking-[0.3em] font-semibold" style={{ color: BRAND.red }}>EST. 1869</div>
