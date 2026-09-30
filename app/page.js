@@ -2749,10 +2749,9 @@ const generateGatePassPDF = async (gp) => {
 
  let y = 30
 if (logoDataUrl) doc.addImage(logoDataUrl, 'PNG', 30, y, 40, 40)
-doc.setFont('times', 'bold'); doc.setFontSize(14); doc.setTextColor(122, 13, 13)
-doc.text('C. Krishniah Chetty', 80, y + 18)
+drawBrandName(doc, 80, y + 18, { baseSize: 16, color: [122, 13, 13] })
 doc.setFont('helvetica', 'normal'); doc.setFontSize(6.5); doc.setTextColor(122, 13, 13)
-doc.text('GROUP OF JEWELLERS', 80, y + 28)
+doc.text('G R O U P   O F   J E W E L L E R S', 80, y + 30)
 
 doc.setFontSize(7.5); doc.setTextColor(80)
 const storeInfo = STORE_ADDRESSES[gp.storeId] || STORE_ADDRESSES.TS
