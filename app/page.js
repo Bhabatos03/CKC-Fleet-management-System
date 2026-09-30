@@ -163,7 +163,7 @@ function Login({ onLogin }) {
   ]
   const Rot = rotating[tick].icon
   return (
-   <div className="min-h-screen flex flex-col lg:flex-row relative overflow-hidden" style={{background: `radial-gradient(1400px 900px at 20% 15%, ${BRAND.bgSoft} 0%, ${BRAND.bg} 55%, #100e0e 100%)`}}>
+<div className="min-h-screen flex flex-col lg:flex-row relative overflow-hidden" style={{background: BRAND.red}}>
       {/* Ambient gradients */}
      <div className="absolute -top-40 -left-40 w-[520px] h-[520px] rounded-full blur-3xl pointer-events-none animate-pulse" style={{background: BRAND.red, opacity: 0.08, animationDuration: '5s'}} />
     <div className="absolute -bottom-60 -right-40 w-[700px] h-[700px] rounded-full blur-3xl pointer-events-none animate-pulse" style={{background: BRAND.red, opacity: 0.05, animationDuration: '7s'}} />
