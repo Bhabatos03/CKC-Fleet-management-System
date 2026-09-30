@@ -162,89 +162,80 @@ function Login({ onLogin }) {
     { icon: Gauge, label: 'Trips This Month', value: '1,240' },
   ]
   const Rot = rotating[tick].icon
-  return (
-<div className="min-h-screen flex flex-col lg:flex-row relative overflow-hidden" style={{background: `radial-gradient(1400px 900px at 20% 15%, ${BRAND.bgSoft} 0%, ${BRAND.bg} 55%, #100e0e 100%)`}}>
-      {/* Ambient gradients */}
-    <div className="absolute -top-40 -left-40 w-[520px] h-[520px] rounded-full blur-3xl pointer-events-none animate-pulse" style={{background: BRAND.red, opacity: 0.18, animationDuration: '5s'}} />
-<div className="absolute -bottom-60 -right-40 w-[700px] h-[700px] rounded-full blur-3xl pointer-events-none animate-pulse" style={{background: BRAND.red, opacity: 0.14, animationDuration: '7s'}} />
-    <div className="absolute top-1/3 left-1/2 w-[320px] h-[320px] rounded-full blur-3xl pointer-events-none" style={{background: '#000000', opacity: 0.4}} />
-      {/* Fine noise/grid texture */}
-      <div className="absolute inset-0 opacity-[0.035] pointer-events-none" style={{
-        backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)',
+    return (
+    <div className="min-h-screen flex flex-col lg:flex-row relative overflow-hidden" style={{ background: BRAND.ivory }}>
+      {/* Soft red glows */}
+      <div className="absolute -top-40 -left-40 w-[520px] h-[520px] rounded-full blur-3xl pointer-events-none" style={{ background: BRAND.red, opacity: 0.08 }} />
+      <div className="absolute -bottom-60 -right-40 w-[700px] h-[700px] rounded-full blur-3xl pointer-events-none" style={{ background: BRAND.red, opacity: 0.06 }} />
+      {/* Fine grid texture */}
+      <div className="absolute inset-0 opacity-[0.04] pointer-events-none" style={{
+        backgroundImage: 'linear-gradient(#231F20 1px, transparent 1px), linear-gradient(90deg, #231F20 1px, transparent 1px)',
         backgroundSize: '52px 52px'
       }} />
 
-      {/* Vignette */}
-      <div className="absolute inset-0 pointer-events-none" style={{boxShadow: 'inset 0 0 260px 60px rgba(0,0,0,0.55)'}} />
-
       {/* Moving truck strip */}
-      <div className="hidden lg:block absolute bottom-24 left-0 right-0 pointer-events-none overflow-hidden opacity-30">
+      <div className="hidden lg:block absolute bottom-24 left-0 right-0 pointer-events-none overflow-hidden opacity-20">
         <div className="flex gap-40 animate-marquee whitespace-nowrap">
           {[...Array(6)].map((_, i) => (
-            <div key={i} className="flex items-center gap-3 text-amber-200/40">
+            <div key={i} className="flex items-center gap-3" style={{ color: BRAND.bg }}>
               <Truck className="w-6 h-6" />
-              <div className="h-px w-40 bg-gradient-to-r from-amber-300/40 to-transparent" />
+              <div className="h-px w-40" style={{ background: `linear-gradient(to right, ${BRAND.bg}, transparent)` }} />
             </div>
           ))}
         </div>
       </div>
 
       {/* LEFT: Brand & Value Prop */}
-      <div className="relative flex-1 flex flex-col justify-between p-8 lg:p-16 text-white z-10">
-        {/* Top: Elegant wordmark */}
+      <div className="relative flex-1 flex flex-col justify-between p-8 lg:p-16 z-10" style={{ color: BRAND.bg }}>
         <div className="space-y-8">
-          <div className="flex items-center gap-4">
-            <img src="/ckc-logo.png" alt="CKC" className="w-20 h-20 object-contain drop-shadow-2xl" />
-            <div className="border-l border-amber-300/20 pl-4">
-              <div className="text-[10px] tracking-[0.3em] text-amber-200/90 font-semibold">EST. 1869</div>
-              <div className="text-[10px] tracking-[0.2em] text-amber-100/50 mt-1">HERITAGE JEWELLERS</div>
-            </div>
+          <div>
+            <div className="text-[10px] tracking-[0.3em] font-semibold" style={{ color: BRAND.red }}>EST. 1869</div>
+            <div className="text-[10px] tracking-[0.2em] mt-1" style={{ color: 'rgba(35,31,32,0.55)' }}>HERITAGE JEWELLERS</div>
           </div>
 
-        <div className="space-y-3">
-  <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full backdrop-blur-sm" style={{background: 'rgba(230,0,0,0.08)', border: `1px solid rgba(230,0,0,0.35)`}}>
-  <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{background: BRAND.red, boxShadow: `0 0 8px ${BRAND.red}`}} />
-  <span className="text-sm tracking-wide font-bold" style={{color: BRAND.ivory}}>FleetPulse</span>
-  <span style={{color: 'rgba(255,245,227,0.3)'}}>·</span>
-  <span className="text-[10px] tracking-[0.2em] font-semibold uppercase" style={{color: BRAND.red}}>Live</span>
-</div>
+          <div className="space-y-3">
+            <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full" style={{ background: 'rgba(230,0,0,0.06)', border: '1px solid rgba(230,0,0,0.35)' }}>
+              <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: BRAND.red }} />
+              <span className="text-sm tracking-wide font-bold" style={{ color: BRAND.bg }}>FleetPulse</span>
+              <span style={{ color: 'rgba(35,31,32,0.3)' }}>·</span>
+              <span className="text-[10px] tracking-[0.2em] font-semibold uppercase" style={{ color: BRAND.red }}>Live</span>
+            </div>
+            <img
+              src="/ckc-logo-transparent.png"
+              alt="C. Krishniah Chetty — Group of Jewellers"
+              className="w-[260px] sm:w-[420px] lg:w-[560px] h-auto"
+            />
+          </div>
+        </div>
 
-<img
-  src="/ckc-logo-transparent.png"
-  alt="C. Krishniah Chetty — Group of Jewellers"
-  className="w-[260px] sm:w-[420px] lg:w-[560px] h-auto"
-/>
-    </div>
-</div>
-
-        {/* Middle: Fleet-focused tagline */}
+        {/* Middle */}
         <div className="hidden lg:block space-y-8 my-10">
           <div>
-       <div className="w-16 h-[2px] mb-5" style={{background: `linear-gradient(to right, ${BRAND.red}, transparent)`}} />
-           <h2 className="text-3xl xl:text-5xl font-light leading-tight" style={{fontFamily: 'Georgia, serif', color: BRAND.ivory}}>
-          Every kilometre.<br />
-          Every litre. <span className="italic" style={{color: BRAND.red}}>Accounted for.</span>
-          </h2>
-            <p className="text-base xl:text-lg text-white/70 leading-relaxed max-w-md font-light mt-5">
-  An enterprise-grade fleet & facility operations platform — real-time vehicle movement, fuel analytics, mileage intelligence, and utility operations for the CKC fleet.
-</p>
+            <div className="w-16 h-[2px] mb-5" style={{ background: `linear-gradient(to right, ${BRAND.red}, transparent)` }} />
+            <h2 className="text-3xl xl:text-5xl font-light leading-tight" style={{ fontFamily: 'Georgia, serif', color: BRAND.bg }}>
+              Every kilometre.<br />
+              Every litre. <span className="italic" style={{ color: BRAND.red }}>Accounted for.</span>
+            </h2>
+            <p className="text-base xl:text-lg leading-relaxed max-w-md font-light mt-5" style={{ color: 'rgba(35,31,32,0.7)' }}>
+              An enterprise-grade fleet & facility operations platform — real-time vehicle movement, fuel analytics, mileage intelligence, and utility operations for the CKC fleet.
+            </p>
           </div>
 
-          {/* Live rotating stat card */}
+          {/* Rotating stat card */}
           <div className="max-w-sm">
-            <div className="relative overflow-hidden rounded-xl bg-white/5 backdrop-blur-sm border border-amber-400/20 p-4">
-              <div className="absolute top-0 left-0 h-full w-1 bg-gradient-to-b from-amber-300 to-amber-600" />
+            <div className="relative overflow-hidden rounded-xl bg-white border p-4 shadow-sm" style={{ borderColor: 'rgba(35,31,32,0.1)' }}>
+              <div className="absolute top-0 left-0 h-full w-1" style={{ background: BRAND.red }} />
               <div className="flex items-center gap-4">
-                <div className="w-11 h-11 rounded-lg bg-amber-500/20 flex items-center justify-center text-amber-300">
+                <div className="w-11 h-11 rounded-lg flex items-center justify-center" style={{ background: 'rgba(230,0,0,0.08)', color: BRAND.red }}>
                   <Rot className="w-5 h-5" />
                 </div>
                 <div className="flex-1">
-                  <div className="text-[10px] tracking-[0.25em] text-amber-200/70 font-semibold uppercase">{rotating[tick].label}</div>
-                  <div className="text-2xl font-bold text-white transition-all" key={tick}>{rotating[tick].value}</div>
+                  <div className="text-[10px] tracking-[0.25em] font-semibold uppercase" style={{ color: 'rgba(35,31,32,0.55)' }}>{rotating[tick].label}</div>
+                  <div className="text-2xl font-bold" style={{ color: BRAND.bg }} key={tick}>{rotating[tick].value}</div>
                 </div>
                 <div className="flex gap-1">
                   {rotating.map((_, i) => (
-                    <div key={i} className={`h-1 rounded-full transition-all ${i === tick ? 'w-4 bg-amber-400' : 'w-1.5 bg-white/20'}`} />
+                    <div key={i} className="h-1 rounded-full transition-all" style={{ width: i === tick ? 16 : 6, background: i === tick ? BRAND.red : 'rgba(35,31,32,0.2)' }} />
                   ))}
                 </div>
               </div>
@@ -261,122 +252,92 @@ function Login({ onLogin }) {
             ].map((f, i) => {
               const I = f.icon
               return (
-                <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition">
-                  <div className="w-8 h-8 rounded-md bg-amber-500/20 flex items-center justify-center text-amber-300"><I className="w-4 h-4" /></div>
-                  <span className="text-sm text-white/80 font-medium">{f.label}</span>
+                <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-white border hover:shadow-md transition" style={{ borderColor: 'rgba(35,31,32,0.1)' }}>
+                  <div className="w-8 h-8 rounded-md flex items-center justify-center" style={{ background: 'rgba(230,0,0,0.08)', color: BRAND.red }}><I className="w-4 h-4" /></div>
+                  <span className="text-sm font-medium" style={{ color: BRAND.bg }}>{f.label}</span>
                 </div>
               )
             })}
           </div>
         </div>
 
-                 {/* Bottom: Footer */}
-          <div className="hidden lg:flex flex-col gap-1 text-[10px] text-amber-100/40 font-medium tracking-[0.2em]">
-          <div style={{color: 'rgba(255,245,227,0.4)'}}>© 2026 C KRISHNIAH CHETTY JEWELLERS PVT. LTD.</div>
-          <div className="flex items-center gap-2" style={{color: 'rgba(255,245,227,0.4)'}}>
-          <span className="w-1 h-1 rounded-full animate-pulse" style={{background: BRAND.red}} />
-          FleetPulse · v1.0
-          </div>
+        {/* Footer */}
+        <div className="hidden lg:block">
+          <div className="flex flex-col gap-1 text-[10px] font-medium tracking-[0.2em]" style={{ color: 'rgba(35,31,32,0.5)' }}>
+            <div>© 2026 C KRISHNIAH CHETTY JEWELLERS PVT. LTD.</div>
+            <div className="flex items-center gap-2">
+              <span className="w-1 h-1 rounded-full animate-pulse" style={{ background: BRAND.red }} />
+              FleetPulse · v1.0
             </div>
-            <div className="hidden lg:block text-right text-amber-100/30 tracking-[0.15em] normal-case">
-  Design &amp; Developed by <span className="text-amber-200/60 font-semibold">Bhabatos Mohanty</span>
-</div>
           </div>
-      
+          <div className="text-right tracking-[0.15em] text-[10px]" style={{ color: 'rgba(35,31,32,0.45)' }}>
+            Design &amp; Developed by <span className="font-semibold" style={{ color: 'rgba(35,31,32,0.75)' }}>Bhabatos Mohanty</span>
+          </div>
+        </div>
+      </div>
+
       {/* RIGHT: Login Card */}
       <div className="relative w-full lg:w-[500px] flex items-center justify-center p-6 lg:p-12 z-10">
         <div className="w-full max-w-sm">
-          <div className="relative">
-            {/* Halo */}
-            <div className="absolute -inset-4 rounded-3xl bg-gradient-to-br from-amber-400/30 via-red-500/10 to-amber-400/30 blur-2xl animate-pulse" style={{animationDuration: '4s'}} />
-
-            <div className="relative bg-white/98 backdrop-blur-xl rounded-2xl shadow-2xl overflow-hidden border border-amber-200/50">
-              {/* Ribbon */}
-              <div className="px-6 py-3 flex items-center gap-2" style={{background: `linear-gradient(to right, ${BRAND.bg}, ${BRAND.red}, ${BRAND.bg})`}}>
-  <Truck className="w-3.5 h-3.5" style={{color: BRAND.ivory}} />
-  <span className="text-lg tracking-[0.15em] font-bold" style={{color: BRAND.ivory}}>FleetPulse</span>
-  <div className="ml-auto flex items-center gap-1.5 text-[9px] tracking-widest" style={{color: BRAND.ivory}}>
-    <span className="w-2 h-2 rounded-full animate-pulse" style={{background: BRAND.ivory}} /> LIVE
-  </div>
-</div>
-
-              <div className="p-8 space-y-6">
-                <div>
-                  <h2 className="text-2xl font-bold text-[#231F20]" style={{fontFamily: 'Georgia, serif'}}>Welcome Back</h2>
-                  <p className="text-sm text-slate-500 mt-1">Sign in to access the Fleet Management System.</p>
-                </div>
-
-                <form onSubmit={submit} className="space-y-5">
-                  <div className="space-y-1.5">
-                    <Label className="text-xs tracking-[0.15em] text-slate-600 font-semibold uppercase">Username</Label>
-                    <div className="relative">
-                      <Input
-                        value={username}
-                        onChange={e => setUsername(e.target.value)}
-                        required
-                        placeholder="Enter your username"
-                        className="h-11 pl-10 border-slate-200 focus:border-red-800 focus:ring-red-800/20 rounded-lg"
-                      />
-                      <Users className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
-                    </div>
-                  </div>
-                                   <div className="space-y-1.5">
-                    <Label className="text-xs tracking-[0.15em] text-slate-600 font-semibold uppercase">Password</Label>
-                    <div className="relative">
-                      <Input
-                        type={showPassword ? 'text' : 'password'}
-                        value={password}
-                        onChange={e => setPassword(e.target.value)}
-                        required
-                        placeholder="Enter your password"
-                        className="h-11 pl-10 pr-10 border-slate-200 focus:border-red-800 focus:ring-red-800/20 rounded-lg"
-                      />
-                      <ShieldAlert className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(x => !x)}
-                        className="absolute right-3 top-3 text-slate-400 hover:text-slate-600"
-                        tabIndex={-1}
-                      >
-                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                      </button>
-                    </div>
-                  </div>
-                  <Button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full h-12 hover:brightness-110 text-white font-semibold tracking-[0.15em] transition-all group"
-                  style={{background: `linear-gradient(to right, ${BRAND.redDeep}, ${BRAND.red}, ${BRAND.redDeep})`, boxShadow: `0 10px 25px -5px rgba(230,0,0,0.4)`}}
-                  >
-                    {loading ? (
-                      <span className="flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
-                        SIGNING IN...
-                      </span>
-                    ) : (
-                      <span className="flex items-center justify-center gap-2">
-                        LOG IN
-                        <ArrowRightCircle className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-                      </span>
-                    )}
-                  </Button>
-                </form>
+          <div className="relative bg-white rounded-2xl overflow-hidden border shadow-2xl" style={{ borderColor: 'rgba(35,31,32,0.1)', boxShadow: '0 25px 50px -12px rgba(35,31,32,0.25)' }}>
+            {/* Ribbon */}
+            <div className="px-6 py-3 flex items-center gap-2" style={{ background: BRAND.bg, borderBottom: `3px solid ${BRAND.red}` }}>
+              <Truck className="w-3.5 h-3.5" style={{ color: BRAND.ivory }} />
+              <span className="text-lg tracking-[0.15em] font-bold" style={{ color: BRAND.ivory }}>FleetPulse</span>
+              <div className="ml-auto flex items-center gap-1.5 text-[9px] tracking-widest" style={{ color: BRAND.ivory }}>
+                <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: BRAND.red }} /> LIVE
               </div>
+            </div>
+
+            <div className="p-8 space-y-6">
+              <div>
+                <h2 className="text-2xl font-bold" style={{ fontFamily: 'Georgia, serif', color: BRAND.bg }}>Welcome Back</h2>
+                <p className="text-sm mt-1" style={{ color: 'rgba(35,31,32,0.6)' }}>Sign in to access the Fleet Management System.</p>
+              </div>
+
+              <form onSubmit={submit} className="space-y-5">
+                <div className="space-y-1.5">
+                  <Label className="text-xs tracking-[0.15em] font-semibold uppercase" style={{ color: BRAND.bg }}>Username</Label>
+                  <div className="relative">
+                    <Input value={username} onChange={e => setUsername(e.target.value)} required placeholder="Enter your username"
+                      className="h-11 pl-10 rounded-lg border-[#231F20]/20 focus-visible:ring-[#E60000]/30 focus-visible:border-[#E60000]" />
+                    <Users className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs tracking-[0.15em] font-semibold uppercase" style={{ color: BRAND.bg }}>Password</Label>
+                  <div className="relative">
+                    <Input type={showPassword ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} required placeholder="Enter your password"
+                      className="h-11 pl-10 pr-10 rounded-lg border-[#231F20]/20 focus-visible:ring-[#E60000]/30 focus-visible:border-[#E60000]" />
+                    <ShieldAlert className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
+                    <button type="button" onClick={() => setShowPassword(x => !x)} className="absolute right-3 top-3 text-slate-400 hover:text-slate-600" tabIndex={-1}>
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+                <Button type="submit" disabled={loading}
+                  className="w-full h-12 hover:brightness-110 text-white font-semibold tracking-[0.15em] transition-all group"
+                  style={{ background: BRAND.red, boxShadow: '0 10px 25px -5px rgba(230,0,0,0.4)' }}>
+                  {loading ? (
+                    <span className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-white animate-pulse" />SIGNING IN...</span>
+                  ) : (
+                    <span className="flex items-center justify-center gap-2">LOG IN<ArrowRightCircle className="w-4 h-4 transition-transform group-hover:translate-x-1" /></span>
+                  )}
+                </Button>
+              </form>
             </div>
           </div>
 
-                    <div className="lg:hidden text-center mt-6 space-y-1">
-            <div className="text-[10px] tracking-[0.2em] text-amber-100/50">© 2026 CKC JEWELLERS · FleetPulse</div>
-            <div className="text-[9px] tracking-[0.15em] text-amber-100/30">
-              Design &amp; Developed by <span className="text-amber-200/60 font-semibold">Bhabatos Mohanty</span>
+          <div className="lg:hidden text-center mt-6 space-y-1">
+            <div className="text-[10px] tracking-[0.2em]" style={{ color: 'rgba(35,31,32,0.6)' }}>© 2026 CKC JEWELLERS · FleetPulse</div>
+            <div className="text-[9px] tracking-[0.15em]" style={{ color: 'rgba(35,31,32,0.5)' }}>
+              Design &amp; Developed by <span className="font-semibold">Bhabatos Mohanty</span>
             </div>
           </div>
         </div>
       </div>
     </div>
   )
-}
-
 function AdminShell({ user, onLogout, children, active, setActive }) {
   const [drawerOpen, setDrawerOpen] = useState(false)
   const fleetNav = [
