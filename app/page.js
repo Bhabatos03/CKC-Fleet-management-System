@@ -307,9 +307,9 @@ function Login({ onLogin }) {
           FleetPulse · v1.0
           </div>
             </div>
-            <div className="text-right text-amber-100/30 tracking-[0.15em] normal-case">
-              Design &amp; Developed by <span className="text-amber-200/60 font-semibold">Bhabatos Mohanty</span>
-            </div>
+            <div className="hidden lg:block text-right text-amber-100/30 tracking-[0.15em] normal-case">
+  Design &amp; Developed by <span className="text-amber-200/60 font-semibold">Bhabatos Mohanty</span>
+</div>
           </div>
       
       {/* RIGHT: Login Card */}
