@@ -210,23 +210,23 @@ function Login({ onLogin }) {
 </div>
 
 <h1
-  className="flex items-baseline flex-wrap"
+  className="flex items-baseline whitespace-nowrap"
   style={{
     fontFamily: '"Bodoni MT", "Bodoni Moda", Didot, Georgia, serif',
     color: BRAND.ivory,
     textTransform: 'uppercase',
   }}
 >
-  <span style={{ fontSize: '80px' }}>C.</span>
-  <span style={{ fontSize: '78px', marginLeft: '10px' }}>K</span>
-  <span style={{ fontSize: '58px' }}>RISHNIAH</span>
-  <span style={{ fontSize: '80px', marginLeft: '16px' }}>C</span>
-  <span style={{ fontSize: '58px' }}>HETTY</span>
+  <span className="text-[22px] sm:text-[80px]">C.</span>
+  <span className="text-[18px] sm:text-[78px] ml-1 sm:ml-2.5">K</span>
+  <span className="text-[15px] sm:text-[58px]">RISHNIAH</span>
+  <span className="text-[22px] sm:text-[80px] ml-1.5 sm:ml-4">C</span>
+  <span className="text-[15px] sm:text-[58px]">HETTY</span>
   <span
+    className="text-[6px] sm:text-[20px]"
     style={{
-      fontSize: '20px',
       verticalAlign: 'super',
-      color: 'BRAND.ivory',
+      color: 'rgba(255,245,227,0.6)',
       textTransform: 'none',
     }}
   >
