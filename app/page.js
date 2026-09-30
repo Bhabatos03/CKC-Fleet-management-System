@@ -222,7 +222,7 @@ function Login({ onLogin }) {
               Every kilometre.<br />
               Every litre. <span className="italic" style={{ color: BRAND.red }}>Accounted for.</span>
             </h2>
-            <p className="text-base xl:text-lg leading-relaxed max-w-md font-light mt-5" style={{ color: 'rgba(35,31,32,0.7)' }}>
+            <p className="text-sm xl:text-base leading-relaxed max-w-md font-light mt-3" style={{ color: 'rgba(35,31,32,0.7)' }}>
               An enterprise-grade fleet & facility operations platform — real-time vehicle movement, fuel analytics, mileage intelligence, and utility operations for the CKC fleet.
             </p>
           </div>
