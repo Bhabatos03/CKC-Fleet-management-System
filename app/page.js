@@ -2040,7 +2040,6 @@ function Mileage() {
       doc.text('C. Krishniah Chetty', brandX, 46)
       const w1 = doc.getTextWidth('C. Krishniah Chetty')
       doc.setFont('helvetica', 'bold'); doc.setFontSize(8)
-      doc.text('TM', brandX + w1 + 3, 34)
       doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(252, 211, 77)
       doc.text('G R O U P    O F    J E W E L L E R S', brandX, 62)
       doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(255, 255, 255)
