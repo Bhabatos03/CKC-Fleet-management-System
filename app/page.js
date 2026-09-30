@@ -957,13 +957,6 @@ function Trips() {
         ? new Date(submitted.fromDate).toLocaleDateString('en-IN')
         : `${new Date(submitted.fromDate).toLocaleDateString('en-IN')} — ${new Date(submitted.toDate).toLocaleDateString('en-IN')}`
 
-      let logoDataUrl = null
-      try {
-        const res = await fetch('/ckc-logo-pdf.png')
-        const blob = await res.blob()
-        logoDataUrl = await new Promise((r) => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(blob) })
-      } catch {}
-
      doc.setFillColor(230, 0, 0); doc.rect(0, 0, pageW, 76, 'F')
 doc.setDrawColor(217, 119, 6); doc.setLineWidth(1); doc.line(0, 74, pageW, 74)
 if (logoDataUrl) {
