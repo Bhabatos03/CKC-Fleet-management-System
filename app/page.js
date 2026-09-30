@@ -107,7 +107,7 @@ const drawBrandName = (doc, x, y, { baseSize = 22, color = [255, 255, 255] } = {
   const scale = baseSize / 26
   const mid = Math.round(22 * scale)
   const small = Math.round(19 * scale)
-  const tmSize = Math.max(7, Math.round(8 * scale))
+  const tmSize = Math.max(5, Math.round(6 * scale))
 
   doc.setTextColor(...color)
   doc.setFont('times', 'bold')
