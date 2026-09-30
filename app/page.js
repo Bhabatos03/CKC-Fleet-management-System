@@ -100,6 +100,36 @@ const fmtDate = (d) => d ? new Date(d).toLocaleDateString('en-IN', { day: '2-dig
 const fmtDT = (d) => d ? new Date(d).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '-'
 const fmtINR = (n) => `₹${Number(n || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 })}`
 
+// Draws "C. KRISHNIAH CHETTY" with the same varied-size, all-caps brand
+// treatment used across the site. Returns the x-position right after the
+// text ends, so callers can place a TM mark or anything else next to it.
+const drawBrandName = (doc, x, y, { baseSize = 22, color = [255, 255, 255] } = {}) => {
+  const scale = baseSize / 26
+  const mid = Math.round(22 * scale)
+  const small = Math.round(19 * scale)
+  doc.setTextColor(...color)
+  doc.setFont('times', 'bold')
+  let cx = x
+
+  doc.setFontSize(baseSize)
+  doc.text('C.', cx, y); cx += doc.getTextWidth('C.') + 2
+
+  doc.setFontSize(mid)
+  doc.text('K', cx, y); cx += doc.getTextWidth('K')
+
+  doc.setFontSize(small)
+  doc.text('RISHNIAH', cx, y); cx += doc.getTextWidth('RISHNIAH') + 6
+
+  doc.setFontSize(baseSize)
+  doc.text('C', cx, y); cx += doc.getTextWidth('C')
+
+  doc.setFontSize(small)
+  doc.text('HETTY', cx, y); cx += doc.getTextWidth('HETTY')
+
+  return cx
+}
+
+
 function Login({ onLogin }) {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
