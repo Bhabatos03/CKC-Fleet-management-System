@@ -215,7 +215,7 @@ function Login({ onLogin }) {
         </div>
 
         {/* Middle */}
-        <div className="hidden lg:block space-y-8 my-10">
+       <div className="hidden lg:block space-y-5 my-5">
           <div>
             <div className="w-16 h-[2px] mb-5" style={{ background: `linear-gradient(to right, ${BRAND.red}, transparent)` }} />
             <h2 className="text-3xl xl:text-5xl font-light leading-tight" style={{ fontFamily: 'Georgia, serif', color: BRAND.bg }}>
