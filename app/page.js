@@ -218,7 +218,7 @@ function Login({ onLogin }) {
        <div className="hidden lg:block space-y-5 my-5">
           <div>
             <div className="w-16 h-[2px] mb-5" style={{ background: `linear-gradient(to right, ${BRAND.red}, transparent)` }} />
-            <h2 className="text-2xl xl:text-3xl font-light leading-tight" style={{ fontFamily: 'Georgia, serif', color: BRAND.bg }}>
+            <h2 className="text-xl xl:text-2xl font-light leading-tight" style={{ fontFamily: 'Georgia, serif', color: BRAND.bg }}>
               Every kilometre.<br />
               Every litre. <span className="italic" style={{ color: BRAND.red }}>Accounted for.</span>
             </h2>
