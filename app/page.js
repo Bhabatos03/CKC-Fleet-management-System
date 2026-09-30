@@ -1026,13 +1026,11 @@ function Trips() {
         doc.addImage(logoDataUrl, 'PNG', 32, 27, 56, 56)
       }
       const brandX = 108
-      doc.setTextColor(255, 255, 255); doc.setFont('times', 'bold'); doc.setFontSize(22)
-      doc.text('C. Krishniah Chetty', brandX, 46)
-      const w1 = doc.getTextWidth('C. Krishniah Chetty')
-      doc.setFont('helvetica', 'bold'); doc.setFontSize(8)
-      doc.text('TM', brandX + w1 + 3, 34)
-      doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(252, 211, 77)
-      doc.text('G R O U P    O F    J E W E L L E R S', brandX, 62)
+  const nameEndX = drawBrandName(doc, brandX, 46, { baseSize: 26, color: [255, 255, 255] })
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.setTextColor(255, 255, 255)
+  doc.text('TM', nameEndX + 3, 34)
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(252, 211, 77)
+  doc.text('G R O U P    O F    J E W E L L E R S', brandX, 62)
       doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(255, 255, 255)
       doc.text('FleetPulse — Trip Register', brandX, 86)
       doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(252, 211, 77)
