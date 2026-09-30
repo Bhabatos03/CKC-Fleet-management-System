@@ -259,7 +259,7 @@ function Login({ onLogin }) {
               const I = f.icon
               return (
                 <div key={i} className="flex items-center gap-2 p-2.5 rounded-lg bg-white border hover:shadow-md transition" style={{ borderColor: 'rgba(35,31,32,0.1)' }}>
-                  <div className="w-8 h-8 rounded-md flex items-center justify-center" style={{ background: 'rgba(230,0,0,0.08)', color: BRAND.red }}><I className="w-4 h-4" /></div>
+                  <div className="w-7 h-7 rounded-md flex items-center justify-center" style={{ background: 'rgba(230,0,0,0.08)', color: BRAND.red }}><I className="w-4 h-4" /></div>
                   <span className="text-sm font-medium" style={{ color: BRAND.bg }}>{f.label}</span>
                 </div>
               )
