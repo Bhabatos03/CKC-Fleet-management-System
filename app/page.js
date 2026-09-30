@@ -210,7 +210,7 @@ function Login({ onLogin }) {
 </div>
 
 <img
-  src="/ckc-logo-red-bg.jpg"
+  src="/ckc-logo-transparent.jpg"
   alt="C. Krishniah Chetty — Group of Jewellers"
   className="w-[260px] sm:w-[420px] lg:w-[560px] h-auto"
 />
