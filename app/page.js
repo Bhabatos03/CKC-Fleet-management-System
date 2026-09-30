@@ -165,8 +165,8 @@ function Login({ onLogin }) {
   return (
 <div className="min-h-screen flex flex-col lg:flex-row relative overflow-hidden" style={{background: `radial-gradient(1400px 900px at 20% 15%, ${BRAND.bgSoft} 0%, ${BRAND.bg} 55%, #100e0e 100%)`}}>
       {/* Ambient gradients */}
-     <div className="absolute -top-40 -left-40 w-[520px] h-[520px] rounded-full blur-3xl pointer-events-none animate-pulse" style={{background: BRAND.red, opacity: 0.08, animationDuration: '5s'}} />
-    <div className="absolute -bottom-60 -right-40 w-[700px] h-[700px] rounded-full blur-3xl pointer-events-none animate-pulse" style={{background: BRAND.red, opacity: 0.05, animationDuration: '7s'}} />
+    <div className="absolute -top-40 -left-40 w-[520px] h-[520px] rounded-full blur-3xl pointer-events-none animate-pulse" style={{background: BRAND.red, opacity: 0.18, animationDuration: '5s'}} />
+<div className="absolute -bottom-60 -right-40 w-[700px] h-[700px] rounded-full blur-3xl pointer-events-none animate-pulse" style={{background: BRAND.red, opacity: 0.14, animationDuration: '7s'}} />
     <div className="absolute top-1/3 left-1/2 w-[320px] h-[320px] rounded-full blur-3xl pointer-events-none" style={{background: '#000000', opacity: 0.4}} />
       {/* Fine noise/grid texture */}
       <div className="absolute inset-0 opacity-[0.035] pointer-events-none" style={{
