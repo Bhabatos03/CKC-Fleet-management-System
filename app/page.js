@@ -429,8 +429,7 @@ function AdminShell({ user, onLogout, children, active, setActive }) {
   const SidebarContent = () => (
     <>
    <div className="px-4 py-5 border-b border-slate-800 flex items-center gap-3">
-  <img src="/ckc-logo.png" alt="CKC" className="w-11 h-11 object-contain flex-shrink-0" />
-  <div className="flex-1 min-w-0">
+   <div className="flex-1 min-w-0">
     <div
       className="flex items-baseline flex-nowrap whitespace-nowrap"
       style={{ fontFamily: '"Bodoni MT", "Bodoni Moda", Didot, Georgia, serif', color: '#ffffff', textTransform: 'uppercase' }}
