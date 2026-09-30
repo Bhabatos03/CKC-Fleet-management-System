@@ -301,7 +301,7 @@ function Login({ onLogin }) {
                <p className="text-xs mt-1" style={{ color: 'rgba(35,31,32,0.6)' }}>Sign in to access the Fleet Management System.</p>
               </div>
 
-              <form onSubmit={submit} className="space-y-5">
+              <form onSubmit={submit} className="space-y-4">
                 <div className="space-y-1.5">
                   <Label className="text-xs tracking-[0.15em] font-semibold uppercase" style={{ color: BRAND.bg }}>Username</Label>
                   <div className="relative">
