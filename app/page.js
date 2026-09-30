@@ -1237,7 +1237,7 @@ function FuelRegister() {
         logoDataUrl = await new Promise((r) => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(blob) })
       } catch {}
 
-      doc.setFillColor(58, 6, 6); doc.rect(0, 0, pageW, 110, 'F')
+      doc.setFillColor(230, 0, 0); doc.rect(0, 0, pageW, 110, 'F')
       doc.setDrawColor(217, 119, 6); doc.setLineWidth(1.5); doc.line(0, 108, pageW, 108)
       if (logoDataUrl) {
         doc.setFillColor(255, 255, 255); doc.circle(60, 55, 32, 'F')
@@ -2029,7 +2029,7 @@ function Mileage() {
         logoDataUrl = await new Promise((r) => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(blob) })
       } catch {}
 
-      doc.setFillColor(58, 6, 6); doc.rect(0, 0, pageW, 110, 'F')
+      doc.setFillColor(230, 0, 0); doc.rect(0, 0, pageW, 110, 'F')
       doc.setDrawColor(217, 119, 6); doc.setLineWidth(1.5); doc.line(0, 108, pageW, 108)
       if (logoDataUrl) {
         doc.setFillColor(255, 255, 255); doc.circle(60, 55, 32, 'F')
@@ -2399,7 +2399,7 @@ function Reports() {
         logoDataUrl = await new Promise((resolve) => { const fr = new FileReader(); fr.onload = () => resolve(fr.result); fr.readAsDataURL(blob) })
       } catch {}
 
-      doc.setFillColor(58, 6, 6); doc.rect(0, 0, pageW, 110, 'F')
+     doc.setFillColor(230, 0, 0); doc.rect(0, 0, pageW, 110, 'F')
       doc.setDrawColor(217, 119, 6); doc.setLineWidth(1.5); doc.line(0, 108, pageW, 108)
       if (logoDataUrl) {
         doc.setFillColor(255, 255, 255); doc.circle(60, 55, 32, 'F')
