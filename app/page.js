@@ -283,7 +283,7 @@ function Login({ onLogin }) {
       </div>
 
       {/* RIGHT: Login Card */}
-      <div className="relative w-full lg:w-[500px] flex items-center justify-center p-6 lg:p-12 z-10">
+     <div className="relative w-full lg:w-[440px] xl:w-[460px] flex items-center justify-center p-4 lg:p-6 xl:p-8 z-10">
         <div className="w-full max-w-sm">
           <div className="relative bg-white rounded-2xl overflow-hidden border shadow-2xl" style={{ borderColor: 'rgba(35,31,32,0.1)', boxShadow: '0 25px 50px -12px rgba(35,31,32,0.25)' }}>
             {/* Ribbon */}
