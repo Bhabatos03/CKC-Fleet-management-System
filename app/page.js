@@ -513,8 +513,7 @@ function AdminShell({ user, onLogout, children, active, setActive }) {
       <main className="flex-1 overflow-auto min-w-0">
         <header className="md:hidden bg-gradient-to-r from-[#E60000] via-[#E60000] to-[#E60000] text-white p-3 flex items-center justify-between sticky top-0 z-30 shadow-lg">
           <button onClick={() => setDrawerOpen(true)} className="p-1"><Menu className="w-6 h-6" /></button>
-          <div className="flex items-center gap-2">
- <div className="flex items-center gap-2 min-w-0 flex-1">
+         <div className="flex items-center gap-2 min-w-0 flex-1">
   <img src="/ckc-logo.png" alt="CKC" className="w-8 h-8 object-contain flex-shrink-0" />
   <div className="leading-tight min-w-0 overflow-hidden">
     <div
