@@ -338,6 +338,9 @@ function Login({ onLogin }) {
       </div>
     </div>
   )
+  }
+
+
 function AdminShell({ user, onLogout, children, active, setActive }) {
   const [drawerOpen, setDrawerOpen] = useState(false)
   const fleetNav = [
