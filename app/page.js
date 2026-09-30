@@ -207,10 +207,10 @@ function Login({ onLogin }) {
               <span className="text-[10px] tracking-[0.2em] font-semibold uppercase" style={{ color: BRAND.red }}>Live</span>
             </div>
             <img
-              src="/ckc-logo-transparent.png"
-              alt="C. Krishniah Chetty — Group of Jewellers"
-              className="w-[260px] sm:w-[420px] lg:w-[560px] h-auto"
-            />
+          src="/ckc-logo-transparent.png"
+          alt="C. Krishniah Chetty — Group of Jewellers"
+          className="w-[220px] sm:w-[280px] lg:w-[340px] h-auto"
+          />
           </div>
         </div>
 
