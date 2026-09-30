@@ -1047,7 +1047,7 @@ doc.setTextColor(255, 255, 255); doc.setFontSize(6)
 doc.text('EST. 1869  ·  HERITAGE JEWELLERS', pageW - 30, 62, { align: 'right' })
 
       doc.setTextColor(15, 23, 42)
-      let y = 135
+      let y = 96
 
       doc.setFontSize(13); doc.setFont('helvetica', 'bold')
       doc.text('Summary', 30, y); y += 8
