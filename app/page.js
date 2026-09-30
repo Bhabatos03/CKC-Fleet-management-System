@@ -297,7 +297,7 @@ function Login({ onLogin }) {
 
             <div className="p-6 space-y-4">
               <div>
-                <h2 className="text-2xl font-bold" style={{ fontFamily: 'Georgia, serif', color: BRAND.bg }}>Welcome Back</h2>
+                <h2 className="text-2xl font-bold leading-tight" style={{ fontFamily: 'Georgia, serif', color: BRAND.bg }}>Welcome Back</h2>
                 <p className="text-sm mt-1" style={{ color: 'rgba(35,31,32,0.6)' }}>Sign in to access the Fleet Management System.</p>
               </div>
 
