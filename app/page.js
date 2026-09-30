@@ -100,13 +100,15 @@ const fmtDate = (d) => d ? new Date(d).toLocaleDateString('en-IN', { day: '2-dig
 const fmtDT = (d) => d ? new Date(d).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '-'
 const fmtINR = (n) => `₹${Number(n || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 })}`
 
-// Draws "C. KRISHNIAH CHETTY" with the same varied-size, all-caps brand
-// treatment used across the site. Returns the x-position right after the
-// text ends, so callers can place a TM mark or anything else next to it.
+// Draws "C. KRISHNIAH CHETTY™" with the same varied-size, all-caps brand
+// treatment used across the site. TM sits on the same baseline as the main
+// text (bottom-aligned), not raised as a superscript.
 const drawBrandName = (doc, x, y, { baseSize = 22, color = [255, 255, 255] } = {}) => {
   const scale = baseSize / 26
   const mid = Math.round(22 * scale)
   const small = Math.round(19 * scale)
+  const tmSize = Math.max(7, Math.round(8 * scale))
+
   doc.setTextColor(...color)
   doc.setFont('times', 'bold')
   let cx = x
@@ -126,9 +128,15 @@ const drawBrandName = (doc, x, y, { baseSize = 22, color = [255, 255, 255] } = {
   doc.setFontSize(small)
   doc.text('HETTY', cx, y); cx += doc.getTextWidth('HETTY')
 
+  // TM — same y (baseline) as everything else above, so it sits flush at
+  // the bottom rather than floating up like a superscript
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(tmSize)
+  doc.text('TM', cx + 2, y)
+  cx += doc.getTextWidth('TM') + 2
+
   return cx
 }
-
 
 function Login({ onLogin }) {
   const [username, setUsername] = useState('')
