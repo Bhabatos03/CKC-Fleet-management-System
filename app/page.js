@@ -322,7 +322,7 @@ function Login({ onLogin }) {
                   </div>
                 </div>
                 <Button type="submit" disabled={loading}
-                  className="w-full h-12 hover:brightness-110 text-white font-semibold tracking-[0.15em] transition-all group"
+                  className="w-full h-11 hover:brightness-110 text-white font-semibold tracking-[0.15em] transition-all group"
                   style={{ background: BRAND.red, boxShadow: '0 10px 25px -5px rgba(230,0,0,0.4)' }}>
                   {loading ? (
                     <span className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-white animate-pulse" />SIGNING IN...</span>
