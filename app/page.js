@@ -1036,7 +1036,6 @@ function Trips() {
       const brandX = 108
   const nameEndX = drawBrandName(doc, brandX, 46, { baseSize: 26, color: [255, 255, 255] })
   doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.setTextColor(255, 255, 255)
-  doc.text('TM', nameEndX + 3, 34)
   doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(252, 211, 77)
   doc.text('G R O U P    O F    J E W E L L E R S', brandX, 62)
       doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(255, 255, 255)
