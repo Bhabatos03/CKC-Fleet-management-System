@@ -217,11 +217,11 @@ function Login({ onLogin }) {
     textTransform: 'uppercase',
   }}
 >
-  <span className="text-[22px] sm:text-[80px]">C.</span>
-  <span className="text-[18px] sm:text-[78px] ml-1 sm:ml-2.5">K</span>
-  <span className="text-[15px] sm:text-[58px]">RISHNIAH</span>
-  <span className="text-[22px] sm:text-[80px] ml-1.5 sm:ml-4">C</span>
-  <span className="text-[15px] sm:text-[58px]">HETTY</span>
+  <span className="text-[30px] sm:text-[80px]">C.</span>
+<span className="text-[25px] sm:text-[78px] ml-1 sm:ml-2.5">K</span>
+<span className="text-[21px] sm:text-[58px]">RISHNIAH</span>
+<span className="text-[30px] sm:text-[80px] ml-2 sm:ml-4">C</span>
+<span className="text-[21px] sm:text-[58px]">HETTY</span>
   <span
     className="text-[6px] sm:text-[20px]"
     style={{
