@@ -209,41 +209,12 @@ function Login({ onLogin }) {
   <span className="text-[10px] tracking-[0.2em] font-semibold uppercase" style={{color: BRAND.red}}>Live</span>
 </div>
 
-<h1
-  className="flex items-baseline whitespace-nowrap"
-  style={{
-    fontFamily: '"Bodoni MT", "Bodoni Moda", Didot, Georgia, serif',
-    color: BRAND.ivory,
-    textTransform: 'uppercase',
-  }}
->
-  <span className="text-[30px] sm:text-[80px]">C.</span>
-<span className="text-[25px] sm:text-[78px] ml-1 sm:ml-2.5">K</span>
-<span className="text-[21px] sm:text-[58px]">RISHNIAH</span>
-<span className="text-[30px] sm:text-[80px] ml-2 sm:ml-4">C</span>
-<span className="text-[21px] sm:text-[58px]">HETTY</span>
-  <span
-    className="text-[6px] sm:text-[20px]"
-    style={{
-      verticalAlign: 'super',
-      color: 'rgba(255,245,227,0.6)',
-      textTransform: 'none',
-    }}
-  >
-    ™
-  </span>
-</h1>
-
- <div className="flex items-center gap-3">
-  <div className="h-px w-8" style={{background: BRAND.red}} />
-  <div
-    className="text-[10px] sm:text-[20px]"
-    style={{ fontFamily: '"Cinzel", serif', letterSpacing: '0.25em', color: 'rgba(255,245,227,0.7)' }}
-  >
-    GROUP OF JEWELLERS
-  </div>
-</div>
-</div>
+<img
+  src="/ckc-full-logo.jpg"
+  alt="C. Krishniah Chetty — Group of Jewellers"
+  className="w-[260px] sm:w-[420px] lg:w-[560px] h-auto"
+/>
+    </div>
 </div>
 
         {/* Middle: Fleet-focused tagline */}
