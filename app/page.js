@@ -120,8 +120,6 @@ const loadLogoDataUrl = async (path = '/C. Krishniah Chetty Jewellers Logo.png')
   }
 }
 
-// Draws "C. KRISHNIAH CHETTY™" ...
-const drawBrandName = ...
 // Draws "C. KRISHNIAH CHETTY™" with the same varied-size, all-caps brand
 // treatment used across the site. TM sits on the same baseline as the main
 // text (bottom-aligned), not raised as a superscript.
