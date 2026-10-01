@@ -721,11 +721,11 @@ function Login({ onLogin }) {
     white-space: nowrap;
   }
 
-  .feature-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 6px 12px;
-  }
+ .feature-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px 10px;
+}
 
   .feature-card {
     display: flex;
