@@ -1,5 +1,3 @@
-New Code
-
 'use client'
 
 import { useState } from 'react'
