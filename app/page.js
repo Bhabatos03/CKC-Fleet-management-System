@@ -151,6 +151,8 @@ function Icon({ name, size = 24 }) {
     eyeOff: (<><path d="M3 3 21 21M10 7.2A10 10 0 0 1 12 7c6 0 9.5 5 9.5 5a13 13 0 0 1-3 3.1M6 8.2C3.7 9.8 2.5 12 2.5 12s3.5 5 9.5 5a10 10 0 0 0 3-.4" /><path d="M10.3 10.3a2.5 2.5 0 0 0 3.4 3.4" /></>),
     arrow: (<><circle cx="12" cy="12" r="9" /><path d="M7.5 12h9m-4-4 4 4-4 4" /></>),
     chevron: <path d="m9 5 7 7-7 7" />,
+    bolt: (<><path d="M13 2 4 14h6l-1 8 9-14h-6l1-8Z" /></>),
+    shield: (<><path d="M12 3 5 6v5c0 5 3 8 7 9 4-1 7-4 7-9V6l-7-3Z" /><path d="m9 12 2 2 4-4" /></>),
   }
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
