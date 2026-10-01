@@ -272,9 +272,9 @@ function LoginCard({ onLogin }) {
   }
 
   return (
-    <section className="login-card" aria-labelledby="login-title">
-      <Brand centered />
-      <div className="login-intro">
+   <section className="login-card" aria-labelledby="login-title">
+  <img src="/C. Krishniah Chetty Jewellers Logo.png" alt="C. Krishniah Chetty — Group of Jewellers" className="login-logo-img" />
+  <div className="login-intro">
         <h2 id="login-title">Welcome Back</h2>
         <p>Sign in to access your Fleet Management System.</p>
       </div>
