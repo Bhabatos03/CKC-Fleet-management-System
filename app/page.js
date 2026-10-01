@@ -1213,18 +1213,18 @@ function AdminShell({ user, onLogout, children, active, setActive }) {
 
   const SidebarContent = () => (
     <>
-   <div className="px-4 py-5 border-b border-slate-800 flex items-center gap-3">
+   <div className="px-4 py-5 border-b border-slate-800 flex items-start justify-between gap-3">
+  <div className="min-w-0">
   <img
    src="/C. Krishniah Chetty Jewellers Logo.png"
     alt="C. Krishniah Chetty — Group of Jewellers"
-    className="h-10 w-auto object-contain flex-shrink-0"
-  />
-  <div className="flex-1 min-w-0">
-    <div className="text-[12px] text-amber-200/60 tracking-[0.2em] mt-0.5">
+    className="h-16 w-auto object-contain"
+    />
+    <div className="text-[12px] text-amber-200/60 tracking-[0.2em] mt-2">
       FleetPulse · {user.role === 'store_admin' ? (user.name || 'STORE') : 'ADMIN'}
     </div>
   </div>
-  <button onClick={() => setDrawerOpen(false)} className="md:hidden text-slate-300 hover:text-white p-1">
+  <button onClick={() => setDrawerOpen(false)} className="md:hidden text-slate-300 hover:text-white p-1 flex-shrink-0">
     <X className="w-5 h-5" />
   </button>
 </div>
