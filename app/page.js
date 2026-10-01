@@ -138,30 +138,6 @@ const drawBrandName = (doc, x, y, { baseSize = 22, color = [255, 255, 255] } = {
   return cx
 }
 
-function Crest({ small = false }) {
-  return (
-    <span className={`crest ${small ? 'crest-small' : ''}`} aria-hidden="true">
-      <svg viewBox="0 0 64 64" fill="none">
-        <path d="M32 2 37 10 46 7 47 17 57 20 53 29 62 35 54 42 56 52 46 54 42 62 32 57 22 62 18 54 8 52 10 42 2 35 11 29 7 20 17 17 18 7 27 10 32 2Z" fill="currentColor" />
-        <path d="M32 12 37 17 44 17 47 24 52 29 48 36 48 43 40 46 35 52 28 48 20 48 17 40 12 35 16 28 16 21 24 18 29 12 32 12Z" fill="#0c0908" />
-        <path d="M41 23c-2.2-2.1-5-3.2-8.2-3.2-7 0-12 5.3-12 12.4 0 7.2 5 12.2 12 12.2 3.3 0 6.2-1.2 8.4-3.5l-3.1-3.4c-1.2 1.3-2.9 2-5 2-3.8 0-6.1-2.7-6.1-6.4s2.3-6.4 6.1-6.4c2 0 3.7.7 4.9 2l3-3.4Z" fill="currentColor" />
-      </svg>
-    </span>
-  )
-}
-
-function Brand({ centered = false }) {
-  return (
-    <div className={`brand ${centered ? 'brand-centered' : ''}`} aria-label="C. Krishniah Chetty Group of Jewellers">
-      <Crest small={centered} />
-      <div className="brand-wordmark">
-        <span>C. Krishniah Chetty.</span>
-        <small>Group of Jewellers</small>
-      </div>
-    </div>
-  )
-}
-
 function Icon({ name, size = 24 }) {
   const shapes = {
     gauge: (<><path d="M3.2 17a9 9 0 1 1 17.6 0" /><path d="m12 14 4.2-5" /><circle cx="12" cy="15" r="1" /><path d="M5.2 13h1M7.7 8.8l.8.8M12 6.5v1M16.3 9.6l.8-.8M18 13h1" /></>),
