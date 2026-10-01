@@ -209,6 +209,8 @@ const loginFeatures = [
   { name: 'Live Mileage', icon: 'mileage' },
   { name: 'Fuel Analytics', icon: 'fuel' },
   { name: 'Compliance Alerts', icon: 'alert' },
+  { name: 'Utility Tracking', icon: 'bolt' },
+  { name: 'AMC & Vendors', icon: 'shield' },
 ]
 
 function LoginFeatureCards() {
