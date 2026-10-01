@@ -3550,7 +3550,8 @@ const generateGatePassPDF = async (gp) => {
   y += 14
   doc.text('Ver. : 1 - 2026', pageW - 90, y)
 
-  doc.save(`${gp.gatePassNo.replace(/\//g, '-')}.pdf`)
+ doc.save(`${gp.gatePassNo.replace(/\//g, '-')}.pdf`)
+}
 
 
    function GatePassDetailDialog({ gp, onClose, onChanged, isSecurity, canPrepare }) {
