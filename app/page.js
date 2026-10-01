@@ -1085,9 +1085,9 @@ function Login({ onLogin }) {
       padding: 0 6% 22px;
     }
 
-    .footer-motto {
-      display: none;
-    }
+    .footer-motto-group {
+  display: none;
+}
 
     .bottom-fabric {
       width: 120%;
