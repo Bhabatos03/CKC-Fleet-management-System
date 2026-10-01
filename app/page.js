@@ -903,6 +903,16 @@ function Login({ onLogin }) {
     font-size: 8px;
     letter-spacing: 0.35em;
   }
+  .login-field input:-webkit-autofill,
+.login-field input:-webkit-autofill:hover,
+.login-field input:-webkit-autofill:focus,
+.login-field input:-webkit-autofill:active {
+  -webkit-text-fill-color: #fff;
+  -webkit-box-shadow: 0 0 0px 1000px rgba(20, 14, 13, 0.95) inset;
+  box-shadow: 0 0 0px 1000px rgba(20, 14, 13, 0.95) inset;
+  transition: background-color 9999s ease-in-out 0s;
+  caret-color: #fff;
+}
 
   .footer-motto {
     color: #d9bf93;
