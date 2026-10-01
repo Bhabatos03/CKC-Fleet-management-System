@@ -1763,18 +1763,17 @@ function Trips() {
         ? new Date(submitted.fromDate).toLocaleDateString('en-IN')
         : `${new Date(submitted.fromDate).toLocaleDateString('en-IN')} — ${new Date(submitted.toDate).toLocaleDateString('en-IN')}`
 
-     doc.setFillColor(230, 0, 0); doc.rect(0, 0, pageW, 76, 'F')
-doc.setDrawColor(217, 119, 6); doc.setLineWidth(1); doc.line(0, 74, pageW, 74)
-if (logoDataUrl) {
-  doc.setFillColor(255, 255, 255); doc.circle(42, 38, 22, 'F')
-  doc.addImage(logoDataUrl, 'PNG', 24, 20, 38, 38)
-}
-const brandX = 76
-const nameEndX = drawBrandName(doc, brandX, 32, { baseSize: 18, color: [255, 255, 255] })
-doc.setFont('helvetica', 'normal'); doc.setFontSize(6.5); doc.setTextColor(252, 211, 77)
-doc.text('G R O U P    O F    J E W E L L E R S', brandX, 43)
-doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(255, 255, 255)
-doc.text('FleetPulse — [Report Title]', brandX, 60)
+     const logoDataUrl = await loadLogoDataUrl()
+
+      doc.setFillColor(230, 0, 0); doc.rect(0, 0, pageW, 76, 'F')
+      doc.setDrawColor(217, 119, 6); doc.setLineWidth(1); doc.line(0, 74, pageW, 74)
+      if (logoDataUrl) {
+        doc.addImage(logoDataUrl, 'PNG', 24, 14, 150, 48)
+      }
+      const brandX = 190
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(255, 255, 255)
+      doc.text('FleetPulse — Trip Register', brandX, 60)
+      
 doc.setFont('helvetica', 'normal'); doc.setFontSize(7); doc.setTextColor(252, 211, 77)
 doc.text(`Period:  ${rangeStr}`, pageW - 30, 26, { align: 'right' })
 doc.text(`Vehicle: ...`, pageW - 30, 38, { align: 'right' })
