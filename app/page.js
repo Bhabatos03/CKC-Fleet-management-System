@@ -3126,25 +3126,16 @@ function Reports() {
       const title = titleMap[preset] || 'Custom Report'
       const rangeStr = fromDate === toDate ? new Date(fromDate).toLocaleDateString('en-IN') : `${new Date(fromDate).toLocaleDateString('en-IN')} — ${new Date(toDate).toLocaleDateString('en-IN')}`
 
-      let logoDataUrl = null
-      try {
-        const res = await fetch('/ckc-logo-pdf.png')
-        const blob = await res.blob()
-        logoDataUrl = await new Promise((resolve) => { const fr = new FileReader(); fr.onload = () => resolve(fr.result); fr.readAsDataURL(blob) })
-      } catch {}
+            const logoDataUrl = await loadLogoDataUrl()
 
-     doc.setFillColor(230, 0, 0); doc.rect(0, 0, pageW, 76, 'F')
-doc.setDrawColor(217, 119, 6); doc.setLineWidth(1); doc.line(0, 74, pageW, 74)
-if (logoDataUrl) {
-  doc.setFillColor(255, 255, 255); doc.circle(42, 38, 22, 'F')
-  doc.addImage(logoDataUrl, 'PNG', 24, 20, 38, 38)
-}
-const brandX = 76
-const nameEndX = drawBrandName(doc, brandX, 32, { baseSize: 18, color: [255, 255, 255] })
-doc.setFont('helvetica', 'normal'); doc.setFontSize(6.5); doc.setTextColor(252, 211, 77)
-doc.text('G R O U P    O F    J E W E L L E R S', brandX, 43)
-doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(255, 255, 255)
-doc.text('FleetPulse — [Report Title]', brandX, 60)
+      doc.setFillColor(230, 0, 0); doc.rect(0, 0, pageW, 76, 'F')
+      doc.setDrawColor(217, 119, 6); doc.setLineWidth(1); doc.line(0, 74, pageW, 74)
+      if (logoDataUrl) {
+        doc.addImage(logoDataUrl, 'PNG', 24, 14, 150, 48)
+      }
+      const brandX = 190
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(255, 255, 255)
+      doc.text(`FleetPulse — ${title}`, brandX, 60)
 doc.setFont('helvetica', 'normal'); doc.setFontSize(7); doc.setTextColor(252, 211, 77)
 doc.text(`Period:  ${rangeStr}`, pageW - 30, 26, { align: 'right' })
 doc.text(`Vehicle: ...`, pageW - 30, 38, { align: 'right' })
