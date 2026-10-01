@@ -1273,28 +1273,10 @@ function AdminShell({ user, onLogout, children, active, setActive }) {
       <main className="flex-1 overflow-auto min-w-0">
         <header className="md:hidden bg-gradient-to-r from-[#E60000] via-[#E60000] to-[#E60000] text-white p-3 flex items-center justify-between sticky top-0 z-30 shadow-lg">
           <button onClick={() => setDrawerOpen(true)} className="p-1"><Menu className="w-6 h-6" /></button>
-         <div className="flex items-center gap-2 min-w-0 flex-1">
-   <div className="leading-tight min-w-0 overflow-hidden">
-    <div
-      className="flex items-baseline whitespace-nowrap"
-      style={{ fontFamily: '"Bodoni MT", "Bodoni Moda", Didot, Georgia, serif', color: '#ffffff', textTransform: 'uppercase' }}
-    >
-      <span style={{ fontSize: '11px' }}>C.</span>
-      <span style={{ fontSize: '9px', marginLeft: '2px' }}>K</span>
-      <span style={{ fontSize: '8px' }}>rishniah</span>
-      <span style={{ fontSize: '11px', marginLeft: '3px' }}>C</span>
-      <span style={{ fontSize: '8px' }}>hetty</span>
-      <span style={{ fontSize: '5px', alignSelf: 'flex-end', textTransform: 'none', marginLeft: '1px' }}>™</span>
-    </div>
-    <div
-      className="mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis"
-      style={{ fontFamily: '"Cinzel", serif', fontSize: '6px', letterSpacing: '0.1em', color: 'rgba(252,211,153,0.8)' }}
-    >
-      GROUP OF JEWELLERS
-    </div>
-  </div>
+       <div className="flex items-center gap-2 min-w-0 flex-1">
+  <img src="/C. Krishniah Chetty Jewellers Logo.png" alt="C. Krishniah Chetty — Group of Jewellers" className="h-8 w-auto object-contain" />
 </div>
-          <Button variant="ghost" size="sm" onClick={onLogout} className="text-white p-2 hover:bg-white/10"><LogOut className="w-4 h-4" /></Button>
+        <Button variant="ghost" size="sm" onClick={onLogout} className="text-white p-2 hover:bg-white/10"><LogOut className="w-4 h-4" /></Button>
         </header>
         {children}
       </main>
