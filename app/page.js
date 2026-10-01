@@ -100,8 +100,11 @@ const fmtDate = (d) => d ? new Date(d).toLocaleDateString('en-IN', { day: '2-dig
 const fmtDT = (d) => d ? new Date(d).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '-'
 const fmtINR = (n) => `₹${Number(n || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 })}`
 const loadLogoDataUrl = async () => {
+  const fmtINR = (n) => `₹${Number(n || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 })}`
+
+const loadLogoDataUrl = async (path = '/C. Krishniah Chetty Jewellers Logo.png') => {
   try {
-    const res = await fetch('/C. Krishniah Chetty Jewellers Logo.png')
+    const res = await fetch(path)
     if (!res.ok) return null
     const blob = await res.blob()
     return await new Promise((resolve) => {
