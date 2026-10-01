@@ -1006,6 +1006,9 @@ function Login({ onLogin }) {
       padding: 18px 6%;
       min-height: 78px;
     }
+    .feature-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 
     .header-identity {
       gap: 14px;
