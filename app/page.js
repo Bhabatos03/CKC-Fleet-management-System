@@ -3473,7 +3473,21 @@ const generateGatePassPDF = async (gp) => {
   const doc = new jsPDF({ unit: 'pt', format: 'a4' })
   const pageW = doc.internal.pageSize.getWidth()
 
-      const logoDataUrl = await loadLogoDataUrl()
+      const loadLogoDataUrl = async (path = '/C. Krishniah Chetty Jewellers Logo') => {
+  try {
+    const res = await fetch(path)
+    if (!res.ok) return null
+    const blob = await res.blob()
+    return await new Promise((resolve) => {
+      const fr = new FileReader()
+      fr.onload = () => resolve(fr.result)
+      fr.onerror = () => resolve(null)
+      fr.readAsDataURL(blob)
+    })
+  } catch {
+    return null
+  }
+}
 
   let y = 30
   if (logoDataUrl) {
