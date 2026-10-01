@@ -307,7 +307,10 @@ function LoginFooter() {
         <span className="footer-dash" />
         <div><span>C. Krishniah Chetty Jewellers Pvt. Ltd.</span><small>FleetPulse v1.0</small></div>
       </div>
-      <span className="footer-motto">Driven by excellence <span /></span>
+      <div className="footer-motto-group">
+        <span className="footer-motto">Driven by excellence <span /></span>
+        <span className="footer-motto footer-credit">Design &amp; Developed by Bhabatos Mohanty</span>
+      </div>
     </footer>
   )
 }
