@@ -1215,7 +1215,7 @@ function AdminShell({ user, onLogout, children, active, setActive }) {
     <>
    <div className="px-4 py-5 border-b border-slate-800 flex items-center gap-3">
   <img
-    src="/C.%20Krishniah%20Chetty%20Jewellers%20Logo.png"
+    src="/C. Krishniah Chetty Jewellers Logo.png"
     alt="C. Krishniah Chetty — Group of Jewellers"
     className="h-10 w-auto object-contain flex-shrink-0"
   />
