@@ -926,6 +926,16 @@ function Login({ onLogin }) {
   .footer-motto span {
     width: 55px;
   }
+  .footer-motto-group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.footer-credit {
+  opacity: 0.75;
+}
 
   @media (max-width: 1250px) {
     .header-motto {
