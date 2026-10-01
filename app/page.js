@@ -995,7 +995,7 @@ function Login({ onLogin }) {
     }
 
     .header-logo-img {
-      height: 38px;
+      height: 52px;
     }
 
     .header-divider {
