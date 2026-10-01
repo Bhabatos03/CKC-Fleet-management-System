@@ -3138,7 +3138,7 @@ function Reports() {
       doc.text(`FleetPulse — ${title}`, brandX, 60)
 doc.setFont('helvetica', 'normal'); doc.setFontSize(7); doc.setTextColor(252, 211, 77)
 doc.text(`Period:  ${rangeStr}`, pageW - 30, 26, { align: 'right' })
-doc.text(`Vehicle: ...`, pageW - 30, 38, { align: 'right' })
+doc.text(`Vehicle: ${selectedVehicle ? selectedVehicle.vehicleNumber : 'All Vehicles'}`, pageW - 30, 38, { align: 'right' })
 doc.text(`Generated: ${now.toLocaleString('en-IN')}`, pageW - 30, 50, { align: 'right' })
 doc.setTextColor(255, 255, 255); doc.setFontSize(6)
 doc.text('EST. 1869  ·  HERITAGE JEWELLERS', pageW - 30, 62, { align: 'right' })
