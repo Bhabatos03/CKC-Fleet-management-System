@@ -481,7 +481,7 @@ function Login({ onLogin }) {
   }
 
   .header-logo-img {
-    height: 49px;
+    height: 72px;
     width: auto;
     flex: none;
   }
