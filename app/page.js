@@ -965,142 +965,177 @@ function Login({ onLogin }) {
   }
 
   @media (max-width: 900px) {
-    .site-header {
-      min-height: 85px;
-    }
-
-    .header-promise,
-    .short-divider {
-      display: none;
-    }
-
-    .page-main {
-      grid-template-columns: 1fr;
-      gap: 34px;
-      padding-top: 30px;
-    }
-
-    .hero-section {
-      max-width: 650px;
-    }
-
-    .login-card {
-      max-width: 490px;
-      margin: 0 auto 20px;
-    }
-
-    .background-shade {
-      background:
-        linear-gradient(
-          90deg,
-          rgba(5, 5, 6, 0.96),
-          rgba(5, 5, 6, 0.76) 52%,
-          rgba(5, 5, 6, 0.82)
-        ),
-        linear-gradient(0deg, #050506, transparent 80%);
-    }
+  .site-header {
+    min-height: 70px;
   }
 
-  @media (max-width: 560px) {
-    .site-header {
-      padding: 18px 6%;
-      min-height: 78px;
-    }
-    .feature-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .header-promise,
+  .short-divider {
+    display: none;
   }
 
-    .header-identity {
-      gap: 14px;
-    }
+  .page-main {
+    grid-template-columns: 1fr;
+    gap: 18px;
+    padding-top: 16px;
+  }
 
-    .header-logo-img {
-      height: 52px;
-    }
+  .hero-section {
+    max-width: 650px;
+  }
 
-    .header-divider {
-      height: 24px;
-    }
+  .login-card {
+    max-width: 490px;
+    margin: 0 auto 14px;
+  }
 
-    .header-product {
-      font-size: 12px;
-    }
-
-    .page-main {
-      padding: 35px 6% 30px;
-    }
-
-    .hero-eyebrow {
-      font-size: 10px;
-      letter-spacing: 0.23em;
-    }
-
-    .hero-title {
-      font-size: clamp(60px, 14vw, 82px);
-    }
-
-    .speed-lines {
-      gap: 5px;
-      margin-left: 8px;
-      transform: translateY(6px);
-    }
-
-    .speed-lines i {
-      width: 23px;
-    }
-
-    .speed-lines i:nth-child(2) {
-      width: 17px;
-    }
-
-    .speed-lines i:nth-child(3) {
-      width: 10px;
-    }
-
-    .hero-statement {
-      font-size: clamp(27px, 7vw, 34px);
-    }
-
-    .hero-description {
-      font-size: 13px;
-    }
-
-    .feature-grid {
-      gap: 8px;
-    }
-
-    .feature-card {
-      gap: 8px;
-      padding: 6px 8px;
-      font-size: 11px;
-    }
-
-    .feature-icon {
-      width: 32px;
-      height: 32px;
-    }
-
-    .feature-card > svg {
-      width: 14px;
-    }
-
-    .login-card {
-      padding: 27px 22px 29px;
-    }
-
-    .site-footer {
-      padding: 0 6% 22px;
-    }
-
-    .footer-motto-group {
-  display: none;
+  .background-shade {
+    background:
+      linear-gradient(
+        90deg,
+        rgba(5, 5, 6, 0.96),
+        rgba(5, 5, 6, 0.76) 52%,
+        rgba(5, 5, 6, 0.82)
+      ),
+      linear-gradient(0deg, #050506, transparent 80%);
+  }
 }
 
-    .bottom-fabric {
-      width: 120%;
-      height: 110px;
-    }
+@media (max-width: 560px) {
+  .site-header {
+    padding: 12px 6%;
+    min-height: 60px;
   }
+
+  .header-identity {
+    gap: 14px;
+  }
+
+  .header-logo-img {
+    height: 44px;
+  }
+
+  .header-divider {
+    height: 24px;
+  }
+
+  .header-product {
+    font-size: 12px;
+  }
+
+  .page-main {
+    padding: 18px 6% 16px;
+    gap: 14px;
+  }
+
+  .hero-eyebrow {
+    margin-bottom: 4px;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+  }
+
+  .hero-title {
+    margin-bottom: 2px;
+    font-size: clamp(44px, 13vw, 62px);
+  }
+
+  .speed-lines {
+    display: none;
+  }
+
+  .hero-statement {
+    margin-bottom: 6px;
+    font-size: clamp(20px, 6vw, 26px);
+  }
+
+  .hero-description {
+    display: none;
+  }
+
+  .efficiency-card {
+    height: 64px;
+    margin-bottom: 8px;
+    padding: 8px 10px;
+  }
+
+  .efficiency-icon {
+    width: 44px;
+    height: 44px;
+    margin-right: 14px;
+  }
+
+  .efficiency-copy strong {
+    font-size: 20px;
+  }
+
+  .efficiency-copy strong small {
+    font-size: 18px;
+  }
+
+  .feature-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .feature-card {
+    height: 42px;
+    gap: 8px;
+    padding: 5px 8px;
+    font-size: 11px;
+  }
+
+  .feature-icon {
+    width: 28px;
+    height: 28px;
+  }
+
+  .feature-card > svg {
+    width: 14px;
+  }
+
+  .login-card {
+    padding: 16px 18px 20px;
+  }
+
+  .login-logo-img {
+    height: 44px;
+  }
+
+  .login-intro {
+    margin-top: 12px;
+  }
+
+  .login-intro h2 {
+    font-size: 24px;
+  }
+
+  .login-form {
+    gap: 10px;
+    margin-top: 14px;
+  }
+
+  .login-field {
+    height: 44px;
+  }
+
+  .login-submit {
+    height: 46px;
+  }
+
+  .site-footer {
+    min-height: 0;
+    padding: 0 6% 14px;
+  }
+
+  .footer-motto-group {
+    display: none;
+  }
+
+  .bottom-fabric {
+    width: 120%;
+    height: 90px;
+  }
+}
 
   @media (max-width: 370px) {
     .header-divider,
