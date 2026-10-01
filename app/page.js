@@ -3473,21 +3473,22 @@ const generateGatePassPDF = async (gp) => {
   const doc = new jsPDF({ unit: 'pt', format: 'a4' })
   const pageW = doc.internal.pageSize.getWidth()
 
-  const logoDataUrl = await loadLogoDataUrl('/C. Krishniah Chetty Jewellers Logo.png')
+   const logoDataUrl = await loadLogoDataUrl()
 
-      let y = 30
+  // Header band so the white logo is visible
+  doc.setFillColor(230, 0, 0); doc.rect(0, 0, pageW, 76, 'F')
+  doc.setDrawColor(217, 119, 6); doc.setLineWidth(1); doc.line(0, 74, pageW, 74)
   if (logoDataUrl) {
-    doc.addImage(logoDataUrl, 'PNG', 30, y, 150, 48)
+    doc.addImage(logoDataUrl, 'PNG', 24, 14, 150, 48)
   }
 
-  doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(80)
+  // Store address in ivory, to the right of the logo
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(255, 245, 227)
   const storeInfo = STORE_ADDRESSES[gp.storeId] || STORE_ADDRESSES.TS
   const addrLines = storeInfo.lines.filter(Boolean)
-  addrLines.forEach((line, i) => doc.text(line, 190, y + 20 + i * 10))
+  addrLines.forEach((line, i) => doc.text(line, 190, 30 + i * 11))
 
-  y += 62
-  doc.setDrawColor(217, 119, 6); doc.setLineWidth(1); doc.line(30, y, pageW - 30, y); y += 18
-
+  let y = 100
   doc.setFont('helvetica', 'bold'); doc.setFontSize(13); doc.setTextColor(15, 23, 42)
   doc.text('MATERIAL / ASSET GATE PASS', pageW / 2, y, { align: 'center' }); y += 20
 
