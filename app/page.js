@@ -3473,25 +3473,19 @@ const generateGatePassPDF = async (gp) => {
   const doc = new jsPDF({ unit: 'pt', format: 'a4' })
   const pageW = doc.internal.pageSize.getWidth()
 
-  let logoDataUrl = null
-  try {
-    const res = await fetch('/ckc-logo-pdf.png')
-    const blob = await res.blob()
-    logoDataUrl = await new Promise((r) => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(blob) })
-  } catch {}
+      const logoDataUrl = await loadLogoDataUrl()
 
- let y = 30
-if (logoDataUrl) doc.addImage(logoDataUrl, 'PNG', 30, y, 40, 40)
-drawBrandName(doc, 80, y + 18, { baseSize: 16, color: [122, 13, 13] })
-doc.setFont('helvetica', 'normal'); doc.setFontSize(6.5); doc.setTextColor(122, 13, 13)
-doc.text('G R O U P   O F   J E W E L L E R S', 80, y + 30)
+  let y = 30
+  if (logoDataUrl) {
+    doc.addImage(logoDataUrl, 'PNG', 30, y, 150, 48)
+  }
 
-doc.setFontSize(7.5); doc.setTextColor(80)
-const storeInfo = STORE_ADDRESSES[gp.storeId] || STORE_ADDRESSES.TS
-const addrLines = storeInfo.lines.filter(Boolean)
-addrLines.forEach((line, i) => doc.text(line, 80, y + 41 + i * 10))
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(80)
+  const storeInfo = STORE_ADDRESSES[gp.storeId] || STORE_ADDRESSES.TS
+  const addrLines = storeInfo.lines.filter(Boolean)
+  addrLines.forEach((line, i) => doc.text(line, 190, y + 20 + i * 10))
 
-y += 41 + (addrLines.length - 1) * 10 + 19
+  y += 62
   doc.setDrawColor(217, 119, 6); doc.setLineWidth(1); doc.line(30, y, pageW - 30, y); y += 18
 
   doc.setFont('helvetica', 'bold'); doc.setFontSize(13); doc.setTextColor(15, 23, 42)
