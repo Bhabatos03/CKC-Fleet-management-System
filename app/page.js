@@ -1214,24 +1214,12 @@ function AdminShell({ user, onLogout, children, active, setActive }) {
   const SidebarContent = () => (
     <>
    <div className="px-4 py-5 border-b border-slate-800 flex items-center gap-3">
-   <div className="flex-1 min-w-0">
-    <div
-      className="flex items-baseline flex-nowrap whitespace-nowrap"
-      style={{ fontFamily: '"Bodoni MT", "Bodoni Moda", Didot, Georgia, serif', color: '#ffffff', textTransform: 'uppercase' }}
-    >
-      <span style={{ fontSize: '22px' }}>C.</span>
-      <span style={{ fontSize: '22px', marginLeft: '4px' }}>K</span>
-      <span style={{ fontSize: '17px' }}>rishniah</span>
-      <span style={{ fontSize: '22px', marginLeft: '6px' }}>C</span>
-      <span style={{ fontSize: '17px' }}>hetty</span>
-     <span style={{ fontSize: '12px', marginLeft: '2px', lineHeight: 1 }}>™</span>
-    </div>
-    <div
-      style={{ fontFamily: '"Cinzel", serif', fontSize: '12px', letterSpacing: '0.2em', color: 'rgba(252,211,153,0.8)' }}
-      className="mt-0.5 whitespace-nowrap"
-    >
-      GROUP OF JEWELLERS
-    </div>
+  <img
+    src="/C.%20Krishniah%20Chetty%20Jewellers%20Logo.png"
+    alt="C. Krishniah Chetty — Group of Jewellers"
+    className="h-10 w-auto object-contain flex-shrink-0"
+  />
+  <div className="flex-1 min-w-0">
     <div className="text-[12px] text-amber-200/60 tracking-[0.2em] mt-0.5">
       FleetPulse · {user.role === 'store_admin' ? (user.name || 'STORE') : 'ADMIN'}
     </div>
@@ -1241,9 +1229,9 @@ function AdminShell({ user, onLogout, children, active, setActive }) {
   </button>
 </div>
 <nav className="flex-1 p-3 overflow-y-auto">
-        <NavSection title="FLEET" items={visibleFleetNav} />
-        <NavSection title="UTILITIES" items={visibleUtilityNav} />
-        <NavSection title="ADMIN" items={visibleAdminNav} />
+<NavSection title="FLEET" items={visibleFleetNav} />
+<NavSection title="UTILITIES" items={visibleUtilityNav} />
+<NavSection title="ADMIN" items={visibleAdminNav} />
       </nav>
       <div className="p-3 border-t border-slate-800">
         <div className="px-3 py-2 text-xs text-slate-400">Signed in as</div>
