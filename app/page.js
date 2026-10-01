@@ -1128,19 +1128,8 @@ function Login({ onLogin }) {
   }
 
   .footer-motto-group {
-  align-items: center;
-  gap: 2px;
-}
-
-.footer-motto {
-  font-size: 7px;
-  letter-spacing: 0.15em;
-}
-
-.footer-motto span {
   display: none;
 }
-
   .bottom-fabric {
     width: 120%;
     height: 90px;
