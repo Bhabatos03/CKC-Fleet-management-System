@@ -191,8 +191,8 @@ function LoginHeader() {
   return (
     <header className="site-header">
       <div className="header-identity">
-        <Brand />
-        <span className="header-divider" />
+  <img src="/C. Krishniah Chetty Jewellers Logo.png" alt="C. Krishniah Chetty — Group of Jewellers" className="header-logo-img" />
+  <span className="header-divider" />
         <span className="header-product">FleetPulse</span>
         <span className="header-divider short-divider" />
         <span className="header-promise">Smarter Fleet <i>·</i> Safer Operations <i>·</i> A Stronger CKC</span>
