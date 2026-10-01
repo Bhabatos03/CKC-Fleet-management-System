@@ -1213,12 +1213,12 @@ function AdminShell({ user, onLogout, children, active, setActive }) {
 
   const SidebarContent = () => (
     <>
-   <div className="px-4 py-5 border-b border-slate-800 flex items-start justify-between gap-3">
-  <div className="min-w-0">
+   <div className="px-4 py-5 border-b border-slate-800 flex items-start justify-between gap-3 overflow-hidden">
+  <div className="min-w-0 flex-1">
   <img
    src="/C. Krishniah Chetty Jewellers Logo.png"
     alt="C. Krishniah Chetty — Group of Jewellers"
-    className="h-16 w-auto object-contain"
+   className="w-full max-w-[200px] h-auto object-contain"
     />
     <div className="text-[12px] text-amber-200/60 tracking-[0.2em] mt-2">
       FleetPulse · {user.role === 'store_admin' ? (user.name || 'STORE') : 'ADMIN'}
