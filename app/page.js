@@ -3632,8 +3632,10 @@ const generateGatePassPDF = async (gp) => {
             </table>
           </div>
 
-          <Button size="sm" variant="outline" onClick={() => generateGatePassPDF(gp)}><FileText className="w-4 h-4 mr-1" /> Download / Print PDF</Button>
-
+         <Button size="sm" variant="outline" onClick={async () => {
+  try { await generateGatePassPDF(gp) }
+  catch (e) { console.error(e); toast.error('PDF failed: ' + e.message) }
+}}><FileText className="w-4 h-4 mr-1" /> Download / Print PDF</Button>
           {gp.signedCopyImage && (
             <div>
               <Label className="text-xs text-slate-500">Signed & Stamped Copy</Label>
