@@ -100,7 +100,9 @@ const fmtDate = (d) => d ? new Date(d).toLocaleDateString('en-IN', { day: '2-dig
 const fmtDT = (d) => d ? new Date(d).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '-'
 const fmtINR = (n) => `₹${Number(n || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 })}`
 const loadLogoDataUrl = async () => {
-  const fmtINR = (n) => `₹${Number(n || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 })}`
+  const fmtDate = (d) => d ? new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '-'
+const fmtDT = (d) => d ? new Date(d).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '-'
+const fmtINR = (n) => `₹${Number(n || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 })}`
 
 const loadLogoDataUrl = async (path = '/C. Krishniah Chetty Jewellers Logo.png') => {
   try {
@@ -118,6 +120,8 @@ const loadLogoDataUrl = async (path = '/C. Krishniah Chetty Jewellers Logo.png')
   }
 }
 
+// Draws "C. KRISHNIAH CHETTY™" ...
+const drawBrandName = ...
 // Draws "C. KRISHNIAH CHETTY™" with the same varied-size, all-caps brand
 // treatment used across the site. TM sits on the same baseline as the main
 // text (bottom-aligned), not raised as a superscript.
