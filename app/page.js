@@ -99,6 +99,21 @@ const exportXlsx = async (filename, sheets) => {
 const fmtDate = (d) => d ? new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '-'
 const fmtDT = (d) => d ? new Date(d).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '-'
 const fmtINR = (n) => `₹${Number(n || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 })}`
+const loadLogoDataUrl = async () => {
+  try {
+    const res = await fetch('/C. Krishniah Chetty Jewellers Logo.png')
+    if (!res.ok) return null
+    const blob = await res.blob()
+    return await new Promise((resolve) => {
+      const fr = new FileReader()
+      fr.onload = () => resolve(fr.result)
+      fr.onerror = () => resolve(null)
+      fr.readAsDataURL(blob)
+    })
+  } catch {
+    return null
+  }
+}
 
 // Draws "C. KRISHNIAH CHETTY™" with the same varied-size, all-caps brand
 // treatment used across the site. TM sits on the same baseline as the main
