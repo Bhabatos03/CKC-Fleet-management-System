@@ -3473,8 +3473,9 @@ const generateGatePassPDF = async (gp) => {
   const doc = new jsPDF({ unit: 'pt', format: 'a4' })
   const pageW = doc.internal.pageSize.getWidth()
 
-      const loadLogoDataUrl = async (path = '/C. Krishniah Chetty Jewellers Logo') => {
-  try {
+  const logoDataUrl = await loadLogoDataUrl('/C. Krishniah Chetty Jewellers Logo.png')
+
+     try {
     const res = await fetch(path)
     if (!res.ok) return null
     const blob = await res.blob()
