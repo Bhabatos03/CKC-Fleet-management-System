@@ -3476,20 +3476,26 @@ const generateGatePassPDF = async (gp) => {
    const logoDataUrl = await loadLogoDataUrl()
 
   // Header band so the white logo is visible
-  doc.setFillColor(230, 0, 0); doc.rect(0, 0, pageW, 76, 'F')
-  doc.setDrawColor(217, 119, 6); doc.setLineWidth(1); doc.line(0, 74, pageW, 74)
-  if (logoDataUrl) {
-    doc.addImage(logoDataUrl, 'PNG', 24, 14, 150, 48)
-  }
+const headerH = 110
+doc.setFillColor(230, 0, 0); doc.rect(0, 0, pageW, headerH, 'F')
+doc.setDrawColor(217, 119, 6); doc.setLineWidth(1); doc.line(0, headerH - 2, pageW, headerH - 2)
 
-  // Store address in ivory, to the right of the logo
-  doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(255, 245, 227)
-  const storeInfo = STORE_ADDRESSES[gp.storeId] || STORE_ADDRESSES.TS
-  const addrLines = storeInfo.lines.filter(Boolean)
-  addrLines.forEach((line, i) => doc.text(line, 190, 30 + i * 11))
+let hy = 16
+if (logoDataUrl) {
+  const logoW = 170
+  const logoH = 50
+  doc.addImage(logoDataUrl, 'PNG', (pageW - logoW) / 2, hy, logoW, logoH)
+  hy += logoH + 10
+}
 
-  let y = 100
-  doc.setFont('helvetica', 'bold'); doc.setFontSize(13); doc.setTextColor(15, 23, 42)
+// Store address in ivory, centered below the logo
+doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(255, 245, 227)
+const storeInfo = STORE_ADDRESSES[gp.storeId] || STORE_ADDRESSES.TS
+const addrLines = storeInfo.lines.filter(Boolean)
+addrLines.forEach((line, i) => doc.text(line, pageW / 2, hy + i * 10, { align: 'center' }))
+
+let y = headerH + 24
+doc.setFont('helvetica', 'bold'); doc.setFontSize(13); doc.setTextColor(15, 23, 42)
   doc.text('MATERIAL / ASSET GATE PASS', pageW / 2, y, { align: 'center' }); y += 20
 
   doc.setFontSize(9); doc.setFont('helvetica', 'normal')
