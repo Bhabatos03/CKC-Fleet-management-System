@@ -1496,6 +1496,11 @@ function Dashboard() {
           </CardContent>
         </Card>
       </div>
+     <FleetDetailDialog
+        filter={detail?.filter}
+        label={detail?.label}
+        onClose={() => setDetail(null)}
+      />
     </div>
   )
 }
