@@ -1372,6 +1372,7 @@ function FleetDetailDialog({ filter, label, onClose }) {
 
 function Dashboard() {
   const [data, setData] = useState(null)
+  const [detail, setDetail] = useState(null) // { filter, label }
   useEffect(() => { api('dashboard').then(setData).catch(e => toast.error(e.message)) }, [])
   if (!data) return <div className="p-8">Loading...</div>
   const kpis = [
