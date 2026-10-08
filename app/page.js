@@ -1286,7 +1286,7 @@ function AdminShell({ user, onLogout, children, active, setActive }) {
     </div>
   )
 }
-function FleetDetailDialog({ filter, label, onClose }) {
+function FleetDetailDialog({ filter, label, onClose, onLocate }) {
   const [vehicles, setVehicles] = useState([])
   const [outTrips, setOutTrips] = useState([])
   const [drivers, setDrivers] = useState([])
