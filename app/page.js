@@ -1509,10 +1509,11 @@ function Dashboard({ onLocate }) {
         </Card>
       </div>
      <FleetDetailDialog
-        filter={detail?.filter}
-        label={detail?.label}
-        onClose={() => setDetail(null)}
-      />
+  filter={detail?.filter}
+  label={detail?.label}
+  onClose={() => setDetail(null)}
+  onLocate={(tripId) => { setDetail(null); onLocate && onLocate(tripId) }}
+/>
     </div>
   )
 }
