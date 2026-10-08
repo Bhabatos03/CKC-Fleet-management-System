@@ -1382,7 +1382,7 @@ function FleetDetailDialog({ filter, label, onClose, onLocate }) {
 }
 
 
-function Dashboard() {
+function Dashboard({ onLocate }) {
   const [data, setData] = useState(null)
   const [detail, setDetail] = useState(null) // { filter, label }
   useEffect(() => { api('dashboard').then(setData).catch(e => toast.error(e.message)) }, [])
