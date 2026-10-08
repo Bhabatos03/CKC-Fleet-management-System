@@ -1286,6 +1286,89 @@ function AdminShell({ user, onLogout, children, active, setActive }) {
     </div>
   )
 }
+function FleetDetailDialog({ filter, label, onClose }) {
+  const [vehicles, setVehicles] = useState([])
+  const [outTrips, setOutTrips] = useState([])
+  const [drivers, setDrivers] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (!filter) return
+    setLoading(true)
+    Promise.all([api('vehicles'), api('trips/outside'), api('drivers')])
+      .then(([v, t, d]) => { setVehicles(v); setOutTrips(t); setDrivers(d) })
+      .catch(e => toast.error(e.message))
+      .finally(() => setLoading(false))
+  }, [filter])
+
+  const list = filter === 'all' ? vehicles : vehicles.filter(v => v.status === filter)
+  const driverName = (id) => drivers.find(d => d.id === id)?.name || '-'
+  const tripFor = (vehicleId) => outTrips.find(t => t.vehicleId === vehicleId)
+  const showTripInfo = filter === 'Outside' || filter === 'all'
+
+  const statusClass = (s) =>
+    s === 'Available' ? 'bg-emerald-500 text-white'
+    : s === 'Outside' ? 'bg-amber-500 text-white'
+    : s === 'Maintenance' ? 'bg-[#E60000] text-white'
+    : 'bg-slate-400 text-white'
+
+  return (
+    <Dialog open={!!filter} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>{label} ({loading ? '…' : list.length})</DialogTitle>
+        </DialogHeader>
+
+        {loading ? (
+          <div className="p-8 text-center text-slate-500">Loading...</div>
+        ) : list.length === 0 ? (
+          <div className="p-8 text-center text-slate-500">No vehicles in this category.</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Vehicle No.</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Make / Model</TableHead>
+                  <TableHead>Assigned Driver</TableHead>
+                  {showTripInfo && <TableHead>Taken By</TableHead>}
+                  {showTripInfo && <TableHead>Destination</TableHead>}
+                  {showTripInfo && <TableHead>Out Since</TableHead>}
+                  <TableHead>Odometer</TableHead>
+                  <TableHead>Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {list.map(v => {
+                  const trip = tripFor(v.id)
+                  return (
+                    <TableRow key={v.id}>
+                      <TableCell className="font-semibold">{v.vehicleNumber}</TableCell>
+                      <TableCell className="text-xs">{v.type}</TableCell>
+                      <TableCell className="text-xs">{v.make} {v.model}</TableCell>
+                      <TableCell className="text-xs">{driverName(v.assignedDriverId)}</TableCell>
+                      {showTripInfo && <TableCell className="text-xs">{trip ? (trip.driverName || trip.employeeName || '-') : '-'}</TableCell>}
+                      {showTripInfo && <TableCell className="text-xs">{trip?.destination || '-'}</TableCell>}
+                      {showTripInfo && <TableCell className="text-xs">{trip ? fmtDT(trip.dateOut) : '-'}</TableCell>}
+                      <TableCell className="text-xs">{v.currentOdometer?.toLocaleString()} km</TableCell>
+                      <TableCell><Badge className={statusClass(v.status)}>{v.status}</Badge></TableCell>
+                    </TableRow>
+                  )
+                })}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Close</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
 
 function Dashboard() {
   const [data, setData] = useState(null)
