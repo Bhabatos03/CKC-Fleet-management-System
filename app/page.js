@@ -1409,15 +1409,23 @@ function Dashboard() {
         <p className="text-slate-500 mt-2">Real-time overview of fleet operations</p>
       </div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {kpis.map(k => {
-          const Icon = k.icon
-          return (
-            <Card key={k.label} className="border-t-4 border-t-[#E60000] hover:shadow-lg transition-shadow"><CardContent className="p-5 flex items-center gap-4">
-              <div className={`${k.color} w-12 h-12 rounded-lg flex items-center justify-center text-white shadow-md`}><Icon className="w-6 h-6" /></div>
-              <div><div className="text-2xl font-bold">{k.value}</div><div className="text-xs text-slate-500">{k.label}</div></div>
-            </CardContent></Card>
-          )
-        })}
+       {kpis.map(k => {
+  const Icon = k.icon
+  return (
+    <Card
+      key={k.label}
+      role="button"
+      tabIndex={0}
+      onClick={() => setDetail({ filter: k.filter, label: k.label })}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setDetail({ filter: k.filter, label: k.label }) }}
+      className="border-t-4 border-t-[#E60000] hover:shadow-lg hover:-translate-y-0.5 transition cursor-pointer"
+    ><CardContent className="p-5 flex items-center gap-4">
+      <div className={`${k.color} w-12 h-12 rounded-lg flex items-center justify-center text-white shadow-md`}><Icon className="w-6 h-6" /></div>
+      <div><div className="text-2xl font-bold">{k.value}</div><div className="text-xs text-slate-500">{k.label}</div></div>
+    </CardContent></Card>
+  )
+})}
+        
       </div>
       <div className="grid md:grid-cols-2 gap-6">
         <Card>
