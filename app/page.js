@@ -4052,6 +4052,16 @@ function LiveTracking({ focusTripId, onFocusDone }) {
       }
     }
   }, [trips])
+  useEffect(() => {
+  if (!focusTripId || !mapReady || !leafletMapRef.current) return
+  const t = trips.find(x => x.id === focusTripId)
+  if (t?.lastLat && t?.lastLng) {
+    isFirstRender.current = false // stop the first-load auto-fit from overriding this zoom
+    leafletMapRef.current.setView([t.lastLat, t.lastLng], 15)
+    setSelectedTrip(t)
+    onFocusDone && onFocusDone()
+  }
+}, [trips, focusTripId, mapReady])
 
   const trackedCount = trips.filter(t => t.lastLat && t.lastLng).length
 
