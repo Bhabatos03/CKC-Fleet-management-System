@@ -3931,6 +3931,7 @@ const overdueCount = items.filter(g => returnInfo(g)?.key === 'overdue').length
 function LiveTracking({ focusTripId, onFocusDone }) {
   const [trips, setTrips] = useState([])
   const [selectedTrip, setSelectedTrip] = useState(null)
+  const [mapReady, setMapReady] = useState(false)
   const mapRef = useRef(null)
   const leafletMapRef = useRef(null)
   const markersRef = useRef({})
