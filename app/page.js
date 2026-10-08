@@ -1354,6 +1354,17 @@ function FleetDetailDialog({ filter, label, onClose, onLocate }) {
                       {showTripInfo && <TableCell className="text-xs">{trip ? fmtDT(trip.dateOut) : '-'}</TableCell>}
                       <TableCell className="text-xs">{v.currentOdometer?.toLocaleString()} km</TableCell>
                       <TableCell><Badge className={statusClass(v.status)}>{v.status}</Badge></TableCell>
+                    {showTripInfo && (
+                    <TableCell className="text-right">
+                    {trip ? (
+                    trip.lastLat ? (
+                    <Button size="sm" variant="outline" onClick={() => onLocate && onLocate(trip.id)}>
+                    <MapPin className="w-3 h-3 mr-1" /> Locate
+                    </Button>
+                    ) : <span className="text-xs text-slate-400">Not sharing</span>
+                    ) : null}
+                  </TableCell>
+                  )}
                     </TableRow>
                   )
                 })}
