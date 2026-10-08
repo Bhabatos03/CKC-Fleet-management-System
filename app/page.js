@@ -3959,7 +3959,8 @@ function LiveTracking({ focusTripId, onFocusDone }) {
         attribution: '&copy; OpenStreetMap contributors'
       }).addTo(map)
       leafletMapRef.current = map
-      renderMarkers()
+    renderMarkers()
+    setMapReady(true)
     })
     return () => {
       cancelled = true
