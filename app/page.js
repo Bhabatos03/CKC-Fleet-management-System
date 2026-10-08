@@ -6333,6 +6333,7 @@ function ReadingFormDialog({ open, onOpenChange, onCreated, meters }) {
   )
 }function App() {
   const [user, setUser] = useState(null)
+  const [trackFocus, setTrackFocus] = useState(null)
   const [active, setActive] = useState('dashboard')
   const [loaded, setLoaded] = useState(false)
   useEffect(() => {
