@@ -1337,6 +1337,7 @@ function FleetDetailDialog({ filter, label, onClose, onLocate }) {
                   {showTripInfo && <TableHead>Out Since</TableHead>}
                   <TableHead>Odometer</TableHead>
                   <TableHead>Status</TableHead>
+                  {showTripInfo && <TableHead></TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
