@@ -1376,11 +1376,11 @@ function Dashboard() {
   useEffect(() => { api('dashboard').then(setData).catch(e => toast.error(e.message)) }, [])
   if (!data) return <div className="p-8">Loading...</div>
   const kpis = [
-    { label: 'Total Vehicles', value: data.fleet.total, icon: Car, color: 'bg-gradient-to-br from-[#E60000] to-[#E60000]' },
-    { label: 'Available', value: data.fleet.available, icon: Truck, color: 'bg-gradient-to-br from-emerald-600 to-emerald-700' },
-    { label: 'Outside', value: data.fleet.outside, icon: ArrowRightCircle, color: 'bg-gradient-to-br from-amber-500 to-amber-600' },
-    { label: 'Maintenance', value: data.fleet.maintenance, icon: AlertTriangle, color: 'bg-gradient-to-br from-[#E60000] to-[#E60000]' },
-  ]
+  { label: 'Total Vehicles', filter: 'all', value: data.fleet.total, icon: Car, color: 'bg-gradient-to-br from-[#E60000] to-[#E60000]' },
+  { label: 'Available', filter: 'Available', value: data.fleet.available, icon: Truck, color: 'bg-gradient-to-br from-emerald-600 to-emerald-700' },
+  { label: 'Outside', filter: 'Outside', value: data.fleet.outside, icon: ArrowRightCircle, color: 'bg-gradient-to-br from-amber-500 to-amber-600' },
+  { label: 'Maintenance', filter: 'Maintenance', value: data.fleet.maintenance, icon: AlertTriangle, color: 'bg-gradient-to-br from-[#E60000] to-[#E60000]' },
+]
   const today = [
     { label: "Today's Trips", value: data.today.trips },
     { label: 'KM Travelled', value: `${data.today.km} km` },
