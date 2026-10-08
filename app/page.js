@@ -6364,10 +6364,10 @@ function ReadingFormDialog({ open, onOpenChange, onCreated, meters }) {
   return (
     <>
     <AdminShell user={user} onLogout={logout} active={effectiveActive} setActive={setActive}>
-      {effectiveActive === 'dashboard' && <Dashboard />}
+     {effectiveActive === 'dashboard' && <Dashboard onLocate={(tripId) => { setTrackFocus(tripId); setActive('tracking') }} />}
       {effectiveActive === 'utilities' && <Utilities />}
       {effectiveActive === 'vehicles' && <Vehicles />}
-      {effectiveActive === 'tracking' && <LiveTracking />}
+      {effectiveActive === 'tracking' && <LiveTracking focusTripId={trackFocus} onFocusDone={() => setTrackFocus(null)} />}
       {effectiveActive === 'drivers' && <Drivers />}
       {effectiveActive === 'trips' && <Trips />}
       {effectiveActive === 'fuel' && <FuelRegister />}
