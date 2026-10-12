@@ -1612,6 +1612,7 @@ function VehicleDialog({ open, onOpenChange, onSubmit, initial, drivers }) {
         <DialogHeader><DialogTitle>{initial ? 'Edit Vehicle' : 'Add Vehicle'}</DialogTitle></DialogHeader>
         <div className="grid grid-cols-2 gap-3">
           <div><Label>Vehicle Number</Label><Input value={f.vehicleNumber || ''} onChange={e => set('vehicleNumber', e.target.value)} /></div>
+          <div><Label>Tracker Vehicle No. (Intellicar)</Label><Input value={f.trackerId || ''} onChange={e => set('trackerId', e.target.value.trim().toUpperCase())} placeholder="Blank if no tracker" /></div>
           <div><Label>Type</Label>
             <Select value={f.type} onValueChange={v => set('type', v)}>
               <SelectTrigger><SelectValue /></SelectTrigger>
