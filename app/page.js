@@ -1603,7 +1603,7 @@ function Vehicles() {
 function VehicleDialog({ open, onOpenChange, onSubmit, initial, drivers }) {
   const [f, setF] = useState({})
   useEffect(() => {
-    setF(initial || { vehicleNumber: '', type: 'Car', make: '', model: '', fuelType: 'Petrol', seatingCapacity: 5, expectedMileage: 15, lowMileageThreshold: 12, currentOdometer: 0, status: 'Available', insuranceExpiry: '', pucExpiry: '', serviceDueDate: '', serviceDueKm: 0, assignedLocation: 'Head Office', remarks: '', assignedDriverId: '' })
+    setF(initial || { vehicleNumber: '', trackerId: '', type: 'Car', make: '', model: '', fuelType: 'Petrol', seatingCapacity: 5, expectedMileage: 15, lowMileageThreshold: 12, currentOdometer: 0, status: 'Available', insuranceExpiry: '', pucExpiry: '', serviceDueDate: '', serviceDueKm: 0, assignedLocation: 'Head Office', remarks: '', assignedDriverId: '' })
   }, [initial, open])
   const set = (k, v) => setF(x => ({ ...x, [k]: v }))
   return (
