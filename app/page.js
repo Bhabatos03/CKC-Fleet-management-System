@@ -3931,22 +3931,45 @@ const overdueCount = items.filter(g => returnInfo(g)?.key === 'overdue').length
 }
 function LiveTracking({ focusTripId, onFocusDone }) {
   const [trips, setTrips] = useState([])
+  const [gps, setGps] = useState([])
   const [selectedTrip, setSelectedTrip] = useState(null)
   const [mapReady, setMapReady] = useState(false)
   const mapRef = useRef(null)
   const leafletMapRef = useRef(null)
-  const markersRef = useRef({})
   const LRef = useRef(null)
-  const animFramesRef = useRef({})
+  const gpsMarkersRef = useRef({})
+  const fittedRef = useRef(false)
 
+  // A reading older than this many minutes is shown as "last seen" (grey), not "live"
+  const FRESH_MIN = 15
+  const hasPos = (g) => !!g && Number.isFinite(g.lat) && Number.isFinite(g.lng) && (g.lat !== 0 || g.lng !== 0)
+  const ageMin = (g) => (g && g.commtime) ? (Date.now() - g.commtime) / 60000 : Infinity
+  const isFresh = (g) => hasPos(g) && ageMin(g) <= FRESH_MIN
+  const ageText = (g) => {
+    const m = ageMin(g)
+    if (!isFinite(m)) return 'no reading'
+    if (m < 60) return `${Math.round(m)} min ago`
+    if (m < 2880) return `${Math.round(m / 60)} h ago`
+    return `${Math.round(m / 1440)} days ago`
+  }
+
+  // Outside trips (who took the vehicle, where to)
   const load = () => api('trips/outside').then(setTrips).catch(() => {})
-
   useEffect(() => {
     load()
     const iv = setInterval(load, 8000)
     return () => clearInterval(iv)
   }, [])
 
+  // GPS positions from Intellicar (cached on the server, so polling here is cheap)
+  useEffect(() => {
+    const loadGps = () => api('gps/live').then(setGps).catch(() => {})
+    loadGps()
+    const iv = setInterval(loadGps, 30000)
+    return () => clearInterval(iv)
+  }, [])
+
+  // Create the map once
   useEffect(() => {
     let cancelled = false
     import('leaflet').then((Lmod) => {
@@ -3960,14 +3983,16 @@ function LiveTracking({ focusTripId, onFocusDone }) {
         attribution: '&copy; OpenStreetMap contributors'
       }).addTo(map)
       leafletMapRef.current = map
-    renderMarkers()
-    setMapReady(true)
+      setMapReady(true)
     })
     return () => {
       cancelled = true
-      Object.values(animFramesRef.current).forEach(id => cancelAnimationFrame(id))
+      Object.values(gpsMarkersRef.current).forEach(m => { if (m._animFrame) cancelAnimationFrame(m._animFrame) })
+      gpsMarkersRef.current = {}
+      fittedRef.current = false
       leafletMapRef.current?.remove()
       leafletMapRef.current = null
+      setMapReady(false)
     }
   }, [])
 
@@ -3976,95 +4001,105 @@ function LiveTracking({ focusTripId, onFocusDone }) {
     const start = performance.now()
     const animate = (now) => {
       const t = Math.min((now - start) / duration, 1)
-      // easeInOutQuad for a natural glide
       const eased = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2
       const lat = fromLatLng[0] + (toLatLng[0] - fromLatLng[0]) * eased
       const lng = fromLatLng[1] + (toLatLng[1] - fromLatLng[1]) * eased
       marker.setLatLng([lat, lng])
-      if (t < 1) {
-        marker._animFrame = requestAnimationFrame(animate)
-      }
+      if (t < 1) marker._animFrame = requestAnimationFrame(animate)
     }
     if (marker._animFrame) cancelAnimationFrame(marker._animFrame)
     marker._animFrame = requestAnimationFrame(animate)
   }
 
-  const renderMarkers = () => {
+  // Same truck marker as before: red when live, grey when the last reading is old
+  const makeIcon = (g) => {
+    const color = isFresh(g) ? '#E60000' : '#94a3b8'
+    return LRef.current.divIcon({
+      className: '',
+      html: `
+        <div style="display:flex;flex-direction:column;align-items:center;">
+          <div style="width:34px;height:34px;background:${color};border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,0.45);border:2px solid #ffffff;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M4 16v-3.2a1 1 0 0 1 .1-.44l1.6-3.6A2 2 0 0 1 7.5 7.5h9a2 2 0 0 1 1.8 1.26l1.6 3.6a1 1 0 0 1 .1.44V16a1 1 0 0 1-1 1h-1a1 1 0 0 1-1-1v-.5H7v.5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1Z" fill="#ffffff"/>
+              <circle cx="7.5" cy="14.5" r="1.5" fill="${color}"/>
+              <circle cx="16.5" cy="14.5" r="1.5" fill="${color}"/>
+            </svg>
+          </div>
+          <div style="margin-top:2px;background:#ffffff;color:#1e293b;padding:1px 6px;border-radius:6px;font-size:10px;font-weight:700;white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,0.3);">${g.vehicleNumber}</div>
+        </div>
+      `,
+      iconSize: [34, 52],
+      iconAnchor: [17, 17],
+    })
+  }
+
+  const popupEl = (g) => {
+    const el = document.createElement('div')
+    el.style.fontSize = '12px'
+    el.style.lineHeight = '1.5'
+    const title = document.createElement('div')
+    title.style.fontWeight = '700'
+    title.textContent = g.vehicleNumber
+    const line1 = document.createElement('div')
+    line1.textContent = `${Math.round(g.speed || 0)} km/h · ignition ${g.ignition || '-'}`
+    const line2 = document.createElement('div')
+    line2.textContent = `Updated ${ageText(g)}${isFresh(g) ? '' : ' (no recent signal)'}`
+    el.append(title, line1, line2)
+    return el
+  }
+
+  // Draw / update one marker per tracked vehicle that has a position
+  useEffect(() => {
     const L = LRef.current
-    if (!leafletMapRef.current || !L) return
     const map = leafletMapRef.current
-    const tracked = trips.filter(t => t.lastLat && t.lastLng)
+    if (!mapReady || !L || !map) return
+    const live = gps.filter(g => hasPos(g))
 
-    Object.keys(markersRef.current).forEach(id => {
-      if (!tracked.find(t => t.id === id)) {
-        if (markersRef.current[id]._animFrame) cancelAnimationFrame(markersRef.current[id]._animFrame)
-        map.removeLayer(markersRef.current[id])
-        delete markersRef.current[id]
+    Object.keys(gpsMarkersRef.current).forEach(id => {
+      if (!live.find(g => g.trackerId === id)) {
+        const m = gpsMarkersRef.current[id]
+        if (m._animFrame) cancelAnimationFrame(m._animFrame)
+        map.removeLayer(m)
+        delete gpsMarkersRef.current[id]
       }
     })
 
-    tracked.forEach(t => {
-      const newPos = [t.lastLat, t.lastLng]
-      if (markersRef.current[t.id]) {
-        const marker = markersRef.current[t.id]
-        const currentPos = marker.getLatLng()
-        const fromPos = [currentPos.lat, currentPos.lng]
-        // Only animate if it actually moved (avoids pointless animation on identical pings)
-        if (fromPos[0] !== newPos[0] || fromPos[1] !== newPos[1]) {
-          animateMarkerTo(marker, fromPos, newPos)
-        }
+    live.forEach(g => {
+      const pos = [g.lat, g.lng]
+      const existing = gpsMarkersRef.current[g.trackerId]
+      if (existing) {
+        const cur = existing.getLatLng()
+        if (cur.lat !== pos[0] || cur.lng !== pos[1]) animateMarkerTo(existing, [cur.lat, cur.lng], pos)
+        existing.setIcon(makeIcon(g))
+        existing.setPopupContent(popupEl(g))
       } else {
-                const icon = L.divIcon({
-          className: '',
-          html: `
-            <div style="display:flex;flex-direction:column;align-items:center;">
-              <div style="width:34px;height:34px;background:#E60000;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,0.45);border:2px solid #ffffff;">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M4 16v-3.2a1 1 0 0 1 .1-.44l1.6-3.6A2 2 0 0 1 7.5 7.5h9a2 2 0 0 1 1.8 1.26l1.6 3.6a1 1 0 0 1 .1.44V16a1 1 0 0 1-1 1h-1a1 1 0 0 1-1-1v-.5H7v.5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1Z" fill="#ffffff"/>
-                  <circle cx="7.5" cy="14.5" r="1.5" fill="#E60000"/>
-                  <circle cx="16.5" cy="14.5" r="1.5" fill="#E60000"/>
-                </svg>
-              </div>
-              <div style="margin-top:2px;background:#ffffff;color:#1e293b;padding:1px 6px;border-radius:6px;font-size:10px;font-weight:700;white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,0.3);">${t.vehicleNumber}</div>
-            </div>
-          `,
-          iconSize: [34, 52],
-          iconAnchor: [17, 17],
-        })
-        markersRef.current[t.id] = L.marker(newPos, { icon }).addTo(map)
-          .on('click', () => setSelectedTrip(t))
+        gpsMarkersRef.current[g.trackerId] = L.marker(pos, { icon: makeIcon(g) }).addTo(map).bindPopup(popupEl(g))
       }
     })
 
-    if (tracked.length > 0 && Object.keys(markersRef.current).length === tracked.length) {
-      // Only auto-fit bounds on first load, not every poll (otherwise the map keeps re-centering and interrupts the user)
+    // Zoom to fit all vehicles once, on first load (not on every refresh)
+    if (!fittedRef.current && live.length) {
+      map.fitBounds(L.latLngBounds(live.map(g => [g.lat, g.lng])), { padding: [50, 50], maxZoom: 14 })
+      fittedRef.current = true
     }
-  }
+  }, [gps, mapReady])
 
-  const isFirstRender = useRef(true)
+  // Locate button on the dashboard cards jumps here with a trip id
   useEffect(() => {
-    renderMarkers()
-    if (isFirstRender.current && leafletMapRef.current && LRef.current) {
-      const tracked = trips.filter(t => t.lastLat && t.lastLng)
-      if (tracked.length > 0) {
-        const bounds = LRef.current.latLngBounds(tracked.map(t => [t.lastLat, t.lastLng]))
-        leafletMapRef.current.fitBounds(bounds, { padding: [50, 50], maxZoom: 14 })
-        isFirstRender.current = false
-      }
+    if (!focusTripId || !mapReady || !leafletMapRef.current) return
+    const t = trips.find(x => x.id === focusTripId)
+    const g = t && gps.find(x => x.vehicleId === t.vehicleId)
+    if (hasPos(g)) {
+      fittedRef.current = true
+      leafletMapRef.current.setView([g.lat, g.lng], 15)
+      setSelectedTrip(t)
+      gpsMarkersRef.current[g.trackerId]?.openPopup()
+      onFocusDone && onFocusDone()
     }
-  }, [trips])
-  useEffect(() => {
-  if (!focusTripId || !mapReady || !leafletMapRef.current) return
-  const t = trips.find(x => x.id === focusTripId)
-  if (t?.lastLat && t?.lastLng) {
-    isFirstRender.current = false // stop the first-load auto-fit from overriding this zoom
-    leafletMapRef.current.setView([t.lastLat, t.lastLng], 15)
-    setSelectedTrip(t)
-    onFocusDone && onFocusDone()
-  }
-}, [trips, focusTripId, mapReady])
+  }, [trips, gps, focusTripId, mapReady])
 
-  const trackedCount = trips.filter(t => t.lastLat && t.lastLng).length
+  const gpsFor = (t) => gps.find(g => g.vehicleId === t.vehicleId)
+  const liveCount = trips.filter(t => isFresh(gpsFor(t))).length
 
   return (
     <div className="p-6 space-y-4">
@@ -4072,13 +4107,13 @@ function LiveTracking({ focusTripId, onFocusDone }) {
         <h1 className="text-3xl font-bold text-slate-900 relative inline-block">Track Vehicle
           <span className="absolute -bottom-1 left-0 w-16 h-1 bg-gradient-to-r from-[#E60000] to-amber-500 rounded-full" />
         </h1>
-        <p className="text-slate-500 mt-2">Vehicles currently outside, sharing location from the security app.</p>
+        <p className="text-slate-500 mt-2">Live vehicle positions from GPS trackers. Grey markers have not reported recently.</p>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         <Card><CardContent className="p-4"><div className="text-xs text-slate-500">Outside Now</div><div className="text-2xl font-bold text-[#E60000]">{trips.length}</div></CardContent></Card>
-        <Card><CardContent className="p-4"><div className="text-xs text-slate-500">Sharing Location</div><div className="text-2xl font-bold text-emerald-600">{trackedCount}</div></CardContent></Card>
-        <Card><CardContent className="p-4"><div className="text-xs text-slate-500">Not Sharing</div><div className="text-2xl font-bold text-slate-400">{trips.length - trackedCount}</div></CardContent></Card>
+        <Card><CardContent className="p-4"><div className="text-xs text-slate-500">GPS Live</div><div className="text-2xl font-bold text-emerald-600">{liveCount}</div></CardContent></Card>
+        <Card><CardContent className="p-4"><div className="text-xs text-slate-500">No Live GPS</div><div className="text-2xl font-bold text-slate-400">{trips.length - liveCount}</div></CardContent></Card>
       </div>
 
       <Card><CardContent className="p-0 overflow-hidden rounded-lg">
@@ -4094,29 +4129,39 @@ function LiveTracking({ focusTripId, onFocusDone }) {
               <TableHead>Out Since</TableHead><TableHead>Location Status</TableHead><TableHead></TableHead>
             </TableRow></TableHeader>
             <TableBody>
-              {trips.map(t => (
-                <TableRow key={t.id} className={selectedTrip?.id === t.id ? 'bg-amber-50' : ''}>
-                  <TableCell className="font-semibold">{t.vehicleNumber}</TableCell>
-                  <TableCell>{t.driverName || t.employeeName || '-'}</TableCell>
-                  <TableCell>{t.destination}</TableCell>
-                  <TableCell className="text-xs">{fmtDT(t.dateOut)}</TableCell>
-                  <TableCell>
-                    {t.lastLat ? (
-                      <Badge className="bg-emerald-500 hover:bg-emerald-600">
-                        Live · {t.lastLocationAt ? new Date(t.lastLocationAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : ''}
-                      </Badge>
-                    ) : <Badge variant="secondary">Not sharing</Badge>}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {t.lastLat && (
-                      <Button size="sm" variant="outline" onClick={() => {
-                        setSelectedTrip(t)
-                        leafletMapRef.current?.setView([t.lastLat, t.lastLng], 15)
-                      }}>Locate</Button>
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))}
+              {trips.map(t => {
+                const g = gpsFor(t)
+                return (
+                  <TableRow key={t.id} className={selectedTrip?.id === t.id ? 'bg-amber-50' : ''}>
+                    <TableCell className="font-semibold">{t.vehicleNumber}</TableCell>
+                    <TableCell>{t.driverName || t.employeeName || '-'}</TableCell>
+                    <TableCell>{t.destination}</TableCell>
+                    <TableCell className="text-xs">{fmtDT(t.dateOut)}</TableCell>
+                    <TableCell>
+                      {isFresh(g) ? (
+                        <Badge className="bg-emerald-500 hover:bg-emerald-600">
+                          Live · {new Date(g.commtime).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+                        </Badge>
+                      ) : hasPos(g) ? (
+                        <Badge variant="secondary">Last seen {ageText(g)}</Badge>
+                      ) : g ? (
+                        <Badge variant="secondary">No GPS data</Badge>
+                      ) : (
+                        <Badge variant="secondary">No tracker</Badge>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {hasPos(g) && (
+                        <Button size="sm" variant="outline" onClick={() => {
+                          setSelectedTrip(t)
+                          leafletMapRef.current?.setView([g.lat, g.lng], 15)
+                          gpsMarkersRef.current[g.trackerId]?.openPopup()
+                        }}>Locate</Button>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                )
+              })}
               {trips.length === 0 && (
                 <TableRow><TableCell colSpan={6} className="text-center text-slate-500 py-8">No vehicles currently outside.</TableCell></TableRow>
               )}
