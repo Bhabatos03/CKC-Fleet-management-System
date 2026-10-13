@@ -1698,11 +1698,6 @@ function Drivers() {
         <TableCell className={expiring ? 'text-rose-600 font-semibold' : ''}>{fmtDate(d.licenceExpiry)}</TableCell>
         <TableCell>{d.assignedLocation || '-'}</TableCell>
         <TableCell><Badge className="bg-[#E60000] hover:bg-[#E60000] hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90">{d.status}</Badge></TableCell>
-        <TableCell>
-          <Button size="sm" variant="outline" onClick={() => setPairingDriver(d)}>
-            <QrCode className="w-3 h-3 mr-1" /> Get Code
-          </Button>
-        </TableCell>
         <TableCell className="text-right space-x-2">
           {canEdit && (
             <>
