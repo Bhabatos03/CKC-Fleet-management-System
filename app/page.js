@@ -4101,6 +4101,21 @@ function LiveTracking({ focusTripId, onFocusDone }) {
   const gpsFor = (t) => gps.find(g => g.vehicleId === t.vehicleId)
   const liveCount = trips.filter(t => isFresh(gpsFor(t))).length
 
+  // Tracker health: problems sort to the top
+  const health = (g) => {
+    if (!hasPos(g)) return { key: 'nodata', label: 'No data', rank: 0, cls: 'bg-slate-400 hover:bg-slate-500 text-white' }
+    const m = ageMin(g)
+    if (m <= FRESH_MIN) return { key: 'live', label: 'Live', rank: 3, cls: 'bg-emerald-500 hover:bg-emerald-600 text-white' }
+    if (m <= 1440) return { key: 'recent', label: 'Offline today', rank: 2, cls: 'bg-amber-500 hover:bg-amber-600 text-white' }
+    return { key: 'silent', label: 'Silent', rank: 1, cls: 'bg-[#E60000] hover:bg-[#c40000] text-white' }
+  }
+  const ageOrZero = (g) => (isFinite(ageMin(g)) ? ageMin(g) : 0)
+  const healthRows = [...gps].sort((a, b) =>
+    (health(a).rank - health(b).rank) ||
+    (ageOrZero(b) - ageOrZero(a)) ||
+    String(a.vehicleNumber).localeCompare(String(b.vehicleNumber)))
+  const hc = healthRows.reduce((acc, g) => { const k = health(g).key; acc[k] = (acc[k] || 0) + 1; return acc }, {})
+
   return (
     <div className="p-6 space-y-4">
       <div>
@@ -4164,6 +4179,41 @@ function LiveTracking({ focusTripId, onFocusDone }) {
               })}
               {trips.length === 0 && (
                 <TableRow><TableCell colSpan={6} className="text-center text-slate-500 py-8">No vehicles currently outside.</TableCell></TableRow>
+              )}
+            </TableBody>
+          </Table></div>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>Tracker Health</CardTitle>
+          <div className="text-xs text-slate-500 mt-1">
+            {healthRows.length} trackers · {hc.live || 0} live · {hc.recent || 0} offline today · {hc.silent || 0} silent over a day · {hc.nodata || 0} no data
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto"><Table>
+            <TableHeader><TableRow>
+              <TableHead>Vehicle</TableHead><TableHead>Tracker No.</TableHead><TableHead>Status</TableHead>
+              <TableHead>Last Report</TableHead><TableHead>Speed</TableHead><TableHead>Ignition</TableHead><TableHead>Note</TableHead>
+            </TableRow></TableHeader>
+            <TableBody>
+              {healthRows.map(g => {
+                const h = health(g)
+                return (
+                  <TableRow key={g.trackerId}>
+                    <TableCell className="font-semibold">{g.vehicleNumber}</TableCell>
+                    <TableCell className="font-mono text-xs">{g.trackerId}</TableCell>
+                    <TableCell><Badge className={h.cls}>{h.label}</Badge></TableCell>
+                    <TableCell className="text-xs">{g.commtime ? `${fmtDT(g.commtime)} (${ageText(g)})` : '-'}</TableCell>
+                    <TableCell className="text-xs">{isFresh(g) ? `${Math.round(g.speed || 0)} km/h` : '-'}</TableCell>
+                    <TableCell className="text-xs">{isFresh(g) ? (g.ignition || '-') : '-'}</TableCell>
+                    <TableCell className="text-xs text-slate-500">{g.error || ''}</TableCell>
+                  </TableRow>
+                )
+              })}
+              {healthRows.length === 0 && (
+                <TableRow><TableCell colSpan={7} className="text-center text-slate-500 py-8">No vehicles have a tracker number yet. Add one in Vehicles → Edit.</TableCell></TableRow>
               )}
             </TableBody>
           </Table></div>
