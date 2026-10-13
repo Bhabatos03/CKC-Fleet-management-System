@@ -1714,7 +1714,6 @@ function Drivers() {
       {canEdit && (
   <DriverDialog open={open} onOpenChange={setOpen} onSubmit={submit} initial={editing} />
 )}
-<PairingCodeDialog driver={pairingDriver} onClose={() => setPairingDriver(null)} />
     
     </div>
   )
