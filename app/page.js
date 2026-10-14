@@ -1430,21 +1430,14 @@ const trackerReason = (g) => {
   </div>
 
   {trackerProblems.length > 0 && (
-    <div className="rounded-lg border border-rose-200 bg-rose-50 p-4 flex flex-wrap items-start justify-between gap-3">
-      <div>
-        <div className="font-semibold text-rose-700 flex items-center gap-2">
-          <AlertTriangle className="w-4 h-4" /> {trackerProblems.length} GPS tracker{trackerProblems.length > 1 ? 's' : ''} need attention
-        </div>
-        <div className="text-xs text-slate-700 mt-1 space-y-0.5">
-          {trackerProblems.slice(0, 5).map(g => (
-            <div key={g.trackerId}><b>{g.vehicleNumber}</b> · {trackerReason(g)}</div>
-          ))}
-          {trackerProblems.length > 5 && <div className="text-slate-500 italic">+{trackerProblems.length - 5} more</div>}
-        </div>
-      </div>
-      <Button size="sm" variant="outline" onClick={() => onOpenTracking && onOpenTracking()}>View tracker health</Button>
-    </div>
-  )}
+  <button
+    onClick={() => onOpenTracking && onOpenTracking()}
+    className="w-full text-left rounded-lg border border-rose-200 bg-rose-50 px-4 py-2 text-sm text-rose-700 hover:bg-rose-100 transition flex items-center gap-2"
+  >
+    <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+    {trackerProblems.length} GPS tracker{trackerProblems.length > 1 ? 's' : ''} not reporting · View tracker health
+  </button>
+)}
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
        {kpis.map(k => {
