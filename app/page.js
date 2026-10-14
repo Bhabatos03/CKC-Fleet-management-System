@@ -2236,6 +2236,8 @@ doc.text('  GROUP OF JEWELLERS  ·  FleetPulse  ·  Confidential', 30 + footerNa
               <div><span className="text-slate-500">Entries: </span><b>{filtered.length}</b></div>
               <div><span className="text-slate-500">Total Litres: </span><b>{totalLit.toFixed(1)} L</b></div>
               <div><span className="text-slate-500">Total Cost: </span><b>{fmtINR(totalCost)}</b></div>
+          <div><span className="text-slate-500">Flagged: </span><b className={flaggedCount > 0 ? 'text-amber-600' : ''}>{flaggedCount}</b></div>
+          <label className="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" checked={flaggedOnly} onChange={e => setFlaggedOnly(e.target.checked)} /> Show flagged only</label>
             </div>
             <div className="overflow-x-auto"><Table>
               <TableHeader><TableRow>
