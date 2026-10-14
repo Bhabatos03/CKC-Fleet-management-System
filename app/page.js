@@ -2030,7 +2030,63 @@ function FuelRegister() {
     if (submitted.vehicleFilter !== 'all' && t.vehicleId !== submitted.vehicleFilter) return false
     return true
   }) : []
+const median = (arr) => {
+  const s = [...arr].sort((a, b) => a - b)
+  const m = Math.floor(s.length / 2)
+  return s.length ? (s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2) : 0
+}
+const flags = !submitted ? {} : (() => {
+  const out = {}
+  const add = (id, msg) => { (out[id] = out[id] || []).push(msg) }
+  const dayOf = (t) => String(t.date).slice(0, 10)
+  const vehById = Object.fromEntries(vehicles.map(v => [v.id, v]))
 
+  // Same receipt number used more than once
+  const byReceipt = {}
+  items.forEach(t => {
+    const r = String(t.receiptNumber || '').trim().toLowerCase()
+    if (r) (byReceipt[r] = byReceipt[r] || []).push(t)
+  })
+  Object.values(byReceipt).forEach(list => { if (list.length > 1) list.forEach(t => add(t.id, 'Duplicate receipt no.')) })
+
+  // Per-vehicle checks
+  const byVehicle = {}
+  items.forEach(t => { (byVehicle[t.vehicleId] = byVehicle[t.vehicleId] || []).push(t) })
+  Object.entries(byVehicle).forEach(([vid, list]) => {
+    if (vehById[vid]?.fuelType === 'Electric') return
+    const sorted = [...list].sort((a, b) => new Date(a.date) - new Date(b.date))
+    const med = median(sorted.map(t => t.quantity))
+    sorted.forEach((t, i) => {
+      if (sorted.length >= 5 && t.quantity > med * 1.5) add(t.id, 'Large fill')
+      if (i > 0) {
+        const p = sorted[i - 1]
+        if (dayOf(p) === dayOf(t)) add(t.id, 'Second fill same day')
+        if (t.odometer && p.odometer && t.odometer < p.odometer) add(t.id, 'Odometer lower than previous fill')
+      }
+    })
+  })
+
+  // Price far from the usual price for that fuel type that week
+  filtered.forEach(t => {
+    const fuelType = vehById[t.vehicleId]?.fuelType
+    if (!fuelType || fuelType === 'Electric' || !t.rate) return
+    const near = items.filter(x => vehById[x.vehicleId]?.fuelType === fuelType && x.rate && Math.abs(new Date(x.date) - new Date(t.date)) <= 3 * 86400000)
+    if (near.length >= 3) {
+      const m = median(near.map(x => x.rate))
+      if (m && Math.abs(t.rate - m) / m > 0.1) add(t.id, 'Rate differs from usual')
+    }
+  })
+
+  // Amount should equal quantity x rate
+  items.forEach(t => {
+    const expected = t.quantity * t.rate
+    if (expected && t.amount && Math.abs(t.amount - expected) / expected > 0.02) add(t.id, 'Amount mismatch')
+  })
+  return out
+})()
+const flaggedCount = filtered.filter(t => flags[t.id]).length
+const shown = flaggedOnly ? filtered.filter(t => flags[t.id]) : filtered
+  
   const totalLit = filtered.reduce((s, f) => s + f.quantity, 0)
   const totalCost = filtered.reduce((s, f) => s + f.amount, 0)
   const headers = ['Date', 'Vehicle', 'Odometer', 'Quantity(L)', 'Rate', 'Amount', 'Station', 'Receipt']
