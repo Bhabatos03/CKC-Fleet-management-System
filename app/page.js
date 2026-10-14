@@ -1990,7 +1990,7 @@ doc.text('  GROUP OF JEWELLERS  ·  FleetPulse  ·  Confidential', 30 + footerNa
                     <TableCell><Badge variant={t.status === 'Outside' ? 'secondary' : 'default'} className={t.status === 'Returned' ? 'bg-[#E60000] hover:bg-[#E60000] hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90' : ''}>{t.status}</Badge></TableCell>
                   </TableRow>
                 ))}
-                {filtered.length === 0 && (
+                {shown.length === 0 && (
                   <TableRow><TableCell colSpan={9} className="text-center text-slate-500 py-8">No trips found for this range.</TableCell></TableRow>
                 )}
               </TableBody>
