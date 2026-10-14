@@ -1421,13 +1421,31 @@ const trackerReason = (g) => {
     { name: 'Inactive', value: data.fleet.inactive, color: '#94a3b8' },
   ].filter(s => s.value > 0)
   return (
-    <div className="p-6 space-y-6">
+  <div className="p-6 space-y-6">
+  <div>
+    <h1 className="text-3xl font-bold text-slate-900 relative inline-block">Fleet Dashboard
+      <span className="absolute -bottom-1 left-0 w-16 h-1 bg-gradient-to-r from-[#E60000] to-amber-500 rounded-full" />
+    </h1>
+    <p className="text-slate-500 mt-2">Real-time overview of fleet operations</p>
+  </div>
+
+  {trackerProblems.length > 0 && (
+    <div className="rounded-lg border border-rose-200 bg-rose-50 p-4 flex flex-wrap items-start justify-between gap-3">
       <div>
-        <h1 className="text-3xl font-bold text-slate-900 relative inline-block">Fleet Dashboard
-          <span className="absolute -bottom-1 left-0 w-16 h-1 bg-gradient-to-r from-[#E60000] to-amber-500 rounded-full" />
-        </h1>
-        <p className="text-slate-500 mt-2">Real-time overview of fleet operations</p>
+        <div className="font-semibold text-rose-700 flex items-center gap-2">
+          <AlertTriangle className="w-4 h-4" /> {trackerProblems.length} GPS tracker{trackerProblems.length > 1 ? 's' : ''} need attention
+        </div>
+        <div className="text-xs text-slate-700 mt-1 space-y-0.5">
+          {trackerProblems.slice(0, 5).map(g => (
+            <div key={g.trackerId}><b>{g.vehicleNumber}</b> · {trackerReason(g)}</div>
+          ))}
+          {trackerProblems.length > 5 && <div className="text-slate-500 italic">+{trackerProblems.length - 5} more</div>}
+        </div>
       </div>
+      <Button size="sm" variant="outline" onClick={() => onOpenTracking && onOpenTracking()}>View tracker health</Button>
+    </div>
+  )}
+
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
        {kpis.map(k => {
   const Icon = k.icon
