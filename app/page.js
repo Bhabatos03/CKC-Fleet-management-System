@@ -1381,7 +1381,9 @@ function FleetDetailDialog({ filter, label, onClose, onLocate }) {
 function Dashboard({ onLocate, onOpenTracking }) {
   const [data, setData] = useState(null)
   const [detail, setDetail] = useState(null) // { filter, label }
+  const [gps, setGps] = useState([])
   useEffect(() => { api('dashboard').then(setData).catch(e => toast.error(e.message)) }, [])
+  useEffect(() => { api('gps/live').then(setGps).catch(() => {}) }, [])
   if (!data) return <div className="p-8">Loading...</div>
   const kpis = [
   { label: 'Total Vehicles', filter: 'all', value: data.fleet.total, icon: Car, color: 'bg-gradient-to-br from-[#E60000] to-[#E60000]' },
