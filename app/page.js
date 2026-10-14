@@ -2271,8 +2271,8 @@ doc.text('  GROUP OF JEWELLERS  ·  FleetPulse  ·  Confidential', 30 + footerNa
                     </TableCell>
                   </TableRow>
                 ))}
-                {filtered.length === 0 && (
-                  <TableRow><TableCell colSpan={9} className="text-center text-slate-500 py-8">No fuel entries found for this range.</TableCell></TableRow>
+                {shown.length === 0 && (
+                  <TableRow><TableCell colSpan={10} className="text-center text-slate-500 py-8">No fuel entries found for this range.</TableCell></TableRow>
                 )}
               </TableBody>
             </Table></div>
