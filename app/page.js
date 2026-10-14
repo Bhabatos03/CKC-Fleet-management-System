@@ -1378,7 +1378,7 @@ function FleetDetailDialog({ filter, label, onClose, onLocate }) {
 }
 
 
-function Dashboard({ onLocate }) {
+function Dashboard({ onLocate, onOpenTracking }) {
   const [data, setData] = useState(null)
   const [detail, setDetail] = useState(null) // { filter, label }
   useEffect(() => { api('dashboard').then(setData).catch(e => toast.error(e.message)) }, [])
