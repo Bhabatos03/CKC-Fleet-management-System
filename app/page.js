@@ -1391,6 +1391,16 @@ function Dashboard({ onLocate, onOpenTracking }) {
   { label: 'Outside', filter: 'Outside', value: data.fleet.outside, icon: ArrowRightCircle, color: 'bg-gradient-to-br from-amber-500 to-amber-600' },
   { label: 'Maintenance', filter: 'Maintenance', value: data.fleet.maintenance, icon: AlertTriangle, color: 'bg-gradient-to-br from-[#E60000] to-[#E60000]' },
 ]
+  const trackerProblems = gps.filter(g => {
+  const hasPos = Number.isFinite(g.lat) && Number.isFinite(g.lng) && (g.lat !== 0 || g.lng !== 0)
+  if (!hasPos) return !!g.error
+  return !g.commtime || (Date.now() - g.commtime) > 24 * 3600 * 1000
+}).sort((a, b) => (a.commtime || 0) - (b.commtime || 0))
+const trackerReason = (g) => {
+  if (!g.commtime) return g.error || 'No data'
+  const days = Math.floor((Date.now() - g.commtime) / 86400000)
+  return `No signal for ${days} day${days === 1 ? '' : 's'}`
+}
   const today = [
     { label: "Today's Trips", value: data.today.trips },
     { label: 'KM Travelled', value: `${data.today.km} km` },
