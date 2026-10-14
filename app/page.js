@@ -2247,7 +2247,7 @@ doc.text('  GROUP OF JEWELLERS  ·  FleetPulse  ·  Confidential', 30 + footerNa
                 <TableHead>Receipt</TableHead><TableHead>Photo</TableHead><TableHead>Flags</TableHead>
               </TableRow></TableHeader>
               <TableBody>
-              filtered.slice(0, 200).map(t => (
+              shown.slice(0, 200).map(t => (
                   <TableRow key={t.id}>
                     <TableCell className="text-xs">{fmtDate(t.date)}</TableCell>
                     <TableCell className="font-semibold">{t.vehicleNumber}</TableCell>
