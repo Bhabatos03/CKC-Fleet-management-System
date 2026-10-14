@@ -2264,6 +2264,11 @@ doc.text('  GROUP OF JEWELLERS  ·  FleetPulse  ·  Confidential', 30 + footerNa
                         </button>
                       ) : <span className="text-slate-300 text-xs">—</span>}
                     </TableCell>
+                    <TableCell className="text-xs">
+                    {flags[t.id]
+                    ? flags[t.id].map(m => <Badge key={m} className="bg-amber-500 hover:bg-amber-600 text-white mr-1 mb-1">{m}</Badge>)
+                    : <span className="text-slate-300">—</span>}
+                    </TableCell>
                   </TableRow>
                 ))}
                 {filtered.length === 0 && (
