@@ -77,7 +77,7 @@ function haversineKm(a, b) {
 // rows from Intellicar -> compact points [lat, lng, time, speed] plus a summary
 function buildRoute(rows) {
   const pts = rows
-    .map((r) => [Number(r.lat), Number(r.lng), Number(r.commtime), Number(r.speed) || 0])
+       .map((r) => [Number(r.latitude ?? r.lat), Number(r.longitude ?? r.lng), Number(r.commtime ?? r.time), Number(r.speed) || 0])
     .filter((p) => Number.isFinite(p[0]) && Number.isFinite(p[1]) && Number.isFinite(p[2]) && (p[0] !== 0 || p[1] !== 0))
     .sort((a, b) => a[2] - b[2])
 
