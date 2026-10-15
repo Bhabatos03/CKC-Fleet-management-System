@@ -2009,7 +2009,6 @@ function FuelRegister() {
   const [items, setItems] = useState([])
   const [vehicles, setVehicles] = useState([])
   const [viewImg, setViewImg] = useState(null)
-  const canDelete = getUser().role === 'admin'
   const [flaggedOnly, setFlaggedOnly] = useState(false)
   const [vehicleFilter, setVehicleFilter] = useState('all')
   const [fromDate, setFromDate] = useState('')
