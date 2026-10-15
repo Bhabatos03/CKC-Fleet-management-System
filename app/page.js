@@ -2089,19 +2089,6 @@ const shown = flaggedOnly ? filtered.filter(t => flags[t.id]) : filtered
   
   const totalLit = filtered.reduce((s, f) => s + f.quantity, 0)
   const totalCost = filtered.reduce((s, f) => s + f.amount, 0)
-  const dupKey = (t) => [t.vehicleId, String(t.date).slice(0, 10), t.quantity, t.amount, String(t.receiptNumber || '').trim().toLowerCase()].join('|')
-const dupCounts = {}
-items.forEach(t => { const k = dupKey(t); dupCounts[k] = (dupCounts[k] || 0) + 1 })
-const isDup = (t) => dupCounts[dupKey(t)] > 1
-
-const removeFuel = async (t) => {
-  if (!confirm(`Delete this fuel entry?\n${t.vehicleNumber} · ${fmtDate(t.date)} · ${t.quantity} L · ${fmtINR(t.amount)}`)) return
-  try {
-    await api(`fuel/${t.id}`, { method: 'DELETE' })
-    setItems(list => list.filter(x => x.id !== t.id))
-    toast.success('Fuel entry deleted')
-  } catch (e) { toast.error(e.message) }
-}
   const headers = ['Date', 'Vehicle', 'Odometer', 'Quantity(L)', 'Rate', 'Amount', 'Station', 'Receipt']
   const rows = () => filtered.map(t => [fmtDate(t.date), t.vehicleNumber, t.odometer, t.quantity, t.rate, t.amount, t.station, t.receiptNumber])
   const exportCsv = () => {
