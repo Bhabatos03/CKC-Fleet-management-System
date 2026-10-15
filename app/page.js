@@ -3972,6 +3972,12 @@ const overdueCount = items.filter(g => returnInfo(g)?.key === 'overdue').length
 function LiveTracking({ focusTripId, onFocusDone }) {
   const [trips, setTrips] = useState([])
   const [gps, setGps] = useState([])
+  const [allTrips, setAllTrips] = useState([])
+  const [replayTripId, setReplayTripId] = useState('')
+  const [route, setRoute] = useState(null)
+  const [routeLoading, setRouteLoading] = useState(false)
+  const [routeError, setRouteError] = useState('')
+  const routeLayerRef = useRef(null)
   const [selectedTrip, setSelectedTrip] = useState(null)
   const [mapReady, setMapReady] = useState(false)
   const mapRef = useRef(null)
@@ -4009,6 +4015,9 @@ function LiveTracking({ focusTripId, onFocusDone }) {
     return () => clearInterval(iv)
   }, [])
 
+  // Past and current trips, for Route Replay
+  useEffect(() => { api('trips').then(setAllTrips).catch(() => {}) }, [])
+
   // Create the map once
   useEffect(() => {
     let cancelled = false
@@ -4030,6 +4039,7 @@ function LiveTracking({ focusTripId, onFocusDone }) {
       Object.values(gpsMarkersRef.current).forEach(m => { if (m._animFrame) cancelAnimationFrame(m._animFrame) })
       gpsMarkersRef.current = {}
       fittedRef.current = false
+      routeLayerRef.current = null
       leafletMapRef.current?.remove()
       leafletMapRef.current = null
       setMapReady(false)
@@ -4141,6 +4151,57 @@ function LiveTracking({ focusTripId, onFocusDone }) {
   const gpsFor = (t) => gps.find(g => g.vehicleId === t.vehicleId)
   const liveCount = trips.filter(t => isFresh(gpsFor(t))).length
 
+  // Route replay
+  const trackedIds = new Set(gps.map(g => g.vehicleId))
+  const replayOptions = allTrips
+    .filter(t => trackedIds.has(t.vehicleId) && t.dateOut)
+    .sort((a, b) => new Date(b.dateOut) - new Date(a.dateOut))
+    .slice(0, 40)
+  const selectedReplayTrip = allTrips.find(x => x.id === replayTripId)
+
+  const clearRoute = () => {
+    if (routeLayerRef.current && leafletMapRef.current) leafletMapRef.current.removeLayer(routeLayerRef.current)
+    routeLayerRef.current = null
+  }
+
+  const drawRoute = (r) => {
+    const L = LRef.current
+    const map = leafletMapRef.current
+    if (!L || !map || !r.points.length) return
+    clearRoute()
+    const latlngs = r.points.map(p => [p[0], p[1]])
+    const group = L.layerGroup().addTo(map)
+    L.polyline(latlngs, { color: '#E60000', weight: 4, opacity: 0.85 }).addTo(group)
+    L.circleMarker(latlngs[0], { radius: 8, color: '#ffffff', weight: 2, fillColor: '#16a34a', fillOpacity: 1 }).bindTooltip('Start').addTo(group)
+    L.circleMarker(latlngs[latlngs.length - 1], { radius: 8, color: '#ffffff', weight: 2, fillColor: '#231F20', fillOpacity: 1 }).bindTooltip('End').addTo(group)
+    routeLayerRef.current = group
+    fittedRef.current = true
+    map.fitBounds(L.latLngBounds(latlngs), { padding: [40, 40] })
+    mapRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }
+
+  const showRoute = async () => {
+    const t = selectedReplayTrip
+    if (!t) return
+    const inProgress = t.status === 'Outside' || !t.timeIn
+    const start = new Date(t.dateOut).getTime()
+    const end = inProgress ? Date.now() : new Date(t.timeIn).getTime()
+    setRouteLoading(true)
+    setRouteError('')
+    setRoute(null)
+    clearRoute()
+    try {
+      const r = await api(`gps/replay?vehicleId=${encodeURIComponent(t.vehicleId)}&start=${start}&end=${end}`)
+      if (!r.points || r.points.length === 0) { setRouteError('No GPS data was recorded for this period.'); return }
+      setRoute(r)
+      drawRoute(r)
+    } catch (e) {
+      setRouteError(e.message)
+    } finally {
+      setRouteLoading(false)
+    }
+  }
+
   // Tracker health: problems sort to the top
   const health = (g) => {
     if (!hasPos(g)) return { key: 'nodata', label: 'No data', rank: 0, cls: 'bg-slate-400 hover:bg-slate-500 text-white' }
@@ -4170,6 +4231,42 @@ function LiveTracking({ focusTripId, onFocusDone }) {
         <Card><CardContent className="p-4"><div className="text-xs text-slate-500">GPS Live</div><div className="text-2xl font-bold text-emerald-600">{liveCount}</div></CardContent></Card>
         <Card><CardContent className="p-4"><div className="text-xs text-slate-500">No Live GPS</div><div className="text-2xl font-bold text-slate-400">{trips.length - liveCount}</div></CardContent></Card>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Route Replay</CardTitle>
+          <div className="text-xs text-slate-500 mt-1">Pick a trip to draw the path the vehicle took on the map below. Only vehicles with a tracker are listed.</div>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex-1 min-w-[260px]">
+              <Select value={replayTripId} onValueChange={(v) => { setReplayTripId(v); setRoute(null); setRouteError(''); clearRoute() }}>
+                <SelectTrigger><SelectValue placeholder="Select a trip" /></SelectTrigger>
+                <SelectContent>
+                  {replayOptions.map(t => (
+                    <SelectItem key={t.id} value={t.id}>
+                      {t.vehicleNumber} · {fmtDT(t.dateOut)} · {t.destination || '-'}{t.status === 'Outside' ? ' (in progress)' : ''}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Button onClick={showRoute} disabled={!replayTripId || routeLoading} className="bg-gradient-to-r from-[#E60000] to-[#E60000] hover:brightness-110 text-white">
+              {routeLoading ? 'Loading...' : 'Show route'}
+            </Button>
+            {route && <Button variant="outline" onClick={() => { clearRoute(); setRoute(null) }}>Clear</Button>}
+          </div>
+          {routeError && <div className="text-sm text-rose-600">{routeError}</div>}
+          {route && route.points.length > 0 && (
+            <div className="flex flex-wrap gap-4 text-sm bg-slate-50 rounded-lg p-3">
+              <div><span className="text-slate-500">GPS distance: </span><b>{route.distanceKm} km</b></div>
+              {selectedReplayTrip?.kmRun ? <div><span className="text-slate-500">Gate record: </span><b>{selectedReplayTrip.kmRun} km</b></div> : null}
+              <div><span className="text-slate-500">Max speed: </span><b>{route.maxSpeed} km/h</b></div>
+              <div><span className="text-slate-500">GPS points: </span><b>{route.count}</b></div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       <Card><CardContent className="p-0 overflow-hidden rounded-lg">
         <div ref={mapRef} style={{ height: '480px', width: '100%' }} />
