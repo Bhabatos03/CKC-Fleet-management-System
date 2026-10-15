@@ -4,11 +4,10 @@
 // history API. Intellicar allows only 24 history calls per vehicle per day, so:
 //   - a finished trip is fetched from Intellicar once, then served from MongoDB
 //   - each vehicle is capped at 20 fresh history calls per day (margin of 4)
+//   - the API document does not say whether times are in seconds or milliseconds,
+//     so we try milliseconds first, then seconds, and remember which one works
 //
 // GET /api/gps/replay?vehicleId=<id>&start=<epoch ms>&end=<epoch ms>
-//
-// Uses the same env vars and the same Intellicar token (stored in MongoDB) as
-// app/api/gps/live/route.js. Nothing needs to change in that file.
 
 import { NextResponse } from 'next/server'
 import { MongoClient } from 'mongodb'
@@ -125,45 +124,72 @@ export async function GET(request) {
     end = ongoing ? end : Math.ceil(end / 60000) * 60000
     if (end <= start) return NextResponse.json({ points: [], count: 0, distanceKm: 0, maxSpeed: 0 })
 
-    // Saved result? No Intellicar call needed.
+    // Saved result? No Intellicar call needed. (Saved empty results are ignored.)
     const cache = db.collection('gps_routes')
     const key = `${veh.trackerId}_${start}_${end}`
     const hit = await cache.findOne({ _id: key })
-    if (hit) {
+    if (hit && hit.count > 0) {
       const { _id, expireAt, ...rest } = hit
       return NextResponse.json({ ...rest, cached: true })
     }
 
-    // Daily budget per vehicle
+    // Daily budget per vehicle: every Intellicar history call is counted
+    const state = db.collection('gps_state')
     const day = new Date().toISOString().slice(0, 10)
-    const counter = await db.collection('gps_state').findOneAndUpdate(
-      { _id: `history_${veh.trackerId}_${day}` },
-      { $inc: { count: 1 } },
-      { upsert: true, returnDocument: 'after' }
-    )
-    const used = ((counter && counter.value !== undefined ? counter.value : counter) || {}).count || 0
-    if (used > DAILY_HISTORY_CAP) return fail('Route history limit reached for this vehicle today. Try again tomorrow.', 429)
+    const spend = async () => {
+      const c = await state.findOneAndUpdate(
+        { _id: `history_${veh.trackerId}_${day}` },
+        { $inc: { count: 1 } },
+        { upsert: true, returnDocument: 'after' }
+      )
+      return ((c && c.value !== undefined ? c.value : c) || {}).count || 0
+    }
+    if ((await spend()) > DAILY_HISTORY_CAP) {
+      return fail('Route history limit reached for this vehicle today. Try again tomorrow.', 429)
+    }
 
     let token = await getToken(db)
-    const body = (t) => ({ token: t, vehicleno: veh.trackerId, starttime: start, endtime: end })
-    let r = await icPost('getgpshistory', body(token))
-    if (r.status === 401) {
-      token = await getToken(db, true)
-      r = await icPost('getgpshistory', body(token))
+    const known = (await state.findOne({ _id: 'history_unit' }))?.unit // 'ms' or 's', once seen working
+    const order = known === 's' ? ['s', 'ms'] : ['ms', 's']
+    const makeBody = (t, unit) => ({
+      token: t,
+      vehicleno: veh.trackerId,
+      starttime: unit === 's' ? Math.floor(start / 1000) : start,
+      endtime: unit === 's' ? Math.floor(end / 1000) : end,
+    })
+
+    let rows = []
+    let usedUnit = null
+    for (let i = 0; i < order.length; i++) {
+      if (i > 0 && (await spend()) > DAILY_HISTORY_CAP) break // the retry also costs a call
+      let r = await icPost('getgpshistory', makeBody(token, order[i]))
+      if (r.status === 401) {
+        token = await getToken(db, true)
+        r = await icPost('getgpshistory', makeBody(token, order[i]))
+      }
+      if (r.status === 429) return fail('Intellicar history limit reached for this vehicle today. Try again tomorrow.', 429)
+      if (!r.json || r.json.status !== 'SUCCESS' || !Array.isArray(r.json.data)) {
+        return fail((r.json && r.json.msg) || `Intellicar returned an error (HTTP ${r.status})`, 502)
+      }
+      rows = r.json.data
+      if (rows.length > 0) { usedUnit = order[i]; break }
     }
-    if (r.status === 429) return fail('Intellicar history limit reached for this vehicle today. Try again tomorrow.', 429)
-    if (!r.json || r.json.status !== 'SUCCESS' || !Array.isArray(r.json.data)) {
-      return fail((r.json && r.json.msg) || `Intellicar returned an error (HTTP ${r.status})`, 502)
+    if (usedUnit && usedUnit !== known) {
+      await state.updateOne({ _id: 'history_unit' }, { $set: { unit: usedUnit } }, { upsert: true })
     }
 
-    const route = buildRoute(r.json.data)
+    const route = buildRoute(rows)
+    if (route.count === 0) {
+      console.log('Route replay: no points', { tracker: veh.trackerId, start, end, tried: order, rowsReturned: rows.length, sample: rows[0] || null })
+    }
+
     const doc = { _id: key, trackerId: veh.trackerId, start, end, ...route, cachedAt: now }
     if (ongoing) {
       // Unfinished trips are only kept for a day
       doc.expireAt = new Date(now + 24 * 3600 * 1000)
       await cache.createIndex({ expireAt: 1 }, { expireAfterSeconds: 0 }).catch(() => {})
     }
-    await cache.replaceOne({ _id: key }, doc, { upsert: true })
+    if (route.count > 0) await cache.replaceOne({ _id: key }, doc, { upsert: true })
 
     const { _id, expireAt, ...out } = doc
     return NextResponse.json({ ...out, cached: false })
