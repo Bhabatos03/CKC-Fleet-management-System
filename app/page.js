@@ -1558,7 +1558,7 @@ function Vehicles() {
   const [search, setSearch] = useState('')
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState(null)
-  const load = () => Promise.all([api('vehicles'), api('drivers')]).then(([v, d]) => { setItems(v); setDrivers(d) })
+ const load = () => Promise.all([api('vehicles'), api('drivers'), api('trips/outside').catch(() => [])]).then(([v, d, t]) => { setItems(v); setDrivers(d); setOutTrips(t) })
   useEffect(() => { load() }, [])
   const filtered = items.filter(v => !search || v.vehicleNumber.toLowerCase().includes(search.toLowerCase()) || (v.make || '').toLowerCase().includes(search.toLowerCase()))
   const driverName = (id) => drivers.find(d => d.id === id)?.name || '-'
