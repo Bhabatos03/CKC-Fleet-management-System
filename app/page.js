@@ -1554,6 +1554,7 @@ function Vehicles() {
   const canEdit = user.role !== 'store_admin'
   const [items, setItems] = useState([])
   const [drivers, setDrivers] = useState([])
+  const [outTrips, setOutTrips] = useState([])
   const [search, setSearch] = useState('')
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState(null)
