@@ -1603,7 +1603,7 @@ function Vehicles() {
                 <TableCell>{v.type}</TableCell>
                 <TableCell>{v.make} {v.model}</TableCell>
                 <TableCell>{v.fuelType}</TableCell>
-                <TableCell>{driverName(v.assignedDriverId)}</TableCell>
+                <TableCell>{currentDriver(v)}</TableCell>
                 <TableCell>{v.currentOdometer?.toLocaleString()} km</TableCell>
                 <TableCell>{v.expectedMileage} km/L</TableCell>
                     <TableCell><Badge variant={v.status === 'Available' ? 'default' : v.status === 'Outside' ? 'secondary' : 'destructive'} className={v.status === 'Available' ? 'bg-[#E60000] hover:bg-[#E60000] hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90 hover:brightness-90' : ''}>{v.status}</Badge></TableCell>
