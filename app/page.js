@@ -1562,6 +1562,13 @@ function Vehicles() {
   useEffect(() => { load() }, [])
   const filtered = items.filter(v => !search || v.vehicleNumber.toLowerCase().includes(search.toLowerCase()) || (v.make || '').toLowerCase().includes(search.toLowerCase()))
   const driverName = (id) => drivers.find(d => d.id === id)?.name || '-'
+  const currentDriver = (v) => {
+  if (v.status === 'Outside') {
+    const trip = outTrips.find(t => t.vehicleId === v.id)
+    if (trip) return trip.driverName || trip.employeeName || '-'
+  }
+  return driverName(v.assignedDriverId)
+}
   const submit = async (data) => {
     try {
       if (editing) { await api(`vehicles/${editing.id}`, { method: 'PUT', body: data }); toast.success('Updated') }
