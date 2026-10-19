@@ -2252,7 +2252,6 @@ doc.text('  GROUP OF JEWELLERS  ·  FleetPulse  ·  Confidential', 30 + footerNa
                 <TableHead>Date</TableHead><TableHead>Vehicle</TableHead><TableHead>Odometer</TableHead>
                 <TableHead>Qty (L)</TableHead><TableHead>Rate</TableHead><TableHead>Amount</TableHead>
                 <TableHead>Station</TableHead><TableHead>Receipt</TableHead><TableHead>Photo</TableHead>
-                <TableHead>Receipt</TableHead><TableHead>Photo</TableHead><TableHead>Flags</TableHead>
                 </TableRow></TableHeader>
               <TableBody>
               {shown.slice(0, 200).map(t => (
