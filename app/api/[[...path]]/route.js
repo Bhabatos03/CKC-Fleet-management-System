@@ -87,15 +87,13 @@ function verifyPassword(password, stored) {
 async function seedUsersIfEmpty(db) {
   const count = await db.collection('users').countDocuments()
   if (count > 0) return
-
-  const seedUsers = [
-    { username: 'admin', password: 'admin123', role: 'admin', name: 'Administrator' },
-    { username: 'security', password: 'security123', role: 'security', name: 'Security User' },
-    { username: 'tss', password: 'tss123', role: 'store_admin', name: 'TSS', storeId: 'TSS' },
-    { username: 'tsw', password: 'tsw123', role: 'store_admin', name: 'TSW', storeId: 'TSW' },
-    { username: 'ts', password: 'ts123', role: 'store_admin', name: 'TS', storeId: 'TS' },
-  ]
-
+  const pw = process.env.INITIAL_ADMIN_PASSWORD
+  if (!pw || pw.length < 12) return // no default accounts are created without a strong initial password
+  await db.collection('users').insertOne({
+    id: uuidv4(), name: 'Administrator', empId: '', mobile: '', username: 'admin',
+    password: hashPassword(pw), role: 'admin', storeId: null, status: 'Active', createdAt: new Date().toISOString(),
+  })
+}
   const now = new Date().toISOString()
   const docs = seedUsers.map((u) => ({
     id: uuidv4(),
