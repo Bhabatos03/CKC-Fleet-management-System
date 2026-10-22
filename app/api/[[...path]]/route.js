@@ -1369,10 +1369,13 @@ export async function PUT(request, { params }) {
   try {
     const db = await getDb()
     const pathArr = (await params).path || []
-    const [col, id] = pathArr
+       const [col, id] = pathArr
+    if (!sameOrigin(request)) return json({ error: 'Request blocked' }, 403)
     const body = await request.json()
-    const role = request.headers.get('x-user-role')
-
+    const auth = await getAuth(db, request)
+    if (!auth) return json({ error: 'Not signed in' }, 401)
+    const role = auth.role
+    
     if (col === 'users') {
       if (role !== 'admin') return json({ error: 'Admin access required' }, 403)
 
