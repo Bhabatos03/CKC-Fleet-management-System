@@ -122,8 +122,10 @@ async function refreshStale(db, vehicles) {
 }
 
 export async function GET(request) {
-  const role = request.headers.get('x-user-role')
-  const storeId = request.headers.get('x-store-id') || ''
+    const db = await getDb()
+  const auth = await getAuth(db, request)
+  if (!auth) return NextResponse.json({ error: 'Sign in required' }, { status: 401 })
+  const { role, storeId } = auth
   if (role !== 'admin' && role !== 'store_admin') {
     return NextResponse.json({ error: 'Not allowed' }, { status: 403 })
   }
