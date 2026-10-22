@@ -1400,6 +1400,7 @@ export async function PUT(request, { params }) {
         return json({ error: 'Store admins must be assigned a storeId' }, 400)
       }
       await db.collection('users').updateOne({ id }, { $set: body })
+      if (id !== auth.userId) await db.collection('sessions').deleteMany({ userId: id })
       const updated = await db.collection('users').findOne({ id })
       return json(cleanUser(updated))
     }
