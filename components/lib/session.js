@@ -4,7 +4,6 @@
 // cookie. The role and store live in MongoDB and are looked up on every request,
 // so the browser can no longer claim to be an administrator.
 
-import { getAuth } from '@/lib/session'
 import { randomBytes, createHash, scrypt as scryptCb, timingSafeEqual } from 'crypto'
 import { promisify } from 'util'
 
