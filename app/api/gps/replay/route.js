@@ -107,6 +107,10 @@ export async function GET(request) {
 
   try {
     const db = await getDb()
+    const auth = await getAuth(db, request)
+    if (!auth) return fail('Sign in required', 401)
+    const { role, storeId } = auth
+    if (role !== 'admin' && role !== 'store_admin') return fail('Not allowed', 403)
     const veh = await db.collection('vehicles').findOne(
       { id: vehicleId },
       { projection: { _id: 0, id: 1, vehicleNumber: 1, trackerId: 1, storeId: 1, assignedLocation: 1 } }
