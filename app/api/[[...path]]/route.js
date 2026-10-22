@@ -1470,7 +1470,7 @@ export async function DELETE(request, { params }) {
 
     if (col === 'users') {
       if (role !== 'admin') return json({ error: 'Admin access required' }, 403)
-      await db.collection('users').deleteOne({ id })
+       await db.collection('sessions').deleteMany({ userId: id })
       return json({ ok: true })
     }
 
