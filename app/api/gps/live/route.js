@@ -6,9 +6,9 @@
 // Env vars (server only, never in browser code or GitHub):
 //   INTELLICAR_USERNAME, INTELLICAR_PASSWORD, MONGO_URL, DB_NAME
 
+import { getAuth } from '@/lib/session'
 import { NextResponse, after } from 'next/server'
 import { MongoClient } from 'mongodb'
-import { getAuth } from '@/lib/session'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
