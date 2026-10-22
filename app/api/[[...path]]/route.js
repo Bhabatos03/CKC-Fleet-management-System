@@ -265,8 +265,14 @@ export async function GET(request, { params }) {
 
     const pathArr = (await params).path || []
     const path = pathArr.join('/')
-    const role = request.headers.get('x-user-role')
-    const storeId = request.headers.get('x-store-id')
+        const auth = await getAuth(db, request)
+    if (path !== 'health' && !auth) return json({ error: 'Not signed in' }, 401)
+    if (path === 'auth/me') {
+      if (auth.via !== 'session') return json({ error: 'Not signed in' }, 401)
+      return json({ user: { username: auth.username, name: auth.name, role: auth.role, storeId: auth.storeId || null } })
+    }
+    const role = auth ? auth.role : null
+    const storeId = auth ? (auth.storeId || null) : null
     const isStoreScoped = (role === 'store_admin' || role === 'security') && !!storeId
 
     // Vehicles for this store, used by trips/fuel/dashboard which key off vehicleId
