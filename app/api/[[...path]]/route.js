@@ -79,11 +79,6 @@ function verifyPassword(password, stored) {
   return crypto.timingSafeEqual(hashBuffer, suppliedBuffer)
 }
 
-// --- Seed the users collection the first time the app runs ---
-// This replaces the old hardcoded `users` object in auth/login with real,
-// hashed-password documents in Mongo, using the same credentials so nobody
-// gets locked out on cutover. Change these passwords via User Management
-// once you've confirmed login works.
 async function seedUsersIfEmpty(db) {
   const count = await db.collection('users').countDocuments()
   if (count > 0) return
