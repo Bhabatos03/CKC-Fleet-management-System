@@ -8,6 +8,7 @@
 
 import { NextResponse, after } from 'next/server'
 import { MongoClient } from 'mongodb'
+import { getAuth } from '@/lib/session'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
