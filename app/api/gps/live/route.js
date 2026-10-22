@@ -131,7 +131,6 @@ export async function GET(request) {
     return NextResponse.json({ error: 'Not allowed' }, { status: 403 })
   }
 
-  const db = await getDb()
   let vehicles = await db
     .collection('vehicles')
     .find(
