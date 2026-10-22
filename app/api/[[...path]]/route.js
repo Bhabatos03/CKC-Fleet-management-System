@@ -565,9 +565,13 @@ export async function POST(request, { params }) {
 
     const pathArr = (await params).path || []
     const path = pathArr.join('/')
+        if (!sameOrigin(request)) return json({ error: 'Request blocked' }, 403)
     const body = await request.json()
-    const role = request.headers.get('x-user-role')
-    const storeId = request.headers.get('x-store-id')
+    const auth = await getAuth(db, request)
+    if (path !== 'auth/login' && path !== 'auth/logout' && !auth) return json({ error: 'Not signed in' }, 401)
+    const role = auth ? auth.role : null
+    const storeId = auth ? (auth.storeId || null) : null
+    
     // Security users with a storeId are scoped to that location's vehicles only;
     // a security user with no storeId (e.g. the original global "Security" account)
     // stays unrestricted, same as before.
