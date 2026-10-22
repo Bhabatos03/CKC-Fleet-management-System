@@ -9,6 +9,7 @@
 //
 // GET /api/gps/replay?vehicleId=<id>&start=<epoch ms>&end=<epoch ms>
 
+import { getAuth } from '@/lib/session'
 import { NextResponse } from 'next/server'
 import { MongoClient } from 'mongodb'
 
@@ -95,9 +96,7 @@ function buildRoute(rows) {
 const fail = (error, status) => NextResponse.json({ error }, { status })
 
 export async function GET(request) {
-  const role = request.headers.get('x-user-role')
-  const storeId = request.headers.get('x-store-id') || ''
-  if (role !== 'admin' && role !== 'store_admin') return fail('Not allowed', 403)
+  
 
   const url = new URL(request.url)
   const vehicleId = url.searchParams.get('vehicleId')
