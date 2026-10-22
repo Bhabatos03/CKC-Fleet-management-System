@@ -577,14 +577,41 @@ export async function POST(request, { params }) {
     // stays unrestricted, same as before.
     const isStoreScopedSecurity = role === 'security' && !!storeId
 
-    if (path === 'auth/login') {
+        if (path === 'auth/login') {
+      const fail = () => json({ error: 'Incorrect username or password. Please try again' }, 401)
+      if (typeof body.username !== 'string' || typeof body.password !== 'string') return fail()
+
+      // Slow down password guessing: 5 failed tries per username and address, then a 15-minute wait
+      const ip = (request.headers.get('x-forwarded-for') || '').split(',')[0].trim() || 'unknown'
+      const key = `${body.username.toLowerCase()}|${ip}`
+      const attempts = db.collection('login_attempts')
+      const WINDOW = 15 * 60 * 1000
+      const rec = await attempts.findOne({ _id: key })
+      const active = rec && Date.now() - rec.first < WINDOW
+      if (active && rec.count >= 5) return json({ error: 'Too many failed attempts. Please try again in 15 minutes.' }, 429)
+
       const u = await db.collection('users').findOne({ username: body.username })
       if (u && u.status === 'Active' && verifyPassword(body.password, u.password)) {
-        return json({ token: uuidv4(), user: { username: u.username, role: u.role, name: u.name, storeId: u.storeId || null } })
+        await attempts.deleteOne({ _id: key })
+        const { cookie } = await createSession(db, u, { ip, userAgent: request.headers.get('user-agent') || '' })
+        const res = json({ user: { username: u.username, role: u.role, name: u.name, storeId: u.storeId || null } })
+        res.headers.append('Set-Cookie', cookie)
+        return res
       }
-      return json({ error: 'Incorrect username or password. Please try again' }, 401)
+
+      await attempts.createIndex({ expireAt: 1 }, { expireAfterSeconds: 0 }).catch(() => {})
+      if (active) await attempts.updateOne({ _id: key }, { $inc: { count: 1 } })
+      else await attempts.replaceOne({ _id: key }, { _id: key, count: 1, first: Date.now(), expireAt: new Date(Date.now() + WINDOW) }, { upsert: true })
+      return fail()
     }
 
+    if (path === 'auth/logout') {
+      await destroySession(db, request)
+      const res = json({ ok: true })
+      res.headers.append('Set-Cookie', clearCookie())
+      return res
+    }
+    
     if (path === 'users') {
       if (role !== 'admin') return json({ error: 'Admin access required' }, 403)
       if (!body.name || !body.username || !body.password || !body.role) {
