@@ -1385,7 +1385,7 @@ export async function PUT(request, { params }) {
           return json({ error: 'Password must be at least 6 characters' }, 400)
         }
         const result = await db.collection('users').updateOne({ id }, { $set: { password: hashPassword(body.password) } })
-        if (result.matchedCount === 0) return json({ error: 'User not found' }, 404)
+        await db.collection('sessions').deleteMany({ userId: id })
         return json({ ok: true })
       }
 
