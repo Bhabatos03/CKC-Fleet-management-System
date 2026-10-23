@@ -6593,10 +6593,17 @@ function ReadingFormDialog({ open, onOpenChange, onCreated, meters }) {
   const [trackFocus, setTrackFocus] = useState(null)
   const [active, setActive] = useState('dashboard')
   const [loaded, setLoaded] = useState(false)
-  useEffect(() => {
-    const u = localStorage.getItem('ckc_user')
-    if (u) setUser(JSON.parse(u))
-    setLoaded(true)
+    useEffect(() => {
+    api('auth/me')
+      .then(d => { localStorage.setItem('ckc_user', JSON.stringify(d.user)); setUser(d.user) })
+      .catch(e => {
+        if (e.message === 'Not signed in') { localStorage.removeItem('ckc_user'); setUser(null) }
+        else { const u = localStorage.getItem('ckc_user'); if (u) setUser(JSON.parse(u)) } // offline: keep the cached user
+      })
+      .finally(() => setLoaded(true))
+    const onOut = () => setUser(null)
+    window.addEventListener('fp-signed-out', onOut)
+    return () => window.removeEventListener('fp-signed-out', onOut)
   }, [])
 
   useEffect(() => {
