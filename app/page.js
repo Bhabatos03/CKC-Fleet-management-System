@@ -70,6 +70,7 @@ const apiOffline = async (path, body) => {
 }
 
 const flushQueue = async () => {
+  if (!getUser().role) return // not signed in yet; keep entries queued
   const q = getQueue()
   if (q.length === 0) return
   const remaining = []
