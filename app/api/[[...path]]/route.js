@@ -89,24 +89,7 @@ async function seedUsersIfEmpty(db) {
     password: hashPassword(pw), role: 'admin', storeId: null, status: 'Active', createdAt: new Date().toISOString(),
   })
 }
-  const now = new Date().toISOString()
-  const docs = seedUsers.map((u) => ({
-    id: uuidv4(),
-    name: u.name,
-    empId: u.empId || '',
-    mobile: u.mobile || '',
-    username: u.username,
-    password: hashPassword(u.password),
-    role: u.role,
-    storeId: u.storeId || null,
-    status: 'Active',
-    createdAt: now,
-  }))
-
-  await db.collection('users').insertMany(docs)
-}
-
-// --- Seed data ---
+ // --- Seed data ---
 async function seedIfEmpty(db) {
   const vCount = await db.collection('vehicles').countDocuments()
   if (vCount > 0) return
