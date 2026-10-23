@@ -44,7 +44,11 @@ const api = async (path, opts = {}) => {
     ...opts,
     body: opts.body ? JSON.stringify(opts.body) : undefined,
   })
-  const data = await res.json()
+   const data = await res.json()
+  if (res.status === 401 && path !== 'auth/login' && path !== 'auth/me' && path !== 'auth/logout') {
+    localStorage.removeItem('ckc_user')
+    window.dispatchEvent(new Event('fp-signed-out'))
+  }
   if (!res.ok) throw new Error(data.error || 'Error')
   return data
 }
