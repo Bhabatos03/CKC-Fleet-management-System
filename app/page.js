@@ -6615,7 +6615,7 @@ function ReadingFormDialog({ open, onOpenChange, onCreated, meters }) {
     document.head.appendChild(link)
   }, [])
 
-  const logout = () => { localStorage.removeItem('ckc_user'); setUser(null) }
+   const logout = () => { api('auth/logout', { method: 'POST', body: {} }).catch(() => {}); localStorage.removeItem('ckc_user'); setUser(null) }
   if (!loaded) return null
   if (!user) return <><Login onLogin={setUser} /><OfflineBanner /></>
   if (user.role === 'security') return <><SecurityHome user={user} onLogout={logout} /><OfflineBanner /></>
