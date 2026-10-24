@@ -1336,6 +1336,7 @@ export async function PUT(request, { params }) {
     const auth = await getAuth(db, request)
     if (!auth) return json({ error: 'Not signed in' }, 401)
     const role = auth.role
+    if (!LEGACY_ROLES.includes(role)) return json({ error: 'Not authorised for this area' }, 403)
     
     if (col === 'users') {
       if (role !== 'admin') return json({ error: 'Admin access required' }, 403)
@@ -1428,6 +1429,7 @@ export async function DELETE(request, { params }) {
     const auth = await getAuth(db, request)
     if (!auth) return json({ error: 'Not signed in' }, 401)
     const role = auth.role
+    if (!LEGACY_ROLES.includes(role)) return json({ error: 'Not authorised for this area' }, 403)
 
     if (col === 'users') {
       if (role !== 'admin') return json({ error: 'Admin access required' }, 403)
