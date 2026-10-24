@@ -6627,8 +6627,10 @@ function ReadingFormDialog({ open, onOpenChange, onCreated, meters }) {
 
 
   // Store admins get the same shell, but only a subset of pages/tabs
-  const allowedForStoreAdmin = ['dashboard', 'vehicles', 'trips', 'maintenance', 'tracking', 'gatepass', 'utilities']
-  const effectiveActive = user.role === 'store_admin' && !allowedForStoreAdmin.includes(active) ? 'dashboard' : active
+    const allowedForStoreAdmin = ['dashboard', 'vehicles', 'trips', 'maintenance', 'tracking', 'gatepass', 'utilities', 'booking']
+  const effectiveActive = user.role === 'brand_host'
+    ? 'booking'
+    : user.role === 'store_admin' && !allowedForStoreAdmin.includes(active) ? 'dashboard' : active
 
   return (
     <>
