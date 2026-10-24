@@ -248,6 +248,7 @@ export async function GET(request, { params }) {
     if (path === 'auth/me') {
       if (auth.via !== 'session') return json({ error: 'Not signed in' }, 401)
       return json({ user: { username: auth.username, name: auth.name, role: auth.role, storeId: auth.storeId || null } })
+      if (auth && !path.startsWith('auth/') && !LEGACY_ROLES.includes(auth.role)) return json({ error: 'Not authorised for this area' }, 403)
     }
     const role = auth ? auth.role : null
     const storeId = auth ? (auth.storeId || null) : null
