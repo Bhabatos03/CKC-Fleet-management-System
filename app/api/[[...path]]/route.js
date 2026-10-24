@@ -548,6 +548,7 @@ export async function POST(request, { params }) {
     const body = await request.json()
     const auth = await getAuth(db, request)
     if (path !== 'auth/login' && path !== 'auth/logout' && !auth) return json({ error: 'Not signed in' }, 401)
+    if (auth && !path.startsWith('auth/') && !LEGACY_ROLES.includes(auth.role)) return json({ error: 'Not authorised for this area' }, 403)
     const role = auth ? auth.role : null
     const storeId = auth ? (auth.storeId || null) : null
     
