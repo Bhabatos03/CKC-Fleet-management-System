@@ -594,6 +594,7 @@ export async function POST(request, { params }) {
     
     if (path === 'users') {
       if (role !== 'admin') return json({ error: 'Admin access required' }, 403)
+      if (!VALID_ROLES.includes(body.role)) return json({ error: 'Invalid role' }, 400)
       if (!body.name || !body.username || !body.password || !body.role) {
         return json({ error: 'Name, username, password, and role are required' }, 400)
       }
