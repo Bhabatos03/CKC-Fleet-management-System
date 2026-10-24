@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { MongoClient } from 'mongodb'
 import Anthropic from '@anthropic-ai/sdk'
+import { getAuth, sameOrigin } from '../../../lib/session'
 
 const MONGO_URL = process.env.MONGO_URL
 const DB_NAME = process.env.DB_NAME || 'ckc_fleet'
@@ -56,44 +57,87 @@ const TOOLS = [
   },
 ]
 
-async function runTool(db, name, input) {
-  const days = input?.days || 30
+// Data is limited to the signed-in user's store HERE, in the database queries,
+// so another store's records never reach the model at all.
+async function runTool(db, name, input, scope) {
+  const rawDays = Number(input?.days)
+  const days = Number.isFinite(rawDays) ? Math.min(Math.max(rawDays, 1), 365) : 30
   const since = new Date(Date.now() - days * 24 * 3600 * 1000).toISOString()
+  const storeId = scope.storeId // null for admin = all stores
+
+  let vehicleIds = null
+  if (storeId) {
+    const vs = await db.collection('vehicles').find({ assignedLocation: storeId }).toArray()
+    vehicleIds = vs.map(v => v.id)
+  }
+  const byVehicle = vehicleIds ? { vehicleId: { $in: vehicleIds } } : {}
 
   if (name === 'get_vehicles') {
-    return (await db.collection('vehicles').find({}).toArray()).map(clean)
+    const q = storeId ? { assignedLocation: storeId } : {}
+    return (await db.collection('vehicles').find(q).toArray()).map(clean)
   }
   if (name === 'get_gate_passes') {
-    return (await db.collection('gatepasses').find({}).sort({ createdAt: -1 }).limit(200).toArray()).map(clean)
+    const q = storeId ? { storeId } : {}
+    return (await db.collection('gatepasses').find(q).sort({ createdAt: -1 }).limit(200).toArray()).map(clean)
   }
   if (name === 'get_drivers') {
-    return (await db.collection('drivers').find({}).toArray()).map(clean)
+    const q = storeId ? { $or: [{ assignedLocation: storeId }, { storeId }] } : {}
+    return (await db.collection('drivers').find(q).toArray()).map(clean)
   }
   if (name === 'get_trips_summary') {
-    return (await db.collection('trips').find({ dateOut: { $gte: since } }).sort({ dateOut: -1 }).limit(300).toArray()).map(clean)
+    return (await db.collection('trips').find({ dateOut: { $gte: since }, ...byVehicle }).sort({ dateOut: -1 }).limit(300).toArray()).map(clean)
   }
   if (name === 'get_fuel_summary') {
-    return (await db.collection('fuel_entries').find({ date: { $gte: since } }).sort({ date: -1 }).limit(300).toArray()).map(clean)
+    return (await db.collection('fuel_entries').find({ date: { $gte: since }, ...byVehicle }).sort({ date: -1 }).limit(300).toArray()).map(clean)
   }
   if (name === 'get_maintenance') {
-    return (await db.collection('maintenance').find({}).sort({ serviceDate: -1 }).limit(200).toArray()).map(clean)
+    return (await db.collection('maintenance').find({ ...byVehicle }).sort({ serviceDate: -1 }).limit(200).toArray()).map(clean)
   }
   return { error: 'Unknown tool' }
 }
 
 export async function POST(request) {
   try {
-    const { question, role, storeId } = await request.json()
-    if (!question) return NextResponse.json({ error: 'No question provided' }, { status: 400 })
+    const db = await getDb()
+
+    // 1. Must be a real signed-in session from our own site
+    if (!sameOrigin(request)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    const auth = await getAuth(db, request)
+    if (!auth || auth.via !== 'session') return NextResponse.json({ error: 'Not signed in' }, { status: 401 })
+
+    // 2. Role and store come from the session, never from the request body
+    const role = auth.role
+    const storeId = auth.storeId || null
     if (!['admin', 'store_admin'].includes(role)) {
       return NextResponse.json({ error: 'Not authorized' }, { status: 403 })
     }
+    if (role === 'store_admin' && !storeId) {
+      return NextResponse.json({ error: 'Not authorized' }, { status: 403 })
+    }
 
-    const db = await getDb()
+    // 3. Limit each user to 20 questions per minute (this call costs money)
+    const col = db.collection('rate_limits')
+    await col.createIndex({ expireAt: 1 }, { expireAfterSeconds: 0 }).catch(() => {})
+    const key = `ask|${auth.username}`
+    const now = Date.now()
+    const rec = await col.findOne({ _id: key })
+    if (rec && now - rec.first < 60000) {
+      if (rec.count >= 20) return NextResponse.json({ error: 'Too many questions. Please wait a minute.' }, { status: 429 })
+      await col.updateOne({ _id: key }, { $inc: { count: 1 } })
+    } else {
+      await col.replaceOne({ _id: key }, { _id: key, count: 1, first: now, expireAt: new Date(now + 60000) }, { upsert: true })
+    }
+
+    const body = await request.json()
+    const question = typeof body.question === 'string' ? body.question.trim() : ''
+    if (!question) return NextResponse.json({ error: 'No question provided' }, { status: 400 })
+    if (question.length > 500) return NextResponse.json({ error: 'Question is too long. Please keep it short.' }, { status: 400 })
+
+    const scope = { storeId: role === 'store_admin' ? storeId : null }
     const today = new Date().toLocaleDateString('en-CA')
 
     const scopeNote = role === 'store_admin'
-      ? `The user is a Store Admin for store "${storeId}". Only consider vehicles/drivers/gate passes/trips/fuel belonging to store "${storeId}" (match on assignedLocation or storeId fields) — ignore data from other stores. Don't mention the scoping explicitly, just answer as if that's the only data that exists.`
+      ? `The user is a Store Admin. All data you can fetch already belongs to their store, so answer from it as if that is the only data that exists. Never mention other stores.`
       : `The user is an Administrator and can see data across all stores (TS, TSS, TSW).`
 
     const messages = [
@@ -121,7 +165,7 @@ If the user's message is a closing remark, a dismissal, or indicates they don't 
       messages.push({ role: 'assistant', content: response.content })
       const toolResults = []
       for (const tu of toolUses) {
-        const result = await runTool(db, tu.name, tu.input)
+        const result = await runTool(db, tu.name, tu.input, scope)
         toolResults.push({ type: 'tool_result', tool_use_id: tu.id, content: JSON.stringify(result).slice(0, 15000) })
       }
       messages.push({ role: 'user', content: toolResults })
