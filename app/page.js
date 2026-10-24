@@ -6647,6 +6647,7 @@ function ReadingFormDialog({ open, onOpenChange, onCreated, meters }) {
       {effectiveActive === 'mileage' && <Mileage />}
       {effectiveActive === 'reports' && <Reports />}
       {effectiveActive === 'users' && <UserManagement />}
+      {effectiveActive === 'booking' && <BookingModule api={api} user={user} />}
     </AdminShell>
     <OfflineBanner />
       <AskFleetPulse />
