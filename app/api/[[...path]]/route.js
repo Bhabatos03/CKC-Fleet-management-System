@@ -1361,6 +1361,7 @@ export async function PUT(request, { params }) {
       }
       if (body.role === ['store_admin', 'brand_host'].includes(body.role) && !body.storeId) {
         return json({ error: 'Store admins must be assigned a storeId' }, 400)
+        if (body.role && !VALID_ROLES.includes(body.role)) return json({ error: 'Invalid role' }, 400)
       }
       await db.collection('users').updateOne({ id }, { $set: body })
       if (id !== auth.userId) await db.collection('sessions').deleteMany({ userId: id })
