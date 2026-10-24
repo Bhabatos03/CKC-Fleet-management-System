@@ -260,6 +260,10 @@ export async function GET(request, { params }) {
       const storeVehicles = await db.collection('vehicles').find({ assignedLocation: storeId }).toArray()
       storeVehicleIds = storeVehicles.map(v => v.id)
     }
+    const isFleetMasterPath = path === 'vehicles' || path.startsWith('vehicles/') || path === 'drivers' || path.startsWith('drivers/')
+if (isFleetMasterPath && request.method !== 'GET' && role !== 'admin') {
+  return json({ error: 'Only an administrator can add or change vehicles and drivers' }, 403)
+}
 
     if (path === 'health') return json({ ok: true })
 
