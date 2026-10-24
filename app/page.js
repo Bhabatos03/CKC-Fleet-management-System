@@ -2606,6 +2606,7 @@ function MaintenanceDialog({ open, onOpenChange, onSubmit, initial, vehicles }) 
 const ROLES = [
   { value: 'admin', label: 'Administrator' },
   { value: 'store_admin', label: 'Store Admin' },
+  { value: 'brand_host', label: 'Brand Host' },
   { value: 'security', label: 'Security' },
 ]
 
