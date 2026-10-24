@@ -2748,8 +2748,8 @@ function UserDialog({ open, onOpenChange, onSubmit, initial }) {
   }, [initial, open])
   const set = (k, v) => setF(x => ({ ...x, [k]: v }))
 
-  const showStore = f.role === 'store_admin' || f.role === 'security'
-  const requiresStore = f.role === 'store_admin' // security's store is optional — a security user with no store stays global/unrestricted
+  const showStore = f.role === 'store_admin' || f.role === 'security' || f.role === 'brand_host'
+  const requiresStore = f.role === 'store_admin' || f.role === 'brand_host'
   const canSave = f.name && f.username && (initial || f.password) && f.role && (!requiresStore || f.storeId)
 
   return (
