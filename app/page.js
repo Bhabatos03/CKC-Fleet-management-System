@@ -1192,6 +1192,7 @@ function AdminShell({ user, onLogout, children, active, setActive }) {
     { id: 'mileage', label: 'Mileage', icon: Gauge },
     { id: 'reports', label: 'Reports', icon: Download },
     { id: 'tracking', label: 'Track Vehicle', icon: MapPin },
+    { id: 'booking', label: 'Vehicle Booking', icon: Truck },
   ]
   const utilityNav = [
     { id: 'utilities', label: 'Utilities', icon: Zap },
