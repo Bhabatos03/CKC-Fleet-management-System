@@ -600,7 +600,7 @@ export async function POST(request, { params }) {
       }
       const existing = await db.collection('users').findOne({ username: body.username })
       if (existing) return json({ error: 'Username already exists' }, 409)
-      if (body.role === 'store_admin' && !body.storeId) {
+      if (body.role === ['store_admin', 'brand_host'].includes(body.role) && !body.storeId) {
         return json({ error: 'Store admins must be assigned a storeId' }, 400)
       }
 
