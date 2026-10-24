@@ -254,7 +254,13 @@ export async function GET(request, { params }) {
     const role = auth ? auth.role : null
     const storeId = auth ? (auth.storeId || null) : null
     const isStoreScoped = (role === 'store_admin' || role === 'security') && !!storeId
-
+    // Brand Hosts may use bookings and sign-in only. Nothing else in FleetPulse.
+if (role === 'brand_host' && !(path === 'bookings' || path.startsWith('bookings/') || path.startsWith('auth/'))) {
+  return json({ error: 'Not permitted' }, 403)
+}
+if (path === 'bookings' || path.startsWith('bookings/')) {
+  return await handleBookings({ db, request, path, auth, body: typeof body === 'undefined' ? {} : body, json })
+}
     // Vehicles for this store, used by trips/fuel/dashboard which key off vehicleId
     let storeVehicleIds = null
     if (isStoreScoped) {
