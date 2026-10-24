@@ -1202,9 +1202,11 @@ function AdminShell({ user, onLogout, children, active, setActive }) {
   ]
 
   const allowedIds = user.role === 'store_admin'
-    ? ['dashboard', 'vehicles', 'trips', 'maintenance', 'tracking', 'gatepass', 'utilities']
-    : null
-
+    ? ['dashboard', 'vehicles', 'trips', 'maintenance', 'tracking', 'gatepass', 'utilities', 'booking']
+    : user.role === 'brand_host'
+      ? ['booking']
+      : null
+  
   const visibleFleetNav = allowedIds ? fleetNav.filter(n => allowedIds.includes(n.id)) : fleetNav
   const visibleUtilityNav = allowedIds ? utilityNav.filter(n => allowedIds.includes(n.id)) : utilityNav
   const visibleAdminNav = user.role === 'admin' ? adminOnlyNav : []
