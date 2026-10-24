@@ -1241,7 +1241,7 @@ function AdminShell({ user, onLogout, children, active, setActive }) {
    className="w-full max-w-[200px] h-auto object-contain"
     />
     <div className="text-[12px] text-amber-200/60 tracking-[0.2em] mt-2">
-      FleetPulse · {user.role === 'store_admin' ? (user.name || 'STORE') : 'ADMIN'}
+     FleetPulse · {(user.role === 'store_admin' || user.role === 'brand_host') ? (user.name || 'STORE') : 'ADMIN'}
     </div>
   </div>
   <button onClick={() => setDrawerOpen(false)} className="md:hidden text-slate-300 hover:text-white p-1 flex-shrink-0">
