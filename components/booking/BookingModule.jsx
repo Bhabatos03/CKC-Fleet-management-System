@@ -206,7 +206,7 @@ function RouteMap({ points, line }) {
       if (dead || !el.current) return
       if (!live.current.map) {
         const map = L.map(el.current, { scrollWheelZoom: false })
-        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        L.tileLayer('/api/bookings/geo/tile/{z}/{x}/{y}', {
           maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a> contributors',
         }).addTo(map)
         live.current = { map, layer: L.layerGroup().addTo(map) }
