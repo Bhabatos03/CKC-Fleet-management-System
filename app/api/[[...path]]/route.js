@@ -1450,6 +1450,9 @@ export async function DELETE(request, { params }) {
     if (!sameOrigin(request)) return json({ error: 'Request blocked' }, 403)
     const auth = await getAuth(db, request)
     if (!auth) return json({ error: 'Not signed in' }, 401)
+    if (pathArr[0] === 'bookings') {
+  return await handleBookings({ db, request, path: pathArr.join('/'), auth, body: {}, json })
+}
     const role = auth.role
     if (!LEGACY_ROLES.includes(role)) return json({ error: 'Not authorised for this area' }, 403)
 
