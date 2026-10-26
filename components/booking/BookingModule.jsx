@@ -1,9 +1,11 @@
 'use client'
 // components/booking/BookingModule.jsx
-// Vehicle Booking Management, Phases 1-2: New Booking form, vehicle and driver allocation, All Bookings register.
+// Vehicle Booking Management, Phases 1-3: New Booking form with map place search and route estimate,
+// vehicle and driver allocation, All Bookings register.
 // Rendered from page.js as <BookingModule api={api} user={user} />.
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
+import 'leaflet/dist/leaflet.css'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -12,7 +14,7 @@ import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Textarea } from '@/components/ui/textarea'
 import { toast } from 'sonner'
-import { Plus, Search, Download, Eye, X, CheckCircle2, Trash2, FileText, ArrowLeft, Car, AlertTriangle } from 'lucide-react'
+import { Plus, Search, Download, Eye, X, CheckCircle2, Trash2, FileText, ArrowLeft, Car, AlertTriangle, MapPin } from 'lucide-react'
 import {
   BOOKING_TYPES, partyOf, SOURCES, PRIORITIES, CUSTOMER_TYPES, TRIP_TYPES, PURPOSES,
   ITEM_CATEGORIES, STATUSES, STATUS_COLORS,
@@ -63,7 +65,7 @@ const fromBooking = (b) => {
       ...base.trip, ...b.trip,
       pickup: { ...base.trip.pickup, ...b.trip.pickup },
       drop: { ...base.trip.drop, ...b.trip.drop },
-      stops: (b.trip.stops || []).map(s => ({ address: s.address, landmark: s.landmark || '' })),
+      stops: (b.trip.stops || []).map(s => ({ address: s.address, landmark: s.landmark || '', lat: s.lat, lng: s.lng, ref: s.ref, manual: s.manual !== false })),
       returnLeg: { ...base.trip.returnLeg, ...(b.trip.returnLeg || {}) },
       passengers: b.trip.passengers ?? '',
     },
@@ -103,6 +105,194 @@ const Section = ({ title, children, note }) => (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">{children}</div>
   </div>
 )
+
+// ================= PLACE SEARCH, MAP AND ROUTE (Phase 3) =================
+const hasPoint = (p) => !!p && p.manual === false && Number.isFinite(p.lat) && Number.isFinite(p.lng)
+
+// Add minutes to HH:MM. Returns null if the result is not on the same day.
+const addMinutes = (hhmm, mins) => {
+  const m = /^(\d\d):(\d\d)$/.exec(hhmm || '')
+  if (!m) return null
+  const t = Number(m[1]) * 60 + Number(m[2]) + mins
+  if (t >= 24 * 60) return null
+  return `${String(Math.floor(t / 60)).padStart(2, '0')}:${String(t % 60).padStart(2, '0')}`
+}
+
+// A text box that suggests places as you type. Choosing one stores its map position; typing again clears it,
+// so a stored position always matches the text shown. Typing a plain address without choosing is still allowed.
+function LocationInput({ api, value, onChange, placeholder, label }) {
+  const [items, setItems] = useState([])
+  const [open, setOpen] = useState(false)
+  const [active, setActive] = useState(-1)
+  const [status, setStatus] = useState('idle') // idle | loading | empty | error
+  const [errMsg, setErrMsg] = useState('')
+  const typed = useRef(false)
+  const listId = useRef(`loc-${Math.random().toString(36).slice(2, 8)}`).current
+  const text = value?.address || ''
+
+  useEffect(() => {
+    if (!typed.current) return
+    const q = text.trim()
+    if (q.length < 3) { setItems([]); setOpen(false); setStatus('idle'); return }
+    let live = true
+    setStatus('loading')
+    const t = setTimeout(() => {
+      api(`bookings/geo/search?q=${encodeURIComponent(q)}`)
+        .then(r => {
+          if (!live) return
+          const list = r.places || []
+          setItems(list); setActive(-1); setOpen(true); setStatus(list.length ? 'idle' : 'empty')
+        })
+        .catch(e => { if (live) { setItems([]); setStatus('error'); setErrMsg(e.message); setOpen(true) } })
+    }, 450)
+    return () => { live = false; clearTimeout(t) }
+  }, [text]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const choose = (p) => {
+    typed.current = false
+    setOpen(false); setItems([]); setStatus('idle')
+    onChange({ ...value, address: p.address, lat: p.lat, lng: p.lng, ref: p.ref || '', manual: false })
+  }
+  const onKey = (e) => {
+    if (!open || !items.length) { if (e.key === 'Escape') setOpen(false); return }
+    if (e.key === 'ArrowDown') { e.preventDefault(); setActive(a => (a + 1) % items.length) }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); setActive(a => (a <= 0 ? items.length - 1 : a - 1)) }
+    else if (e.key === 'Enter' && active >= 0) { e.preventDefault(); choose(items[active]) }
+    else if (e.key === 'Escape') setOpen(false)
+  }
+
+  return (
+    <div className="relative">
+      <Input
+        role="combobox" aria-expanded={open} aria-controls={listId} aria-autocomplete="list" aria-label={label}
+        aria-activedescendant={active >= 0 ? `${listId}-${active}` : undefined}
+        value={text} placeholder={placeholder} maxLength={300} autoComplete="off"
+        onChange={e => { typed.current = true; onChange({ ...value, address: e.target.value, lat: undefined, lng: undefined, ref: '', manual: true }) }}
+        onKeyDown={onKey} onFocus={() => items.length && setOpen(true)} onBlur={() => setTimeout(() => setOpen(false), 150)}
+      />
+      <div className="mt-1 text-[11px] min-h-[14px]" aria-live="polite">
+        {status === 'loading' ? <span className="text-slate-500">Searching…</span>
+          : hasPoint(value) ? <span className="text-emerald-700 inline-flex items-center gap-1"><MapPin className="w-3 h-3" /> Found on the map</span>
+            : text.trim().length >= 3 ? <span className="text-slate-500">Typed address, not on the map. Pick a suggestion to see it on the map.</span> : null}
+      </div>
+      {open && (
+        <ul id={listId} role="listbox" className="absolute z-30 mt-0.5 w-full max-h-64 overflow-auto rounded-lg border bg-white shadow-lg text-sm">
+          {status === 'error' && <li className="p-3 text-rose-700 text-xs">{errMsg || 'Map search is not available.'} You can still type the address.</li>}
+          {status === 'empty' && <li className="p-3 text-slate-500 text-xs">No matching places. You can still type the full address.</li>}
+          {items.map((p, i) => (
+            <li key={`${p.ref}-${i}`} id={`${listId}-${i}`} role="option" aria-selected={i === active}
+              onMouseDown={e => { e.preventDefault(); choose(p) }} onMouseEnter={() => setActive(i)}
+              className={`px-3 py-2 cursor-pointer border-b last:border-b-0 ${i === active ? 'bg-red-50' : 'hover:bg-slate-50'}`}>
+              <div className="font-medium break-words">{p.address}</div>
+              {p.kind && <div className="text-[11px] text-slate-500 capitalize">{p.kind}</div>}
+            </li>
+          ))}
+          <li className="px-3 py-1 text-[10px] text-slate-400">Places from OpenStreetMap contributors</li>
+        </ul>
+      )}
+    </div>
+  )
+}
+
+// OpenStreetMap map drawn with Leaflet (loaded only when a map is shown). No Google services.
+function RouteMap({ points, line }) {
+  const el = useRef(null)
+  const live = useRef({})
+  useEffect(() => {
+    let dead = false
+    ;(async () => {
+      const mod = await import('leaflet')
+      const L = mod.default || mod
+      if (dead || !el.current) return
+      if (!live.current.map) {
+        const map = L.map(el.current, { scrollWheelZoom: false })
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a> contributors',
+        }).addTo(map)
+        live.current = { map, layer: L.layerGroup().addTo(map) }
+      }
+      const { map, layer } = live.current
+      layer.clearLayers()
+      if (line && line.length) L.polyline(line, { color: RED, weight: 4, opacity: 0.85 }).addTo(layer)
+      points.forEach((p) => {
+        const icon = L.divIcon({
+          className: '', iconSize: [26, 26], iconAnchor: [13, 13],
+          html: `<div style="width:26px;height:26px;border-radius:13px;background:#231F20;color:#fff;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;font:600 12px sans-serif">${p.tag}</div>`,
+        })
+        L.marker([p.lat, p.lng], { icon, title: p.title }).addTo(layer)
+      })
+      const bounds = L.latLngBounds(line && line.length ? line : points.map(p => [p.lat, p.lng]))
+      map.fitBounds(bounds, { padding: [24, 24], maxZoom: 16 })
+      setTimeout(() => map.invalidateSize(), 50)
+    })().catch(() => {})
+    return () => { dead = true }
+  }, [points, line])
+  useEffect(() => () => { try { live.current.map?.remove() } catch (e) { /* already gone */ } live.current = {} }, [])
+  return <div ref={el} role="img" aria-label="Map of the pickup, stops and drop" className="h-64 w-full rounded-lg border bg-slate-100" style={{ isolation: 'isolate' }} />
+}
+
+// Distance and time for the chosen places. This is a planning estimate only; it does not check whether any vehicle is free.
+function RoutePanel({ api, trip, onApplyDrop }) {
+  const [res, setRes] = useState(null)
+  const [state, setState] = useState('idle') // idle | loading | none | error
+  const [msg, setMsg] = useState('')
+  const stops = trip.stops.filter(s => s.address.trim())
+  const typedStops = stops.filter(s => !hasPoint(s)).length
+  const ready = hasPoint(trip.pickup) && hasPoint(trip.drop) && typedStops === 0
+  const chainKey = [trip.pickup, ...stops, trip.drop].map(p => `${p.lat ?? ''},${p.lng ?? ''}`).join('|')
+  const chain = useMemo(() => [trip.pickup, ...stops, trip.drop], [chainKey]) // eslint-disable-line react-hooks/exhaustive-deps
+  const key = ready ? chain.map(p => `${p.lat},${p.lng}`).join('|') : ''
+
+  useEffect(() => {
+    if (!key) { setRes(null); setState('idle'); return }
+    let live = true
+    setState('loading')
+    const t = setTimeout(() => {
+      api('bookings/geo/route', { method: 'POST', body: { points: chain.map(p => ({ lat: p.lat, lng: p.lng })) } })
+        .then(r => { if (!live) return; if (r.route) { setRes(r.route); setState('idle') } else { setRes(null); setState('none'); setMsg(r.message || '') } })
+        .catch(e => { if (live) { setRes(null); setState('error'); setMsg(e.message) } })
+    }, 600)
+    return () => { live = false; clearTimeout(t) }
+  }, [key]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const points = useMemo(() => (ready ? chain.map((p, i) => ({
+    lat: p.lat, lng: p.lng, tag: i === 0 ? 'A' : i === chain.length - 1 ? 'B' : String(i), title: p.address,
+  })) : []), [key]) // eslint-disable-line react-hooks/exhaustive-deps
+  const line = res?.geometry
+
+  if (!hasPoint(trip.pickup) && !hasPoint(trip.drop)) {
+    return <p className="sm:col-span-2 text-[11px] text-slate-500">Choose pickup and drop from the suggestions to see them on a map with a route estimate. Typed addresses are saved as text.</p>
+  }
+  if (!ready) {
+    return <p className="sm:col-span-2 text-[11px] text-slate-500">
+      {typedStops > 0 ? 'Choose each stop from the suggestions too, to see the route.' : 'Choose both the pickup and the drop from the suggestions to see the route.'}
+    </p>
+  }
+  const drop = res ? addMinutes(trip.pickupTime, res.plannedMin) : null
+  return (
+    <div className="sm:col-span-2 space-y-2">
+      <RouteMap points={points} line={line} />
+      <div className="rounded-lg bg-slate-50 border p-3 text-sm space-y-1" aria-live="polite">
+        {state === 'loading' && <div className="text-slate-500">Working out the route…</div>}
+        {state === 'error' && <div className="text-amber-800">{msg || 'Route estimate is not available.'} The booking can still be saved.</div>}
+        {state === 'none' && <div className="text-amber-800">{msg}</div>}
+        {res && (
+          <>
+            <div><b>{res.distanceKm} km</b> · about <b>{res.durationMin} min</b> of driving. Allowing for traffic and stops, plan for about <b>{res.plannedMin} min</b>.</div>
+            <div className="text-[11px] text-slate-500">
+              A road estimate for the way there{trip.tripType === 'Round Trip' ? ' only (the return is not included)' : ''}. It does not check whether a vehicle or driver is free; that is done in the next steps.
+            </div>
+            {trip.pickupTime && (drop
+              ? <Button type="button" size="sm" variant="outline" onClick={() => onApplyDrop(drop)} disabled={trip.expectedDropTime === drop}>
+                {trip.expectedDropTime === drop ? `Expected drop time is ${drop}` : `Use ${drop} as the expected drop time`}
+              </Button>
+              : <div className="text-[11px] text-amber-800">This trip would run past midnight, so a same-day drop time cannot be suggested.</div>)}
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
 
 // ================= VEHICLE & DRIVER ALLOCATION PANEL =================
 // Shows who is free for the booking's time and lets the user pick. The server checks again when saving,
@@ -509,17 +699,17 @@ function BookingForm({ api, meta, initial, onDone, onCancel }) {
           </Section>
 
           <Section title="Locations" note={
-            <p className="text-[11px] text-slate-500">Type the full address. Map search and route estimates are coming in a later phase.</p>
+            <p className="text-[11px] text-slate-500">Start typing a place and pick it from the list to put it on the map. You can also type a full address.</p>
           }>
             <Field label="Pickup location" required error={E('trip.pickup')} className="sm:col-span-2">
-              <Input value={f.trip.pickup.address} onChange={e => set('trip.pickup.address', e.target.value)} maxLength={300} placeholder="Building, street, locality, city" />
+              <LocationInput api={api} label="Pickup location" value={f.trip.pickup} onChange={v => set('trip.pickup', v)} placeholder="Building, street, locality, city" />
             </Field>
             <Field label="Pickup landmark" hint="Optional">
               <Input value={f.trip.pickup.landmark} onChange={e => set('trip.pickup.landmark', e.target.value)} maxLength={120} />
             </Field>
             <div className="hidden sm:block" />
             <Field label="Drop location" required error={E('trip.drop')} className="sm:col-span-2">
-              <Input value={f.trip.drop.address} onChange={e => set('trip.drop.address', e.target.value)} maxLength={300} placeholder="Building, street, locality, city" />
+              <LocationInput api={api} label="Drop location" value={f.trip.drop} onChange={v => set('trip.drop', v)} placeholder="Building, street, locality, city" />
             </Field>
             <Field label="Drop landmark" hint="Optional">
               <Input value={f.trip.drop.landmark} onChange={e => set('trip.drop.landmark', e.target.value)} maxLength={120} />
@@ -529,10 +719,12 @@ function BookingForm({ api, meta, initial, onDone, onCancel }) {
             {(f.trip.tripType === 'Multiple Stops' || f.trip.stops.length > 0) && (
               <div className="sm:col-span-2 space-y-2">
                 <Label className="text-xs font-semibold tracking-wide text-slate-600">Additional stops</Label>
-                {f.trip.stops.map((s, i) => (
-                  <div key={i} className="flex gap-2">
-                    <Input value={s.address} placeholder={`Stop ${i + 1} address`} maxLength={300}
-                      onChange={e => set('trip.stops', f.trip.stops.map((x, j) => j === i ? { ...x, address: e.target.value } : x))} />
+                {f.trip.stops.map((st, i) => (
+                  <div key={i} className="flex gap-2 items-start">
+                    <div className="flex-1">
+                      <LocationInput api={api} label={`Stop ${i + 1}`} value={st} placeholder={`Stop ${i + 1} address`}
+                        onChange={v => set('trip.stops', f.trip.stops.map((x, j) => j === i ? { ...x, ...v } : x))} />
+                    </div>
                     <Button type="button" variant="outline" size="sm" aria-label={`Remove stop ${i + 1}`}
                       onClick={() => set('trip.stops', f.trip.stops.filter((_, j) => j !== i))}><Trash2 className="w-4 h-4" /></Button>
                   </div>
@@ -540,10 +732,12 @@ function BookingForm({ api, meta, initial, onDone, onCancel }) {
                 {E('trip.stops') && <p className="text-[11px] text-rose-600">{E('trip.stops')}</p>}
                 {f.trip.stops.length < 5 && (
                   <Button type="button" variant="outline" size="sm"
-                    onClick={() => set('trip.stops', [...f.trip.stops, { address: '', landmark: '' }])}><Plus className="w-4 h-4 mr-1" /> Add stop</Button>
+                    onClick={() => set('trip.stops', [...f.trip.stops, { address: '', landmark: '', manual: true }])}><Plus className="w-4 h-4 mr-1" /> Add stop</Button>
                 )}
               </div>
             )}
+
+            <RoutePanel api={api} trip={f.trip} onApplyDrop={(t) => set('trip.expectedDropTime', t)} />
 
             {f.trip.tripType === 'Round Trip' && (
               <div className="sm:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-3 rounded-lg bg-slate-50 p-3">
@@ -659,6 +853,7 @@ function printBooking(b) {
     ['Name', b.requester?.name], ['Contact', b.requester?.mobile], ['Brand Host', b.brandHost?.name],
     ['Travel date', fmtDay(b.trip?.travelDate)], ['Pickup time', b.trip?.pickupTime],
     ['Pickup', b.trip?.pickup?.address], ['Drop', b.trip?.drop?.address],
+    ['Distance (estimate)', b.trip?.route ? `${b.trip.route.distanceKm} km, about ${b.trip.route.durationMin} min` : '-'],
     ['Passengers', b.trip?.passengers ?? '-'], ['Purpose', b.trip?.purpose], ['Instructions', b.trip?.instructions],
     ['Vehicle', b.allocation ? `${b.allocation.vehicleNumber} ${b.allocation.vehicleModel || ''}` : 'Not allocated'], ['Driver', b.allocation?.driverName || '-'],
     ['Created by', `${b.createdBy?.name} on ${fmtWhen(b.createdAt)}`],
@@ -728,6 +923,7 @@ function BookingDetail({ api, id, onClose, onEdit, onChanged }) {
               <Row k="Travel" v={`${fmtDay(b.trip?.travelDate)} at ${b.trip?.pickupTime}`} />
               <Row k="Pickup" v={b.trip?.pickup?.address} />
               <Row k="Drop" v={b.trip?.drop?.address} />
+              {b.trip?.route && <Row k="Distance" v={`${b.trip.route.distanceKm} km · about ${b.trip.route.durationMin} min driving (estimate)`} />}
               {(b.trip?.stops || []).map((s, i) => <Row key={i} k={`Stop ${i + 1}`} v={s.address} />)}
               {b.trip?.returnLeg && <Row k="Return" v={`${fmtDay(b.trip.returnLeg.date)} at ${b.trip.returnLeg.time}`} />}
               {b.party !== 'delivery' && <Row k="Passengers" v={`${b.trip?.passengers ?? '-'} · ${b.trip?.purpose || '-'}`} />}
