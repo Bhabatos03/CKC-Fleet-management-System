@@ -1,6 +1,6 @@
 'use client'
 // components/booking/BookingModule.jsx
-// Vehicle Booking Management, Phase 1: New Booking form and the All Bookings register.
+// Vehicle Booking Management, Phases 1-2: New Booking form, vehicle and driver allocation, All Bookings register.
 // Rendered from page.js as <BookingModule api={api} user={user} />.
 
 import { useState, useEffect, useRef } from 'react'
@@ -12,7 +12,7 @@ import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Textarea } from '@/components/ui/textarea'
 import { toast } from 'sonner'
-import { Plus, Search, Download, Eye, X, CheckCircle2, Trash2, FileText, ArrowLeft } from 'lucide-react'
+import { Plus, Search, Download, Eye, X, CheckCircle2, Trash2, FileText, ArrowLeft, Car, AlertTriangle } from 'lucide-react'
 import {
   BOOKING_TYPES, partyOf, SOURCES, PRIORITIES, CUSTOMER_TYPES, TRIP_TYPES, PURPOSES,
   ITEM_CATEGORIES, STATUSES, STATUS_COLORS,
@@ -36,7 +36,7 @@ const setIn = (obj, path, val) => {
 
 const blankForm = () => ({
   bookingType: '', source: 'Phone Call', priority: 'Normal', department: '', remarks: '',
-  storeId: '', brandHostUsername: '',
+  storeId: '', brandHostUsername: '', vehicleId: '', driverId: '',
   requester: { name: '', mobile: '', crmRef: '', customerType: '', language: '', empId: '', department: '', approvingManager: '' },
   delivery: {
     sendingUnit: '', receivingUnit: '', recipientName: '', recipientMobile: '', itemCategory: '',
@@ -54,6 +54,7 @@ const fromBooking = (b) => {
   return {
     ...base,
     id: b.id, version: b.version, status: b.status,
+    vehicleId: b.allocation?.vehicleId || '', driverId: b.allocation?.driverId || '', hadAllocation: !!b.allocation,
     bookingType: b.bookingType, source: b.source, priority: b.priority, department: b.department || '', remarks: b.remarks || '',
     storeId: b.storeId, brandHostUsername: b.brandHost?.username || '',
     requester: { ...base.requester, ...b.requester },
@@ -103,14 +104,134 @@ const Section = ({ title, children, note }) => (
   </div>
 )
 
+// ================= VEHICLE & DRIVER ALLOCATION PANEL =================
+// Shows who is free for the booking's time and lets the user pick. The server checks again when saving,
+// so a vehicle taken in the meantime is refused with a clear message.
+function AllocationPanel({ api, query, vehicleId, driverId, onPick, onSuggest, refreshKey = 0 }) {
+  const [res, setRes] = useState(null)
+  const [err, setErr] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [showOut, setShowOut] = useState(false)
+
+  useEffect(() => {
+    if (!query) { setRes(null); setErr(''); return }
+    let live = true
+    setLoading(true)
+    const t = setTimeout(() => {
+      api(`bookings/availability?${query}`)
+        .then(r => { if (live) { setRes(r); setErr('') } })
+        .catch(e => { if (live) { setRes(null); setErr(e.message) } })
+        .finally(() => { if (live) setLoading(false) })
+    }, 350)
+    return () => { live = false; clearTimeout(t) }
+  }, [query, refreshKey]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Drop a choice that is no longer available for the current time
+  useEffect(() => {
+    if (!res) return
+    const v = res.vehicles.find(x => x.id === vehicleId)
+    const d = res.drivers.find(x => x.id === driverId)
+    if ((vehicleId && !(v && v.eligible)) || (driverId && !(d && d.eligible))) {
+      onPick({ vehicleId: v && v.eligible ? vehicleId : '', driverId: d && d.eligible ? driverId : '' })
+    }
+  }, [res]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (!query) return <div className="rounded-lg border bg-slate-50 p-4 text-sm text-slate-600">Enter the travel date and pickup time first, then come back to choose a vehicle.</div>
+  if (err) return <div className="rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700" role="alert">{err}</div>
+  if (!res) return <div className="p-4 text-sm text-slate-500">Checking availability…</div>
+
+  const okV = res.vehicles.filter(v => v.eligible)
+  const outV = res.vehicles.filter(v => !v.eligible)
+  const okD = res.drivers.filter(d => d.eligible)
+  const outD = res.drivers.filter(d => !d.eligible)
+  const pickVehicle = (v) => {
+    // Suggest the vehicle's usual driver when that driver is free
+    const usual = v.defaultDriverId && okD.some(d => d.id === v.defaultDriverId) ? v.defaultDriverId : ''
+    onPick({ vehicleId: v.id, driverId: driverId && okD.some(d => d.id === driverId) ? driverId : usual })
+  }
+
+  return (
+    <div className="space-y-3" aria-busy={loading}>
+      <div className="text-xs text-slate-500">
+        Busy from {fmtWhen(res.window.startAt)} to {fmtWhen(res.window.endAt)}
+        {res.window.assumedEnd ? ' (end time assumed; add an expected drop time for a closer fit)' : ''},
+        plus {res.window.bufferMinutes} minutes before the vehicle can take another trip.
+        {loading && ' Refreshing…'}
+      </div>
+
+      {!res.available && (
+        <div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+          <div className="font-medium flex items-center gap-1"><AlertTriangle className="w-4 h-4" /> No vehicle and driver are both free at this time.</div>
+          {res.suggestions.length > 0 && (
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <span className="text-xs">Free at:</span>
+              {res.suggestions.map(s => (
+                <Button key={s.pickupTime} size="sm" variant="outline" onClick={() => onSuggest(s)}>{s.pickupTime}</Button>
+              ))}
+            </div>
+          )}
+          <div className="text-xs mt-2">You can still save the booking and allocate a vehicle later.</div>
+        </div>
+      )}
+
+      <div>
+        <div className="text-xs font-semibold tracking-wide text-slate-600 mb-1">Vehicle</div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          {okV.map(v => (
+            <button type="button" key={v.id} onClick={() => pickVehicle(v)} aria-pressed={vehicleId === v.id}
+              className={`text-left rounded-lg border p-3 text-sm transition ${vehicleId === v.id ? 'border-red-600 ring-2 ring-red-500/30 bg-red-50' : 'bg-white hover:bg-slate-50'}`}>
+              <div className="flex items-center gap-2 font-medium"><Car className="w-4 h-4" /> {v.vehicleNumber}
+                {v.recommended && <Badge className="bg-emerald-600 text-white">Recommended</Badge>}</div>
+              <div className="text-xs text-slate-500">{[v.make, v.model].filter(Boolean).join(' ')} · carries {v.passengerCapacity} passenger{v.passengerCapacity === 1 ? '' : 's'}{v.location ? ` · ${v.location}` : ''}</div>
+              {v.cautions.map((c, i) => <div key={i} className="text-[11px] text-amber-700 mt-1">⚠ {c}</div>)}
+            </button>
+          ))}
+          {okV.length === 0 && <div className="text-sm text-slate-500 sm:col-span-2">No vehicle is free for this booking.</div>}
+        </div>
+        {outV.length > 0 && (
+          <div className="mt-2">
+            <button type="button" className="text-xs underline text-slate-500" onClick={() => setShowOut(x => !x)}>
+              {showOut ? 'Hide' : 'Show'} {outV.length} unavailable vehicle{outV.length === 1 ? '' : 's'}
+            </button>
+            {showOut && (
+              <ul className="mt-1 text-xs text-slate-600 space-y-1">
+                {outV.map(v => <li key={v.id}><b>{v.vehicleNumber}</b> — {v.reasons.join(', ')}</li>)}
+                {outD.map(d => <li key={d.id}><b>{d.name}</b> (driver) — {d.reasons.join(', ')}</li>)}
+              </ul>
+            )}
+          </div>
+        )}
+      </div>
+
+      <div>
+        <div className="text-xs font-semibold tracking-wide text-slate-600 mb-1">Driver</div>
+        <Pick value={driverId} onChange={v => onPick({ vehicleId, driverId: v })} placeholder="Choose driver"
+          options={okD.map(d => ({ value: d.id, label: `${d.name}${d.empId ? ` (${d.empId})` : ''}${d.mobile ? ` · ${d.mobile}` : ''}` }))} />
+        {driverId && (res.drivers.find(d => d.id === driverId)?.cautions || []).map((c, i) => <div key={i} className="text-[11px] text-amber-700 mt-1">⚠ {c}</div>)}
+        {okD.length === 0 && <p className="text-xs text-slate-500 mt-1">No driver is free at this time.</p>}
+      </div>
+    </div>
+  )
+}
+
 // ================= NEW / EDIT BOOKING =================
 function BookingForm({ api, meta, initial, onDone, onCancel }) {
   const editing = !!initial?.id
   const [f, setF] = useState(() => initial || blankForm())
   const [step, setStep] = useState(1)
+  const canAlloc = !!meta.canAllocate
+  const steps = [
+    { key: 'details', title: 'Booking & contact details' },
+    { key: 'schedule', title: 'Pickup, drop & schedule' },
+    ...(canAlloc ? [{ key: 'vehicle', title: 'Vehicle & driver' }] : []),
+    { key: 'review', title: 'Review & submit' },
+  ]
+  const key = steps[step - 1].key
+  const last = step === steps.length
   const [errors, setErrors] = useState({})
   const [banner, setBanner] = useState([])
   const [busy, setBusy] = useState(false)
+  const [recheck, setRecheck] = useState(0)
   const requestId = useRef(typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : String(Date.now()))
   const isAdmin = meta.me.role === 'admin'
   const party = partyOf(f.bookingType)
@@ -167,6 +288,20 @@ function BookingForm({ api, meta, initial, onDone, onCancel }) {
     return e
   }
 
+  const availQuery = (() => {
+    const t = f.trip
+    if (!t.travelDate || !t.pickupTime) return ''
+    const p = new URLSearchParams({ travelDate: t.travelDate, pickupTime: t.pickupTime, tripType: t.tripType })
+    if (t.expectedDropTime) p.set('expectedDropTime', t.expectedDropTime)
+    if (t.tripType === 'Round Trip' && t.returnLeg.date && t.returnLeg.time) { p.set('returnDate', t.returnLeg.date); p.set('returnTime', t.returnLeg.time) }
+    const stops = t.stops.filter(x => x.address.trim()).length
+    if (stops) p.set('stops', String(stops))
+    if (party === 'delivery') p.set('party', 'delivery'); else if (t.passengers) p.set('passengers', String(t.passengers))
+    if (isAdmin && f.storeId) p.set('storeId', f.storeId)
+    if (editing) p.set('bookingId', f.id)
+    return p.toString()
+  })()
+
   const next = () => {
     const e = check(step)
     setErrors(e)
@@ -181,27 +316,38 @@ function BookingForm({ api, meta, initial, onDone, onCancel }) {
         const e = check(s)
         if (Object.keys(e).length) { setErrors(e); setBanner(Object.values(e)); setStep(s); return }
       }
+    } else if (saveAs === 'Confirmed') {
+      for (const s of [1, 2]) {
+        const e = check(s)
+        if (Object.keys(e).length) { setErrors(e); setBanner(Object.values(e)); setStep(s); return }
+      }
+      if (!!f.vehicleId !== !!f.driverId) { setBanner(['Choose both a vehicle and a driver, or neither']); setStep(steps.findIndex(x => x.key === 'vehicle') + 1 || step); return }
     } else if (!f.bookingType) {
       setErrors({ bookingType: 'Choose a booking type' }); setBanner(['Choose a booking type before saving a draft']); setStep(1); return
     }
     setBusy(true); setBanner([])
     try {
       const body = { ...f, saveAs, clientRequestId: requestId.current }
+      // Only a confirmation, or a booking that already has a vehicle, carries a vehicle choice
+      if (saveAs !== 'Confirmed' && !f.hadAllocation) { delete body.vehicleId; delete body.driverId }
       const res = editing
         ? await api(`bookings/${f.id}`, { method: 'PUT', body })
         : await api('bookings', { method: 'POST', body })
       const b = res.booking
-      toast.success(saveAs === 'Requested'
-        ? `Booking ${b.bookingNo} submitted`
-        : editing ? 'Changes saved' : 'Draft saved')
+      if (res.confirmError) toast.warning(`Booking ${b.bookingNo} saved but not confirmed: ${res.confirmError}`, { duration: 9000 })
+      else toast.success(saveAs === 'Confirmed'
+        ? `Booking ${b.bookingNo} ${b.allocation ? `confirmed with ${b.allocation.vehicleNumber}` : 'confirmed'}`
+        : saveAs === 'Requested'
+          ? `Booking ${b.bookingNo} submitted`
+          : editing ? 'Changes saved' : 'Draft saved')
       onDone(b)
     } catch (e) {
       setBanner(String(e.message || 'Could not save').split('; '))
+      setRecheck(n => n + 1)
       toast.error('Could not save the booking')
     } finally { setBusy(false) }
   }
 
-  const stepTitles = ['Booking & contact details', 'Pickup, drop & schedule', 'Review & submit']
   const E = (k) => errors[k]
 
   return (
@@ -214,7 +360,7 @@ function BookingForm({ api, meta, initial, onDone, onCancel }) {
       </div>
 
       <div className="flex gap-2 text-xs">
-        {stepTitles.map((t, i) => (
+        {steps.map(({ title: t }, i) => (
           <div key={t} className={`flex-1 rounded-lg px-3 py-2 border ${step === i + 1 ? 'text-white border-transparent' : 'bg-white text-slate-500'}`}
             style={step === i + 1 ? { background: '#231F20' } : undefined}>
             <span className="font-semibold">{i + 1}.</span> <span className="hidden sm:inline">{t}</span>
@@ -229,7 +375,7 @@ function BookingForm({ api, meta, initial, onDone, onCancel }) {
         </div>
       )}
 
-      {step === 1 && (
+      {key === 'details' && (
         <>
           <Section title="Booking information">
             <Field label="Booking type" required error={E('bookingType')}>
@@ -345,7 +491,7 @@ function BookingForm({ api, meta, initial, onDone, onCancel }) {
         </>
       )}
 
-      {step === 2 && (
+      {key === 'schedule' && (
         <>
           <Section title="Schedule">
             <Field label="Travel date" required error={E('trip.travelDate')}>
@@ -435,7 +581,17 @@ function BookingForm({ api, meta, initial, onDone, onCancel }) {
         </>
       )}
 
-      {step === 3 && (
+      {key === 'vehicle' && (
+        <div className="rounded-xl border bg-white p-4 space-y-3">
+          <div className="text-sm font-semibold" style={{ fontFamily: 'Georgia, serif' }}>Vehicle & driver</div>
+          <AllocationPanel api={api} query={availQuery} vehicleId={f.vehicleId} driverId={f.driverId} refreshKey={recheck}
+            onPick={({ vehicleId, driverId }) => setF(x => ({ ...x, vehicleId, driverId }))}
+            onSuggest={(s) => { set('trip.pickupTime', s.pickupTime) }} />
+          <p className="text-[11px] text-slate-500">Optional. You can submit the request now and allocate later. A vehicle and driver are held only when the booking is confirmed.</p>
+        </div>
+      )}
+
+      {key === 'review' && (
         <div className="rounded-xl border bg-white p-4 space-y-3 text-sm">
           <div className="text-sm font-semibold" style={{ fontFamily: 'Georgia, serif' }}>Booking summary</div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
@@ -451,10 +607,13 @@ function BookingForm({ api, meta, initial, onDone, onCancel }) {
             {f.trip.stops.filter(s => s.address).map((s, i) => <Row key={i} k={`Stop ${i + 1}`} v={s.address} />)}
             {f.trip.tripType === 'Round Trip' && <Row k="Return" v={`${fmtDay(f.trip.returnLeg.date)} at ${f.trip.returnLeg.time}`} />}
             {party !== 'delivery' && <Row k="Passengers" v={`${f.trip.passengers} · ${f.trip.purpose}`} />}
+            {canAlloc && <Row k="Vehicle" v={f.vehicleId ? 'Chosen, checked again when you confirm' : 'Not chosen'} />}
           </div>
           <div className="rounded-lg bg-slate-50 border p-3 text-xs text-slate-600">
-            Submitting creates the booking record and its booking number. A vehicle and driver are not allocated yet.
-            Allocation and confirmation come next, so this booking stays <b>Requested</b> until then.
+            {canAlloc
+              ? <>Submit request keeps the booking as <b>Requested</b> so it can be confirmed later. Confirm booking checks availability once more and holds the vehicle and driver
+                  {f.vehicleId ? '.' : ' (no vehicle is chosen, so it will be confirmed without one).'}</>
+              : <>Submitting creates the booking and its booking number. The Facility team will confirm it and allocate a vehicle and driver.</>}
           </div>
         </div>
       )}
@@ -462,15 +621,20 @@ function BookingForm({ api, meta, initial, onDone, onCancel }) {
       <div className="flex flex-wrap items-center justify-between gap-2 sticky bottom-0 bg-slate-50/95 py-3">
         <div>{step > 1 && <Button variant="outline" onClick={() => { setBanner([]); setStep(step - 1) }} disabled={busy}>Back</Button>}</div>
         <div className="flex flex-wrap gap-2">
-          {step < 3 && (
+          {!last && (
             <>
               <Button variant="outline" onClick={() => save('Draft')} disabled={busy}>{editing && initial.status !== 'Draft' ? 'Save changes' : 'Save draft'}</Button>
               <Button onClick={next} style={{ background: RED }} className="text-white hover:brightness-110">Next</Button>
             </>
           )}
-          {step === 3 && (
+          {last && (
             <>
               {(!editing || initial.status === 'Draft') && <Button variant="outline" onClick={() => save('Draft')} disabled={busy}>Save draft</Button>}
+              {(!editing || ['Draft', 'Requested'].includes(initial.status)) && canAlloc && (
+                <Button variant="outline" onClick={() => save('Confirmed')} disabled={busy}>
+                  <Car className="w-4 h-4 mr-1" /> {f.vehicleId ? 'Confirm with vehicle' : 'Confirm without vehicle'}
+                </Button>
+              )}
               <Button onClick={() => save('Requested')} disabled={busy} style={{ background: RED }} className="text-white hover:brightness-110">
                 <CheckCircle2 className="w-4 h-4 mr-1" /> {busy ? 'Saving…' : editing && initial.status !== 'Draft' ? 'Save changes' : 'Submit request'}
               </Button>
@@ -496,6 +660,7 @@ function printBooking(b) {
     ['Travel date', fmtDay(b.trip?.travelDate)], ['Pickup time', b.trip?.pickupTime],
     ['Pickup', b.trip?.pickup?.address], ['Drop', b.trip?.drop?.address],
     ['Passengers', b.trip?.passengers ?? '-'], ['Purpose', b.trip?.purpose], ['Instructions', b.trip?.instructions],
+    ['Vehicle', b.allocation ? `${b.allocation.vehicleNumber} ${b.allocation.vehicleModel || ''}` : 'Not allocated'], ['Driver', b.allocation?.driverName || '-'],
     ['Created by', `${b.createdBy?.name} on ${fmtWhen(b.createdAt)}`],
   ]
   const w = window.open('', '_blank', 'width=720,height=800')
@@ -513,6 +678,8 @@ function BookingDetail({ api, id, onClose, onEdit, onChanged }) {
   const [cancelling, setCancelling] = useState(false)
   const [reason, setReason] = useState('')
   const [busy, setBusy] = useState(false)
+  const [alloc, setAlloc] = useState(null) // { mode: 'confirm' | 'allocate', vehicleId, driverId }
+  const [recheck, setRecheck] = useState(0)
 
   const load = () => api(`bookings/${id}`).then(setData).catch(e => { toast.error(e.message); onClose() })
   useEffect(() => { load() }, [id]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -527,6 +694,19 @@ function BookingDetail({ api, id, onClose, onEdit, onChanged }) {
       setCancelling(false); setReason('')
       await load(); onChanged()
     } catch (e) { toast.error(e.message) } finally { setBusy(false) }
+  }
+
+  const submitAlloc = async () => {
+    if (busy || !alloc) return
+    if (!!alloc.vehicleId !== !!alloc.driverId) { toast.error('Choose both a vehicle and a driver'); return }
+    if (alloc.mode === 'allocate' && !alloc.vehicleId) { toast.error('Choose a vehicle and a driver'); return }
+    setBusy(true)
+    try {
+      const r = await api(`bookings/${id}/${alloc.mode}`, { method: 'POST', body: { vehicleId: alloc.vehicleId, driverId: alloc.driverId } })
+      toast.success(r.booking?.allocation ? `${alloc.mode === 'confirm' ? 'Confirmed' : 'Assigned'}: ${r.booking.allocation.vehicleNumber}` : 'Booking confirmed')
+      setAlloc(null)
+      await load(); onChanged()
+    } catch (e) { toast.error(e.message); setRecheck(n => n + 1) } finally { setBusy(false) }
   }
 
   return (
@@ -554,6 +734,9 @@ function BookingDetail({ api, id, onClose, onEdit, onChanged }) {
               {b.delivery && <Row k="Recipient" v={`${b.delivery.recipientName} · ${b.delivery.recipientMobile}`} />}
               {b.delivery && <Row k="Item" v={`${b.delivery.itemCategory}${b.delivery.authorisationRef ? ` · Ref ${b.delivery.authorisationRef}` : ''}`} />}
               {b.remarks && <Row k="Remarks" v={b.remarks} />}
+              {b.allocation && <Row k="Vehicle" v={`${b.allocation.vehicleNumber}${b.allocation.vehicleModel ? ` · ${b.allocation.vehicleModel}` : ''}`} />}
+              {b.allocation && <Row k="Driver" v={`${b.allocation.driverName}${b.allocation.driverMobile ? ` · ${b.allocation.driverMobile}` : ''}`} />}
+              {(b.scheduleHistory || []).length > 0 && <Row k="Rescheduled" v={`${b.scheduleHistory.length} time${b.scheduleHistory.length === 1 ? '' : 's'}; first planned ${fmtDay(b.scheduleHistory[0].from?.travelDate)} at ${b.scheduleHistory[0].from?.pickupTime}`} />}
               {b.cancellation && <Row k="Cancelled" v={`${b.cancellation.reason} (${b.cancellation.by?.name})`} />}
             </div>
             {b.contactsMasked && <p className="text-xs text-slate-500">Contact numbers are hidden on bookings created by someone else.</p>}
@@ -561,9 +744,26 @@ function BookingDetail({ api, id, onClose, onEdit, onChanged }) {
             <div className="flex flex-wrap gap-2">
               {b.permissions.canEdit && <Button size="sm" variant="outline" onClick={() => onEdit(b)}>Edit</Button>}
               {b.permissions.canSubmit && <Button size="sm" disabled={busy} onClick={() => act('Requested')} style={{ background: RED }} className="text-white">Submit request</Button>}
+              {b.permissions.canConfirm && !alloc && <Button size="sm" onClick={() => setAlloc({ mode: 'confirm', vehicleId: '', driverId: '' })} style={{ background: RED }} className="text-white"><Car className="w-4 h-4 mr-1" /> Confirm booking</Button>}
+              {b.permissions.canAllocate && !alloc && <Button size="sm" variant="outline" onClick={() => setAlloc({ mode: 'allocate', vehicleId: '', driverId: '' })}><Car className="w-4 h-4 mr-1" /> {b.allocation ? 'Change vehicle / driver' : 'Allocate vehicle'}</Button>}
               {b.permissions.canCancel && !cancelling && <Button size="sm" variant="outline" className="text-rose-600" onClick={() => setCancelling(true)}>Cancel booking</Button>}
               <Button size="sm" variant="outline" onClick={() => printBooking(b)}><FileText className="w-4 h-4 mr-1" /> Print</Button>
             </div>
+
+            {alloc && (
+              <div className="rounded-lg border bg-slate-50 p-3 space-y-3">
+                <div className="text-sm font-semibold">{alloc.mode === 'confirm' ? 'Confirm booking' : b.allocation ? 'Change vehicle and driver' : 'Allocate vehicle and driver'}</div>
+                <AllocationPanel api={api} query={`bookingId=${encodeURIComponent(id)}`} vehicleId={alloc.vehicleId} driverId={alloc.driverId} refreshKey={recheck}
+                  onPick={({ vehicleId, driverId }) => setAlloc(a => a && ({ ...a, vehicleId, driverId }))}
+                  onSuggest={() => toast.info('To use another time, edit the booking and change the pickup time')} />
+                <div className="flex flex-wrap gap-2">
+                  <Button size="sm" disabled={busy} onClick={submitAlloc} style={{ background: RED }} className="text-white">
+                    {busy ? 'Saving…' : alloc.mode === 'confirm' ? (alloc.vehicleId ? 'Confirm with vehicle' : 'Confirm without vehicle') : 'Save allocation'}
+                  </Button>
+                  <Button size="sm" variant="outline" disabled={busy} onClick={() => setAlloc(null)}>Close</Button>
+                </div>
+              </div>
+            )}
 
             {cancelling && (
               <div className="rounded-lg border border-rose-200 bg-rose-50 p-3 space-y-2">
@@ -604,7 +804,7 @@ function BookingDetail({ api, id, onClose, onEdit, onChanged }) {
 
 // ================= ALL BOOKINGS REGISTER =================
 function AllBookings({ api, meta, refreshKey, onOpen, onNew }) {
-  const [f, setF] = useState({ q: '', status: '', type: '', from: '', to: '', store: '' })
+  const [f, setF] = useState({ q: '', status: '', type: '', from: '', to: '', store: '', vehicle: '', driver: '' })
   const [debounced, setDebounced] = useState(f)
   const [sort, setSort] = useState({ key: 'created', dir: 'desc' })
   const [page, setPage] = useState(1)
@@ -661,11 +861,13 @@ function AllBookings({ api, meta, refreshKey, onOpen, onNew }) {
         <Input type="date" value={f.from} onChange={e => set('from', e.target.value)} aria-label="Travel date from" />
         <Input type="date" value={f.to} onChange={e => set('to', e.target.value)} aria-label="Travel date to" />
         {meta.me.role === 'admin' && <Pick value={f.store} onChange={v => set('store', v)} options={meta.stores} placeholder="All showrooms" />}
+        <Pick value={f.vehicle} onChange={v => set('vehicle', v)} options={(meta.vehicles || []).map(v => ({ value: v.id, label: v.vehicleNumber }))} placeholder="All vehicles" />
+        <Pick value={f.driver} onChange={v => set('driver', v)} options={(meta.drivers || []).map(d => ({ value: d.id, label: d.name }))} placeholder="All drivers" />
       </div>
       <div className="flex justify-between items-center">
         <div className="text-xs text-slate-500">{loading ? 'Loading…' : `${res.total} booking${res.total === 1 ? '' : 's'}`}</div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => setF({ q: '', status: '', type: '', from: '', to: '', store: '' })}><X className="w-4 h-4 mr-1" /> Clear</Button>
+          <Button variant="outline" size="sm" onClick={() => setF({ q: '', status: '', type: '', from: '', to: '', store: '', vehicle: '', driver: '' })}><X className="w-4 h-4 mr-1" /> Clear</Button>
           <Button variant="outline" size="sm" onClick={exportCsv}><Download className="w-4 h-4 mr-1" /> Export CSV</Button>
         </div>
       </div>
@@ -674,11 +876,11 @@ function AllBookings({ api, meta, refreshKey, onOpen, onNew }) {
         <div className="rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">{failed}</div>
       ) : (
         <div className="border rounded-xl bg-white overflow-x-auto">
-          <table className="w-full text-xs min-w-[980px]">
+          <table className="w-full text-xs min-w-[1180px]">
             <thead className="bg-slate-100">
               <tr>
                 <Th k="no">Booking ID</Th><Th k="travel">Travel</Th><Th>Type</Th><Th>Name</Th><Th>Contact</Th>
-                <Th>Brand Host</Th><Th>Pickup → Drop</Th><Th k="status">Status</Th><Th k="updated">Updated</Th><Th />
+                <Th>Brand Host</Th><Th>Vehicle / Driver</Th><Th>Pickup → Drop</Th><Th k="status">Status</Th><Th k="updated">Updated</Th><Th />
               </tr>
             </thead>
             <tbody>
@@ -690,6 +892,7 @@ function AllBookings({ api, meta, refreshKey, onOpen, onNew }) {
                   <td className="p-2">{b.requester?.name}</td>
                   <td className="p-2 whitespace-nowrap">{b.requester?.mobile}</td>
                   <td className="p-2">{b.brandHost?.name}</td>
+                  <td className="p-2 whitespace-nowrap">{b.allocation ? <>{b.allocation.vehicleNumber}<div className="text-slate-500">{b.allocation.driverName}</div></> : <span className="text-slate-400">Not allocated</span>}</td>
                   <td className="p-2 max-w-[260px]"><div className="truncate">{b.trip?.pickup?.address}</div><div className="truncate text-slate-500">→ {b.trip?.drop?.address}</div></td>
                   <td className="p-2"><StatusBadge status={b.status} /></td>
                   <td className="p-2 whitespace-nowrap text-slate-500">{fmtWhen(b.updatedAt)}</td>
@@ -697,7 +900,7 @@ function AllBookings({ api, meta, refreshKey, onOpen, onNew }) {
                 </tr>
               ))}
               {!loading && res.items.length === 0 && (
-                <tr><td colSpan={10} className="p-8 text-center text-slate-500">
+                <tr><td colSpan={11} className="p-8 text-center text-slate-500">
                   No bookings found. <button className="underline" onClick={onNew}>Create a booking</button>
                 </td></tr>
               )}
@@ -769,4 +972,3 @@ export default function BookingModule({ api, user }) {
     </div>
   )
 }
-
