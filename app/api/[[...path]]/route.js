@@ -1353,6 +1353,9 @@ export async function PUT(request, { params }) {
     const body = await request.json()
     const auth = await getAuth(db, request)
     if (!auth) return json({ error: 'Not signed in' }, 401)
+    if (path === 'bookings' || path.startsWith('bookings/')) {
+  return await handleBookings({ db, request, path, auth, body, json })
+}
     const role = auth.role
     if (!LEGACY_ROLES.includes(role)) return json({ error: 'Not authorised for this area' }, 403)
     
