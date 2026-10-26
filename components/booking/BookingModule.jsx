@@ -16,7 +16,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { toast } from 'sonner'
 import { Plus, Search, Download, Eye, X, CheckCircle2, Trash2, FileText, ArrowLeft, Car, AlertTriangle, MapPin } from 'lucide-react'
 import {
-  BOOKING_TYPES, partyOf, SOURCES, PRIORITIES, CUSTOMER_TYPES, TRIP_TYPES, PURPOSES,
+  BOOKING_TYPES, partyOf, SOURCES, BOOKING_MODES, DEPARTMENTS, CUSTOMER_TYPES, TRIP_TYPES, PURPOSES,
   ITEM_CATEGORIES, STATUSES, STATUS_COLORS,
 } from '@/lib/bookings/constants'
 
@@ -39,7 +39,7 @@ const setIn = (obj, path, val) => {
 const blankForm = () => ({
   bookingType: '', source: 'Phone Call', priority: 'Normal', department: '', remarks: '',
   storeId: '', brandHostUsername: '', vehicleId: '', driverId: '',
-  requester: { name: '', mobile: '', crmRef: '', customerType: '', language: '', empId: '', department: '', approvingManager: '' },
+  requester: { name: '', mobile: '', crmRef: '', customerType: '', language: '', empId: '', department: '', approvingManager: '', whatsappConsent: false },
   delivery: {
     sendingUnit: '', receivingUnit: '', recipientName: '', recipientMobile: '', itemCategory: '',
     referenceNo: '', itemDescription: '', handling: '', authorisationRef: '',
@@ -410,10 +410,12 @@ function BookingForm({ api, meta, initial, onDone, onCancel }) {
   const [f, setF] = useState(() => initial || blankForm())
   const [step, setStep] = useState(1)
   const canAlloc = !!meta.canAllocate
+  const isAdvance = f.priority === 'Advance'
+  const firstSubmit = !editing || initial.status === 'Draft'
   const steps = [
     { key: 'details', title: 'Booking & contact details' },
     { key: 'schedule', title: 'Pickup, drop & schedule' },
-    ...(canAlloc ? [{ key: 'vehicle', title: 'Vehicle & driver' }] : []),
+    ...(canAlloc && !isAdvance ? [{ key: 'vehicle', title: 'Vehicle & driver' }] : []),
     { key: 'review', title: 'Review & submit' },
   ]
   const key = steps[step - 1].key
@@ -432,13 +434,16 @@ function BookingForm({ api, meta, initial, onDone, onCancel }) {
     if (!editing && !isAdmin && meta.me.storeId) setF(x => ({ ...x, storeId: meta.me.storeId }))
   }, [editing, isAdmin, meta.me.storeId])
 
+  const onMode = (v) => setF(x => ({ ...x, priority: v, ...(v === 'Advance' ? { vehicleId: '', driverId: '' } : {}) }))
+
   const onType = (v) => {
     setF(x => {
       const p = partyOf(v)
       let purpose = x.trip.purpose
       if (p === 'employee') purpose = 'Employee Transport'
       else if (p === 'customer' && (!purpose || purpose === 'Employee Transport')) purpose = 'Customer Visit'
-      return { ...setIn(x, 'trip.purpose', purpose), bookingType: v }
+      const next = setIn(x, 'trip.purpose', purpose)
+      return { ...(editing ? next : setIn(next, 'requester.whatsappConsent', p === 'employee')), bookingType: v }
     })
   }
 
@@ -449,6 +454,7 @@ function BookingForm({ api, meta, initial, onDone, onCancel }) {
       if (isAdmin && !f.storeId) e.storeId = 'Choose a showroom'
       if (!f.requester.name.trim()) e['requester.name'] = 'Required'
       if (!validMobile(f.requester.mobile)) e['requester.mobile'] = 'Enter a valid 10-digit mobile number'
+      if (party === 'employee' && !f.requester.department) e['requester.department'] = 'Choose the employee\u2019s department'
       if (party === 'delivery') {
         const d = f.delivery
         if (!d.sendingUnit.trim()) e['delivery.sendingUnit'] = 'Required'
@@ -464,6 +470,7 @@ function BookingForm({ api, meta, initial, onDone, onCancel }) {
       const t = f.trip
       if (!t.travelDate) e['trip.travelDate'] = 'Required'
       else if (t.travelDate < todayIST()) e['trip.travelDate'] = 'Cannot be in the past'
+      else if (isAdvance && firstSubmit && t.travelDate <= todayIST()) e['trip.travelDate'] = 'An Advance booking must be for a later date. Choose Normal for a trip today'
       if (!t.pickupTime) e['trip.pickupTime'] = 'Required'
       if (!t.pickup.address.trim()) e['trip.pickup'] = 'Pickup location is required'
       if (!t.drop.address.trim()) e['trip.drop'] = 'Drop location is required'
@@ -519,7 +526,7 @@ function BookingForm({ api, meta, initial, onDone, onCancel }) {
     try {
       const body = { ...f, saveAs, clientRequestId: requestId.current }
       // Only a confirmation, or a booking that already has a vehicle, carries a vehicle choice
-      if (saveAs !== 'Confirmed' && !f.hadAllocation) { delete body.vehicleId; delete body.driverId }
+      if ((saveAs !== 'Confirmed' && !f.hadAllocation) || isAdvance) { delete body.vehicleId; delete body.driverId }
       const res = editing
         ? await api(`bookings/${f.id}`, { method: 'PUT', body })
         : await api('bookings', { method: 'POST', body })
@@ -574,17 +581,20 @@ function BookingForm({ api, meta, initial, onDone, onCancel }) {
             <Field label="Booking source">
               <Pick value={f.source} onChange={v => set('source', v)} options={SOURCES} />
             </Field>
-            <Field label="Priority">
-              <Pick value={f.priority} onChange={v => set('priority', v)} options={PRIORITIES} />
+            <Field label="Booking mode" hint={isAdvance ? 'Vehicle and driver are allocated on the travel day' : 'Vehicle and driver are chosen now'}>
+              <Pick value={f.priority} onChange={onMode} options={BOOKING_MODES} />
             </Field>
             <Field label="Requesting showroom" required={isAdmin} error={E('storeId')}>
               {isAdmin
                 ? <Pick value={f.storeId} onChange={v => set('storeId', v)} options={meta.stores} placeholder="Choose showroom" disabled={editing} />
                 : <Input value={f.storeId || meta.me.storeId} disabled />}
             </Field>
-            <Field label="Requesting department" hint="Optional">
-              <Input value={f.department} onChange={e => set('department', e.target.value)} maxLength={80} />
-            </Field>
+            {party !== 'employee' && (
+              <Field label="Requesting department" hint="Optional">
+                <Pick value={f.department} onChange={v => set('department', v)} placeholder="Not applicable"
+                  options={[...DEPARTMENTS, ...(f.department && !DEPARTMENTS.includes(f.department) ? [f.department] : [])]} />
+              </Field>
+            )}
             <Field label="Brand Host" hint={meta.brandHosts.length ? undefined : 'Filled in from your login'}>
               {meta.me.role === 'brand_host'
                 ? <Input value={`${meta.me.name}${meta.me.empId ? ` (${meta.me.empId})` : ''}`} disabled />
@@ -612,6 +622,18 @@ function BookingForm({ api, meta, initial, onDone, onCancel }) {
               <Field label={party === 'delivery' ? 'Requester contact number' : 'Mobile number'} required error={E('requester.mobile')}>
                 <Input inputMode="tel" value={f.requester.mobile} onChange={e => set('requester.mobile', e.target.value)} maxLength={20} />
               </Field>
+              {(party === 'customer' || party === 'employee') && (
+                <label className="sm:col-span-2 flex items-start gap-2 text-sm cursor-pointer">
+                  <input type="checkbox" className="mt-1 h-4 w-4 accent-red-600" checked={!!f.requester.whatsappConsent}
+                    onChange={e => set('requester.whatsappConsent', e.target.checked)} />
+                  <span>
+                    Send booking confirmation to this number on WhatsApp
+                    <span className="block text-[11px] text-slate-500">
+                      Tick only if the {party === 'employee' ? 'employee' : 'customer'} has agreed. If it is not ticked, no WhatsApp message is sent to them.
+                    </span>
+                  </span>
+                </label>
+              )}
 
               {party === 'customer' && (
                 <>
@@ -632,8 +654,9 @@ function BookingForm({ api, meta, initial, onDone, onCancel }) {
                   <Field label="Employee ID">
                     <Input value={f.requester.empId} onChange={e => set('requester.empId', e.target.value)} maxLength={30} />
                   </Field>
-                  <Field label="Department">
-                    <Input value={f.requester.department} onChange={e => set('requester.department', e.target.value)} maxLength={80} />
+                  <Field label="Department" required error={E('requester.department')}>
+                    <Pick value={f.requester.department} onChange={v => set('requester.department', v)} placeholder="Choose department"
+                      options={[...DEPARTMENTS, ...(f.requester.department && !DEPARTMENTS.includes(f.requester.department) ? [f.requester.department] : [])]} />
                   </Field>
                   <Field label="Approving manager" hint="If applicable">
                     <Input value={f.requester.approvingManager} onChange={e => set('requester.approvingManager', e.target.value)} maxLength={100} />
@@ -789,7 +812,7 @@ function BookingForm({ api, meta, initial, onDone, onCancel }) {
         <div className="rounded-xl border bg-white p-4 space-y-3 text-sm">
           <div className="text-sm font-semibold" style={{ fontFamily: 'Georgia, serif' }}>Booking summary</div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
-            <Row k="Type" v={`${f.bookingType} · ${f.priority}`} />
+            <Row k="Type" v={`${f.bookingType} · ${f.priority} booking`} />
             <Row k="Showroom" v={f.storeId || meta.me.storeId} />
             <Row k={party === 'delivery' ? 'Requester' : party === 'employee' ? 'Employee' : 'Customer'} v={`${f.requester.name} · ${f.requester.mobile}`} />
             {party === 'delivery' && <Row k="Recipient" v={`${f.delivery.recipientName} · ${f.delivery.receivingUnit}`} />}
@@ -801,10 +824,13 @@ function BookingForm({ api, meta, initial, onDone, onCancel }) {
             {f.trip.stops.filter(s => s.address).map((s, i) => <Row key={i} k={`Stop ${i + 1}`} v={s.address} />)}
             {f.trip.tripType === 'Round Trip' && <Row k="Return" v={`${fmtDay(f.trip.returnLeg.date)} at ${f.trip.returnLeg.time}`} />}
             {party !== 'delivery' && <Row k="Passengers" v={`${f.trip.passengers} · ${f.trip.purpose}`} />}
-            {canAlloc && <Row k="Vehicle" v={f.vehicleId ? 'Chosen, checked again when you confirm' : 'Not chosen'} />}
+            {canAlloc && <Row k="Vehicle" v={isAdvance ? `Allocated on the travel day (${fmtDay(f.trip.travelDate)})` : f.vehicleId ? 'Chosen, checked again when you confirm' : 'Not chosen'} />}
+            {(party === 'customer' || party === 'employee') && <Row k="WhatsApp" v={f.requester.whatsappConsent ? 'Booking updates will be sent' : 'No WhatsApp messages (not agreed)'} />}
           </div>
           <div className="rounded-lg bg-slate-50 border p-3 text-xs text-slate-600">
-            {canAlloc
+            {isAdvance
+              ? <>This is an <b>Advance</b> booking, so no vehicle or driver is chosen now. On the travel day ({fmtDay(f.trip.travelDate)}) a reminder will ask a Brand Host to allocate them. <b>Confirm booking</b> records it as Confirmed; <b>Submit request</b> keeps it as Requested.</>
+              : canAlloc
               ? <>Submit request keeps the booking as <b>Requested</b> so it can be confirmed later. Confirm booking checks availability once more and holds the vehicle and driver
                   {f.vehicleId ? '.' : ' (no vehicle is chosen, so it will be confirmed without one).'}</>
               : <>Submitting creates the booking and its booking number. The Facility team will confirm it and allocate a vehicle and driver.</>}
@@ -826,7 +852,7 @@ function BookingForm({ api, meta, initial, onDone, onCancel }) {
               {(!editing || initial.status === 'Draft') && <Button variant="outline" onClick={() => save('Draft')} disabled={busy}>Save draft</Button>}
               {(!editing || ['Draft', 'Requested'].includes(initial.status)) && canAlloc && (
                 <Button variant="outline" onClick={() => save('Confirmed')} disabled={busy}>
-                  <Car className="w-4 h-4 mr-1" /> {f.vehicleId ? 'Confirm with vehicle' : 'Confirm without vehicle'}
+                  <Car className="w-4 h-4 mr-1" /> {isAdvance ? 'Confirm booking' : f.vehicleId ? 'Confirm with vehicle' : 'Confirm without vehicle'}
                 </Button>
               )}
               <Button onClick={() => save('Requested')} disabled={busy} style={{ background: RED }} className="text-white hover:brightness-110">
@@ -849,7 +875,7 @@ const esc = (s) => String(s ?? '-').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<
 
 function printBooking(b) {
   const rows = [
-    ['Booking ID', b.bookingNo || 'Draft'], ['Status', b.status], ['Type', `${b.bookingType} (${b.priority})`], ['Showroom', b.storeId],
+    ['Booking ID', b.bookingNo || 'Draft'], ['Status', b.status], ['Type', `${b.bookingType} (${b.priority === 'Advance' ? 'Advance' : 'Normal'} booking)`], ['Showroom', b.storeId],
     ['Name', b.requester?.name], ['Contact', b.requester?.mobile], ['Brand Host', b.brandHost?.name],
     ['Travel date', fmtDay(b.trip?.travelDate)], ['Pickup time', b.trip?.pickupTime],
     ['Pickup', b.trip?.pickup?.address], ['Drop', b.trip?.drop?.address],
@@ -912,13 +938,15 @@ function BookingDetail({ api, id, onClose, onEdit, onChanged }) {
           <div className="space-y-4 text-sm">
             <div className="flex flex-wrap items-center gap-2">
               <StatusBadge status={b.status} />
-              <span className="text-slate-500">{b.bookingType} · {b.priority} · {b.storeId}</span>
+              <span className="text-slate-500">{b.bookingType} · {b.priority === 'Advance' ? 'Advance' : 'Normal'} booking · {b.storeId}</span>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
               <Row k="Name" v={b.requester?.name} />
               <Row k="Contact" v={b.requester?.mobile} />
               {b.requester?.crmRef && <Row k="CRM ref" v={b.requester.crmRef} />}
               {b.requester?.empId && <Row k="Employee ID" v={b.requester.empId} />}
+              {b.requester?.department && <Row k="Department" v={b.requester.department} />}
+              {(b.party === 'customer' || b.party === 'employee') && <Row k="WhatsApp" v={b.requester?.whatsappConsent ? 'Updates allowed' : 'Not agreed, no messages sent'} />}
               <Row k="Brand Host" v={b.brandHost?.name} />
               <Row k="Travel" v={`${fmtDay(b.trip?.travelDate)} at ${b.trip?.pickupTime}`} />
               <Row k="Pickup" v={b.trip?.pickup?.address} />
@@ -937,6 +965,11 @@ function BookingDetail({ api, id, onClose, onEdit, onChanged }) {
             </div>
             {b.contactsMasked && <p className="text-xs text-slate-500">Contact numbers are hidden on bookings created by someone else.</p>}
 
+            {b.permissions.allocationOpensOn && (
+              <div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-xs text-amber-900">
+                Advance booking: the vehicle and driver can be allocated from the travel day, {fmtDay(b.permissions.allocationOpensOn)}. A reminder will appear then.
+              </div>
+            )}
             <div className="flex flex-wrap gap-2">
               {b.permissions.canEdit && <Button size="sm" variant="outline" onClick={() => onEdit(b)}>Edit</Button>}
               {b.permissions.canSubmit && <Button size="sm" disabled={busy} onClick={() => act('Requested')} style={{ background: RED }} className="text-white">Submit request</Button>}
@@ -998,9 +1031,83 @@ function BookingDetail({ api, id, onClose, onEdit, onChanged }) {
   )
 }
 
+// ================= SAME-DAY ALERT =================
+// Opens when the module opens, and comes back every few minutes, until every booking travelling today has a vehicle and driver.
+// A red banner stays on the page even while the pop-up is snoozed, so nothing can be missed.
+function TodayAlerts({ api, onOpen, refreshKey }) {
+  const [data, setData] = useState(null)
+  const [open, setOpen] = useState(false)
+  const snoozeUntil = useRef(0)
+  const dataRef = useRef(null)
+  const snooze = () => { snoozeUntil.current = Date.now() + 15 * 60 * 1000; setOpen(false) }
+
+  const load = (popUp = true) => api('bookings/alerts').then(r => {
+    dataRef.current = r; setData(r)
+    if (r.needsAction === 0) setOpen(false)
+    else if (popUp && Date.now() >= snoozeUntil.current) setOpen(true)
+  }).catch(() => {})
+
+  useEffect(() => {
+    load()
+    const poll = setInterval(() => { if (!document.hidden) load() }, 5 * 60 * 1000)
+    const wake = setInterval(() => { if (!document.hidden && dataRef.current?.needsAction > 0 && Date.now() >= snoozeUntil.current) setOpen(true) }, 30 * 1000)
+    const vis = () => { if (!document.hidden) load() }
+    document.addEventListener('visibilitychange', vis)
+    return () => { clearInterval(poll); clearInterval(wake); document.removeEventListener('visibilitychange', vis) }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (refreshKey) load(false) }, [refreshKey]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (!data || data.items.length === 0) return null
+  const need = data.items.filter(x => x.needsAction)
+  const done = data.items.filter(x => !x.needsAction)
+  const go = (id) => { snooze(); onOpen(id) }
+
+  return (
+    <>
+      {need.length > 0 && !open && (
+        <div className="rounded-lg border border-rose-300 bg-rose-50 p-3 flex flex-wrap items-center justify-between gap-2" role="alert">
+          <span className="text-sm text-rose-800"><b>{need.length} booking{need.length === 1 ? '' : 's'} travelling today still need{need.length === 1 ? 's' : ''} a vehicle and driver.</b></span>
+          <Button size="sm" onClick={() => setOpen(true)} style={{ background: RED }} className="text-white">View</Button>
+        </div>
+      )}
+      <Dialog open={open} onOpenChange={(v) => { if (!v) snooze() }}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>Today&apos;s bookings need a vehicle and driver</DialogTitle></DialogHeader>
+          <p className="text-sm text-slate-600">{fmtDay(data.date)} · {need.length} waiting. Open each one to allocate.</p>
+          <div className="space-y-2">
+            {need.map(x => (
+              <div key={x.id} className={`rounded-lg border p-3 text-sm ${x.overdue ? 'border-rose-400 bg-rose-50' : 'bg-white'}`}>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="font-semibold text-base">{x.pickupTime}</span>
+                  <span className="font-medium">{x.bookingNo}</span>
+                  {x.mode === 'Advance' && <Badge className="bg-amber-600 text-white">Advance</Badge>}
+                  {x.overdue && <Badge className="bg-rose-600 text-white">Pickup time passed</Badge>}
+                  <StatusBadge status={x.status} />
+                  <Button size="sm" className="ml-auto text-white" style={{ background: RED }} disabled={!x.canAct} onClick={() => go(x.id)}>Open</Button>
+                </div>
+                <div className="mt-1 text-slate-600">{x.bookingType}{x.name ? ` · ${x.name}` : ''}{x.storeId ? ` · ${x.storeId}` : ''}</div>
+                <div className="text-xs text-slate-500 truncate">{x.pickup} → {x.drop}</div>
+              </div>
+            ))}
+          </div>
+          {done.length > 0 && (
+            <div className="border-t pt-2">
+              <div className="text-xs uppercase tracking-wide text-slate-500 mb-1">Already allocated today ({done.length})</div>
+              <ul className="text-xs text-slate-600 space-y-1">
+                {done.map(x => <li key={x.id}>{x.pickupTime} · {x.bookingNo} · {x.vehicleNumber || x.status}{x.driverName ? ` · ${x.driverName}` : ''}</li>)}
+              </ul>
+            </div>
+          )}
+          <DialogFooter><Button variant="outline" onClick={snooze}>Remind me in 15 minutes</Button></DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  )
+}
+
 // ================= ALL BOOKINGS REGISTER =================
 function AllBookings({ api, meta, refreshKey, onOpen, onNew }) {
-  const [f, setF] = useState({ q: '', status: '', type: '', from: '', to: '', store: '', vehicle: '', driver: '' })
+  const [f, setF] = useState({ q: '', status: '', type: '', mode: '', from: '', to: '', store: '', vehicle: '', driver: '' })
   const [debounced, setDebounced] = useState(f)
   const [sort, setSort] = useState({ key: 'created', dir: 'desc' })
   const [page, setPage] = useState(1)
@@ -1054,6 +1161,7 @@ function AllBookings({ api, meta, refreshKey, onOpen, onNew }) {
         </div>
         <Pick value={f.status} onChange={v => set('status', v)} options={STATUSES} placeholder="All statuses" />
         <Pick value={f.type} onChange={v => set('type', v)} options={BOOKING_TYPES.map(t => t.value)} placeholder="All types" />
+        <Pick value={f.mode} onChange={v => set('mode', v)} options={BOOKING_MODES} placeholder="All modes" />
         <Input type="date" value={f.from} onChange={e => set('from', e.target.value)} aria-label="Travel date from" />
         <Input type="date" value={f.to} onChange={e => set('to', e.target.value)} aria-label="Travel date to" />
         {meta.me.role === 'admin' && <Pick value={f.store} onChange={v => set('store', v)} options={meta.stores} placeholder="All showrooms" />}
@@ -1063,7 +1171,7 @@ function AllBookings({ api, meta, refreshKey, onOpen, onNew }) {
       <div className="flex justify-between items-center">
         <div className="text-xs text-slate-500">{loading ? 'Loading…' : `${res.total} booking${res.total === 1 ? '' : 's'}`}</div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => setF({ q: '', status: '', type: '', from: '', to: '', store: '', vehicle: '', driver: '' })}><X className="w-4 h-4 mr-1" /> Clear</Button>
+          <Button variant="outline" size="sm" onClick={() => setF({ q: '', status: '', type: '', mode: '', from: '', to: '', store: '', vehicle: '', driver: '' })}><X className="w-4 h-4 mr-1" /> Clear</Button>
           <Button variant="outline" size="sm" onClick={exportCsv}><Download className="w-4 h-4 mr-1" /> Export CSV</Button>
         </div>
       </div>
@@ -1084,11 +1192,11 @@ function AllBookings({ api, meta, refreshKey, onOpen, onNew }) {
                 <tr key={b.id} className="border-t hover:bg-slate-50 cursor-pointer" onClick={() => onOpen(b.id)}>
                   <td className="p-2 font-medium whitespace-nowrap">{b.bookingNo || <span className="text-slate-400">Draft</span>}</td>
                   <td className="p-2 whitespace-nowrap">{fmtDay(b.trip?.travelDate)}<div className="text-slate-500">{b.trip?.pickupTime}</div></td>
-                  <td className="p-2">{b.bookingType}{b.priority === 'Urgent' && <Badge className="ml-1 bg-rose-600 text-white">Urgent</Badge>}</td>
+                  <td className="p-2">{b.bookingType}{b.priority === 'Advance' && <Badge className="ml-1 bg-amber-600 text-white">Advance</Badge>}</td>
                   <td className="p-2">{b.requester?.name}</td>
                   <td className="p-2 whitespace-nowrap">{b.requester?.mobile}</td>
                   <td className="p-2">{b.brandHost?.name}</td>
-                  <td className="p-2 whitespace-nowrap">{b.allocation ? <>{b.allocation.vehicleNumber}<div className="text-slate-500">{b.allocation.driverName}</div></> : <span className="text-slate-400">Not allocated</span>}</td>
+                  <td className="p-2 whitespace-nowrap">{b.allocation ? <>{b.allocation.vehicleNumber}<div className="text-slate-500">{b.allocation.driverName}</div></> : b.priority === 'Advance' && b.status !== 'Cancelled' ? <span className="text-amber-700">On travel day</span> : <span className="text-slate-400">Not allocated</span>}</td>
                   <td className="p-2 max-w-[260px]"><div className="truncate">{b.trip?.pickup?.address}</div><div className="truncate text-slate-500">→ {b.trip?.drop?.address}</div></td>
                   <td className="p-2"><StatusBadge status={b.status} /></td>
                   <td className="p-2 whitespace-nowrap text-slate-500">{fmtWhen(b.updatedAt)}</td>
@@ -1134,6 +1242,7 @@ export default function BookingModule({ api, user }) {
 
   return (
     <div className="p-4 md:p-6 space-y-4 max-w-6xl">
+      {meta.me.role !== 'admin' && <TodayAlerts api={api} onOpen={setOpenId} refreshKey={refreshKey} />}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0">
           <CardTitle style={{ fontFamily: 'Georgia, serif' }}>Vehicle Booking Management</CardTitle>
