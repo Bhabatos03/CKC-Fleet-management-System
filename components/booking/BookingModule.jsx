@@ -627,7 +627,7 @@ function BookingForm({ api, meta, initial, onDone, onCancel }) {
                   <input type="checkbox" className="mt-1 h-4 w-4 accent-red-600" checked={!!f.requester.whatsappConsent}
                     onChange={e => set('requester.whatsappConsent', e.target.checked)} />
                   <span>
-                    Send booking confirmation to this number on WhatsApp
+                    Send booking confirmation to this number on WhatsApp/text message
                     <span className="block text-[11px] text-slate-500">
                       Tick only if the {party === 'employee' ? 'employee' : 'customer'} has agreed. If it is not ticked, no WhatsApp message is sent to them.
                     </span>
