@@ -14,7 +14,7 @@ import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Textarea } from '@/components/ui/textarea'
 import { toast } from 'sonner'
-import { Plus, Search, Download, Eye, X, CheckCircle2, Trash2, FileText, ArrowLeft, Car, AlertTriangle, MapPin } from 'lucide-react'
+import { Plus, Search, Download, Eye, X, CheckCircle2, Trash2, FileText, ArrowLeft, Car, AlertTriangle, MapPin, Play, Flag, Copy, Star } from 'lucide-react'
 import {
   BOOKING_TYPES, partyOf, SOURCES, BOOKING_MODES, DEPARTMENTS, CUSTOMER_TYPES, TRIP_TYPES, PURPOSES,
   ITEM_CATEGORIES, STATUSES, STATUS_COLORS,
@@ -443,7 +443,7 @@ function BookingForm({ api, meta, initial, onDone, onCancel }) {
       if (p === 'employee') purpose = 'Employee Transport'
       else if (p === 'customer' && (!purpose || purpose === 'Employee Transport')) purpose = 'Customer Visit'
       const next = setIn(x, 'trip.purpose', purpose)
-      return { ...(editing ? next : setIn(next, 'requester.whatsappConsent', p === 'employee')), bookingType: v }
+      return { ...next, bookingType: v }
     })
   }
 
@@ -595,14 +595,8 @@ function BookingForm({ api, meta, initial, onDone, onCancel }) {
                   options={[...DEPARTMENTS, ...(f.department && !DEPARTMENTS.includes(f.department) ? [f.department] : [])]} />
               </Field>
             )}
-            <Field label="Brand Host" hint={meta.brandHosts.length ? undefined : 'Filled in from your login'}>
-              {meta.me.role === 'brand_host'
-                ? <Input value={`${meta.me.name}${meta.me.empId ? ` (${meta.me.empId})` : ''}`} disabled />
-                : (
-                  <Pick value={f.brandHostUsername} onChange={v => set('brandHostUsername', v)}
-                    options={meta.brandHosts.map(h => ({ value: h.username, label: `${h.name} (${h.storeId})` }))}
-                    placeholder={`Me (${meta.me.name})`} />
-                )}
+            <Field label="Brand Host">
+              <Input value={`${meta.me.name}${meta.me.empId ? ` (${meta.me.empId})` : ''}`} disabled />
             </Field>
           </Section>
 
@@ -622,18 +616,6 @@ function BookingForm({ api, meta, initial, onDone, onCancel }) {
               <Field label={party === 'delivery' ? 'Requester contact number' : 'Mobile number'} required error={E('requester.mobile')}>
                 <Input inputMode="tel" value={f.requester.mobile} onChange={e => set('requester.mobile', e.target.value)} maxLength={20} />
               </Field>
-              {(party === 'customer' || party === 'employee') && (
-                <label className="sm:col-span-2 flex items-start gap-2 text-sm cursor-pointer">
-                  <input type="checkbox" className="mt-1 h-4 w-4 accent-red-600" checked={!!f.requester.whatsappConsent}
-                    onChange={e => set('requester.whatsappConsent', e.target.checked)} />
-                  <span>
-                    Send booking confirmation to this number on WhatsApp/text message
-                    <span className="block text-[11px] text-slate-500">
-                      Tick only if the {party === 'employee' ? 'employee' : 'customer'} has agreed. If it is not ticked, no WhatsApp message is sent to them.
-                    </span>
-                  </span>
-                </label>
-              )}
 
               {party === 'customer' && (
                 <>
@@ -825,7 +807,6 @@ function BookingForm({ api, meta, initial, onDone, onCancel }) {
             {f.trip.tripType === 'Round Trip' && <Row k="Return" v={`${fmtDay(f.trip.returnLeg.date)} at ${f.trip.returnLeg.time}`} />}
             {party !== 'delivery' && <Row k="Passengers" v={`${f.trip.passengers} · ${f.trip.purpose}`} />}
             {canAlloc && <Row k="Vehicle" v={isAdvance ? `Allocated on the travel day (${fmtDay(f.trip.travelDate)})` : f.vehicleId ? 'Chosen, checked again when you confirm' : 'Not chosen'} />}
-            {(party === 'customer' || party === 'employee') && <Row k="WhatsApp" v={f.requester.whatsappConsent ? 'Booking updates will be sent' : 'No WhatsApp messages (not agreed)'} />}
           </div>
           <div className="rounded-lg bg-slate-50 border p-3 text-xs text-slate-600">
             {isAdvance
@@ -901,6 +882,9 @@ function BookingDetail({ api, id, onClose, onEdit, onChanged }) {
   const [busy, setBusy] = useState(false)
   const [alloc, setAlloc] = useState(null) // { mode: 'confirm' | 'allocate', vehicleId, driverId }
   const [recheck, setRecheck] = useState(0)
+  const [closing, setClosing] = useState(null)   // { endTime, km, notes } while the Close trip form is open
+  const [noShow, setNoShow] = useState(null)     // reason text while the no-show form is open
+  const [fb, setFb] = useState({ consent: false, links: null })
 
   const load = () => api(`bookings/${id}`).then(setData).catch(e => { toast.error(e.message); onClose() })
   useEffect(() => { load() }, [id]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -915,6 +899,31 @@ function BookingDetail({ api, id, onClose, onEdit, onChanged }) {
       setCancelling(false); setReason('')
       await load(); onChanged()
     } catch (e) { toast.error(e.message) } finally { setBusy(false) }
+  }
+
+  const tripAction = async (path, body, okMsg) => {
+    if (busy) return
+    setBusy(true)
+    try {
+      await api(`bookings/${id}/${path}`, { method: 'POST', body })
+      toast.success(okMsg)
+      setClosing(null); setNoShow(null)
+      await load(); onChanged()
+    } catch (e) { toast.error(e.message) } finally { setBusy(false) }
+  }
+
+  // Links are shown once, because only a hash of each is stored
+  const getLinks = async () => {
+    if (busy) return
+    setBusy(true)
+    try {
+      const r = await api(`bookings/${id}/feedback-links`, { method: 'POST', body: { consent: fb.consent } })
+      setFb(f => ({ ...f, links: r.links.map(l => ({ ...l, url: l.path ? `${window.location.origin}${l.path}` : '' })) }))
+      await load()
+    } catch (e) { toast.error(e.message) } finally { setBusy(false) }
+  }
+  const copy = async (text) => {
+    try { await navigator.clipboard.writeText(text); toast.success('Link copied') } catch { toast.error('Could not copy. Select the link and copy it.') }
   }
 
   const submitAlloc = async () => {
@@ -946,7 +955,6 @@ function BookingDetail({ api, id, onClose, onEdit, onChanged }) {
               {b.requester?.crmRef && <Row k="CRM ref" v={b.requester.crmRef} />}
               {b.requester?.empId && <Row k="Employee ID" v={b.requester.empId} />}
               {b.requester?.department && <Row k="Department" v={b.requester.department} />}
-              {(b.party === 'customer' || b.party === 'employee') && <Row k="WhatsApp" v={b.requester?.whatsappConsent ? 'Updates allowed' : 'Not agreed, no messages sent'} />}
               <Row k="Brand Host" v={b.brandHost?.name} />
               <Row k="Travel" v={`${fmtDay(b.trip?.travelDate)} at ${b.trip?.pickupTime}`} />
               <Row k="Pickup" v={b.trip?.pickup?.address} />
@@ -962,6 +970,10 @@ function BookingDetail({ api, id, onClose, onEdit, onChanged }) {
               {b.allocation && <Row k="Driver" v={`${b.allocation.driverName}${b.allocation.driverMobile ? ` · ${b.allocation.driverMobile}` : ''}`} />}
               {(b.scheduleHistory || []).length > 0 && <Row k="Rescheduled" v={`${b.scheduleHistory.length} time${b.scheduleHistory.length === 1 ? '' : 's'}; first planned ${fmtDay(b.scheduleHistory[0].from?.travelDate)} at ${b.scheduleHistory[0].from?.pickupTime}`} />}
               {b.cancellation && <Row k="Cancelled" v={`${b.cancellation.reason} (${b.cancellation.by?.name})`} />}
+              {b.actual?.startedAt && <Row k="Trip started" v={fmtWhen(b.actual.startedAt)} />}
+              {b.actual?.endedAt && <Row k="Trip ended" v={`${fmtWhen(b.actual.endedAt)}${b.actual.km != null ? ` · ${b.actual.km} km` : ''}`} />}
+              {b.actual?.notes && <Row k="Trip notes" v={b.actual.notes} />}
+              {b.noShow && <Row k="No-show" v={`${b.noShow.reason} (${b.noShow.by?.name})`} />}
             </div>
             {b.contactsMasked && <p className="text-xs text-slate-500">Contact numbers are hidden on bookings created by someone else.</p>}
 
@@ -975,9 +987,92 @@ function BookingDetail({ api, id, onClose, onEdit, onChanged }) {
               {b.permissions.canSubmit && <Button size="sm" disabled={busy} onClick={() => act('Requested')} style={{ background: RED }} className="text-white">Submit request</Button>}
               {b.permissions.canConfirm && !alloc && <Button size="sm" onClick={() => setAlloc({ mode: 'confirm', vehicleId: '', driverId: '' })} style={{ background: RED }} className="text-white"><Car className="w-4 h-4 mr-1" /> Confirm booking</Button>}
               {b.permissions.canAllocate && !alloc && <Button size="sm" variant="outline" onClick={() => setAlloc({ mode: 'allocate', vehicleId: '', driverId: '' })}><Car className="w-4 h-4 mr-1" /> {b.allocation ? 'Change vehicle / driver' : 'Allocate vehicle'}</Button>}
+              {b.permissions.canStart && <Button size="sm" disabled={busy} onClick={() => tripAction('start', {}, 'Trip started')} className="bg-violet-600 text-white"><Play className="w-4 h-4 mr-1" /> Start trip</Button>}
+              {b.permissions.canComplete && !closing && <Button size="sm" onClick={() => setClosing({ endTime: '', km: '', notes: '' })} className="bg-emerald-600 text-white"><Flag className="w-4 h-4 mr-1" /> Complete trip</Button>}
+              {b.permissions.canNoShow && noShow === null && <Button size="sm" variant="outline" onClick={() => setNoShow('')}>Mark no-show</Button>}
               {b.permissions.canCancel && !cancelling && <Button size="sm" variant="outline" className="text-rose-600" onClick={() => setCancelling(true)}>Cancel booking</Button>}
               <Button size="sm" variant="outline" onClick={() => printBooking(b)}><FileText className="w-4 h-4 mr-1" /> Print</Button>
             </div>
+
+            {b.permissions.tripOverdue && (
+              <div className="rounded-lg border border-rose-300 bg-rose-50 p-3 text-sm font-medium text-rose-800">
+                Is this trip finished? It is past its planned end time. {b.permissions.canComplete ? 'Press Complete trip to close it.' : 'Only the Brand Host who created it can close it.'}
+              </div>
+            )}
+            {b.status === 'In Progress' && !b.permissions.canComplete && (
+              <p className="text-xs text-slate-500">Only {b.createdBy?.name || 'the Brand Host who created this booking'} can close this trip.</p>
+            )}
+
+            {closing && (
+              <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 space-y-3">
+                <div className="text-sm font-semibold">Complete trip</div>
+                <p className="text-xs text-slate-600">Both fields are optional. Leave the end time empty to use the current time.</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><Label className="text-xs">Actual end time</Label><Input type="time" value={closing.endTime} onChange={e => setClosing(c => ({ ...c, endTime: e.target.value }))} /></div>
+                  <div><Label className="text-xs">Kilometres driven</Label><Input type="number" min="0" step="0.1" inputMode="decimal" value={closing.km} onChange={e => setClosing(c => ({ ...c, km: e.target.value }))} /></div>
+                </div>
+                <div><Label className="text-xs">Notes</Label><Textarea rows={2} maxLength={300} value={closing.notes} onChange={e => setClosing(c => ({ ...c, notes: e.target.value }))} /></div>
+                <div className="flex gap-2">
+                  <Button size="sm" disabled={busy} onClick={() => tripAction('complete', closing, 'Trip completed')} className="bg-emerald-600 text-white">{busy ? 'Saving…' : 'Complete trip'}</Button>
+                  <Button size="sm" variant="outline" disabled={busy} onClick={() => setClosing(null)}>Not yet</Button>
+                </div>
+              </div>
+            )}
+
+            {noShow !== null && (
+              <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 space-y-2">
+                <Label className="text-xs font-semibold">Why did the trip not happen? *</Label>
+                <Textarea rows={2} maxLength={300} value={noShow} onChange={e => setNoShow(e.target.value)} />
+                <div className="flex gap-2">
+                  <Button size="sm" disabled={busy || noShow.trim().length < 3} onClick={() => tripAction('no-show', { reason: noShow }, 'Marked as no-show')} className="bg-amber-600 text-white">Mark no-show</Button>
+                  <Button size="sm" variant="outline" onClick={() => setNoShow(null)}>Back</Button>
+                </div>
+              </div>
+            )}
+
+            {b.status === 'Completed' && (
+              <div className="rounded-lg border p-3 space-y-3">
+                <div className="text-sm font-semibold">Feedback</div>
+                {(data.feedback || []).length > 0 && (
+                  <div className="space-y-1 text-xs text-slate-700">
+                    {data.feedback.map(f => (
+                      <div key={f.role}>
+                        <b>{f.role === 'driver' ? 'Driver' : b.party === 'employee' ? 'Employee' : 'Customer'}:</b>{' '}
+                        {f.status === 'submitted'
+                          ? <span>{'★'.repeat(f.rating)}{'☆'.repeat(5 - f.rating)}{f.comment ? ` · ${f.comment}` : ''}{f.issues?.length ? ` · ${f.issues.join(', ')}` : ''}</span>
+                          : f.status === 'expired' ? <span className="text-slate-500">link expired, not answered</span> : <span className="text-slate-500">link created, waiting for a reply</span>}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {b.permissions.canRequestFeedback ? (
+                  <>
+                    {(b.party === 'customer' || b.party === 'delivery') && !fb.links && (
+                      <label className="flex items-start gap-2 text-xs text-slate-700">
+                        <input type="checkbox" className="mt-0.5" checked={fb.consent} onChange={e => setFb(f => ({ ...f, consent: e.target.checked }))} />
+                        <span>The customer has agreed to receive a feedback request.</span>
+                      </label>
+                    )}
+                    {!fb.links && <Button size="sm" variant="outline" disabled={busy || ((b.party === 'customer' || b.party === 'delivery') && !fb.consent)} onClick={getLinks}>Create feedback links</Button>}
+                    {fb.links && (
+                      <div className="space-y-2">
+                        <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded p-2">
+                          Nothing has been sent. Copy each link and share it with that person yourself. Each link works once and expires in 7 days. These links cannot be shown again after you leave this window.
+                        </p>
+                        {fb.links.map(l => (
+                          <div key={l.role} className="flex items-center gap-2">
+                            <span className="text-xs w-24 shrink-0">{l.role === 'driver' ? 'Driver' : b.party === 'employee' ? 'Employee' : 'Customer'}</span>
+                            {l.url
+                              ? <><Input readOnly value={l.url} className="text-xs h-8" onFocus={e => e.target.select()} /><Button size="sm" variant="outline" onClick={() => copy(l.url)}><Copy className="w-4 h-4" /></Button></>
+                              : <span className="text-xs text-slate-500">Already answered</span>}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                ) : <p className="text-xs text-slate-500">Only the Brand Host who created this booking can create feedback links.</p>}
+              </div>
+            )}
 
             {alloc && (
               <div className="rounded-lg border bg-slate-50 p-3 space-y-3">
@@ -1028,6 +1123,80 @@ function BookingDetail({ api, id, onClose, onEdit, onChanged }) {
         <DialogFooter><Button variant="outline" onClick={onClose}>Close</Button></DialogFooter>
       </DialogContent>
     </Dialog>
+  )
+}
+
+// ================= TRIPS IN PROGRESS =================
+// Stays at the top of the page until every open trip is closed. An open trip past its planned end turns red.
+function OpenTrips({ api, onOpen, refreshKey }) {
+  const [items, setItems] = useState([])
+  useEffect(() => {
+    let live = true
+    const load = () => api('bookings/open-trips').then(d => live && setItems(d.items || [])).catch(() => {})
+    load()
+    const t = setInterval(load, 60000)
+    return () => { live = false; clearInterval(t) }
+  }, [refreshKey]) // eslint-disable-line react-hooks/exhaustive-deps
+  if (!items.length) return null
+  return (
+    <Card className="border-violet-300">
+      <CardHeader className="py-3"><CardTitle className="text-base">Trips in progress ({items.length})</CardTitle></CardHeader>
+      <CardContent className="space-y-2 pb-3">
+        {items.map(t => (
+          <div key={t.id} className={`flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border p-2 text-sm ${t.overdue ? 'border-rose-300 bg-rose-50' : 'bg-violet-50 border-violet-200'}`}>
+            <span className="font-medium">{t.bookingNo}</span>
+            <span>{t.vehicleNumber} · {t.driverName}</span>
+            <span className="text-slate-600">{t.pickup} → {t.drop}</span>
+            <span className="text-slate-500 text-xs">started {fmtWhen(t.startedAt)}</span>
+            {t.overdue && <span className="text-rose-700 text-xs font-semibold">Past its planned end. Is this trip finished?</span>}
+            {!t.canAct && <span className="text-xs text-slate-500">closed by {t.createdByName}</span>}
+            <Button size="sm" variant="outline" className="ml-auto" onClick={() => onOpen(t.id)}>{t.canAct ? 'Open / close' : 'View'}</Button>
+          </div>
+        ))}
+      </CardContent>
+    </Card>
+  )
+}
+
+// ================= FEEDBACK (Admin and Store Admin) =================
+function FeedbackView({ api, onOpen }) {
+  const [data, setData] = useState(null)
+  const [err, setErr] = useState('')
+  useEffect(() => { api('bookings/feedback?days=90').then(setData).catch(e => setErr(e.message)) }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  if (err) return <div className="text-sm text-rose-700">{err}</div>
+  if (!data) return <div className="text-sm text-slate-500">Loading…</div>
+  const avg = (x) => (x == null ? '-' : x.toFixed(1))
+  const Group = ({ title, rows }) => (
+    <div>
+      <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">{title}</div>
+      {rows.length === 0 ? <div className="text-xs text-slate-500">No ratings yet</div> : rows.map(r => (
+        <div key={r.id} className="flex justify-between text-sm py-0.5"><span>{r.label}</span><span className={r.average <= 2.5 ? 'text-rose-700 font-semibold' : ''}>{avg(r.average)} ★ ({r.count})</span></div>
+      ))}
+    </div>
+  )
+  return (
+    <div className="space-y-4">
+      <p className="text-xs text-slate-500">Last {data.days} days. Feedback is optional for customers, employees and drivers, so these are only the replies received. Ratings of 2 or less are flagged.</p>
+      <div className="grid sm:grid-cols-2 gap-3">
+        <div className="rounded-lg border p-3"><div className="text-xs text-slate-500">Customer / employee ratings</div><div className="text-2xl font-semibold">{avg(data.totals.customer.average)} ★ <span className="text-sm font-normal text-slate-500">({data.totals.customer.count})</span></div></div>
+        <div className="rounded-lg border p-3"><div className="text-xs text-slate-500">Driver ratings of trips</div><div className="text-2xl font-semibold">{avg(data.totals.driver.average)} ★ <span className="text-sm font-normal text-slate-500">({data.totals.driver.count})</span></div></div>
+      </div>
+      <div className="grid sm:grid-cols-2 gap-4"><Group title="By driver (lowest first)" rows={data.byDriver} /><Group title="By vehicle (lowest first)" rows={data.byVehicle} /></div>
+      <div className="space-y-2">
+        {data.items.length === 0 && <div className="text-sm text-slate-500">No feedback received yet.</div>}
+        {data.items.map(f => (
+          <div key={f.id} className={`rounded-lg border p-2 text-sm ${f.low ? 'border-rose-300 bg-rose-50' : ''}`}>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="font-medium">{f.bookingNo}</span><Badge variant="outline">{f.role === 'driver' ? 'Driver' : 'Customer / employee'}</Badge>
+              <span>{'★'.repeat(f.rating)}{'☆'.repeat(5 - f.rating)}</span>{f.low && <span className="text-rose-700 text-xs font-semibold">Low rating</span>}
+              <span className="text-xs text-slate-500">{f.vehicleNumber} · {f.driverName} · {fmtDay(f.travelDate)}</span>
+              <Button size="sm" variant="ghost" className="ml-auto h-7" onClick={() => onOpen(f.bookingId)}>View booking</Button>
+            </div>
+            {(f.comment || f.issues.length > 0) && <div className="text-slate-700 mt-1">{f.comment}{f.issues.length ? ` [${f.issues.join(', ')}]` : ''}</div>}
+          </div>
+        ))}
+      </div>
+    </div>
   )
 }
 
@@ -1106,7 +1275,7 @@ function TodayAlerts({ api, onOpen, refreshKey }) {
 }
 
 // ================= ALL BOOKINGS REGISTER =================
-function AllBookings({ api, meta, refreshKey, onOpen, onNew }) {
+function AllBookings({ api, meta, refreshKey, onOpen, onNew, canCreate }) {
   const [f, setF] = useState({ q: '', status: '', type: '', mode: '', from: '', to: '', store: '', vehicle: '', driver: '' })
   const [debounced, setDebounced] = useState(f)
   const [sort, setSort] = useState({ key: 'created', dir: 'desc' })
@@ -1205,7 +1374,7 @@ function AllBookings({ api, meta, refreshKey, onOpen, onNew }) {
               ))}
               {!loading && res.items.length === 0 && (
                 <tr><td colSpan={11} className="p-8 text-center text-slate-500">
-                  No bookings found. <button className="underline" onClick={onNew}>Create a booking</button>
+                  No bookings found.{canCreate && <> <button className="underline" onClick={onNew}>Create a booking</button></>}
                 </td></tr>
               )}
             </tbody>
@@ -1226,7 +1395,7 @@ function AllBookings({ api, meta, refreshKey, onOpen, onNew }) {
 export default function BookingModule({ api, user }) {
   const [meta, setMeta] = useState(null)
   const [metaError, setMetaError] = useState('')
-  const [view, setView] = useState('list') // 'list' | 'form'
+  const [view, setView] = useState('list') // 'list' | 'form' | 'feedback'
   const [editing, setEditing] = useState(null)
   const [openId, setOpenId] = useState(null)
   const [refreshKey, setRefreshKey] = useState(0)
@@ -1242,19 +1411,29 @@ export default function BookingModule({ api, user }) {
 
   return (
     <div className="p-4 md:p-6 space-y-4 max-w-6xl">
-      {meta.me.role !== 'admin' && <TodayAlerts api={api} onOpen={setOpenId} refreshKey={refreshKey} />}
+      <OpenTrips api={api} onOpen={setOpenId} refreshKey={refreshKey} />
+      {meta.me.role === 'brand_host' && <TodayAlerts api={api} onOpen={setOpenId} refreshKey={refreshKey} />}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0">
           <CardTitle style={{ fontFamily: 'Georgia, serif' }}>Vehicle Booking Management</CardTitle>
-          {view === 'list' && (
+          {!meta.canCreate && view !== 'form' && (
+            <div className="flex items-center gap-2">
+              <Button size="sm" variant={view === 'list' ? 'default' : 'outline'} onClick={() => setView('list')}>Bookings</Button>
+              <Button size="sm" variant={view === 'feedback' ? 'default' : 'outline'} onClick={() => setView('feedback')}><Star className="w-4 h-4 mr-1" /> Feedback</Button>
+              <Badge variant="outline" className="text-slate-600">View only</Badge>
+            </div>
+          )}
+          {view === 'list' && meta.canCreate && (
             <Button onClick={startNew} style={{ background: RED }} className="text-white hover:brightness-110">
               <Plus className="w-4 h-4 mr-1" /> New Booking
             </Button>
           )}
         </CardHeader>
         <CardContent>
-          {view === 'list' ? (
-            <AllBookings api={api} meta={meta} refreshKey={refreshKey} onOpen={setOpenId} onNew={startNew} />
+          {view === 'feedback' ? (
+            <FeedbackView api={api} onOpen={setOpenId} />
+          ) : view === 'list' ? (
+            <AllBookings api={api} meta={meta} refreshKey={refreshKey} onOpen={setOpenId} onNew={startNew} canCreate={!!meta.canCreate} />
           ) : (
             <BookingForm
               key={editing?.id || 'new'}
