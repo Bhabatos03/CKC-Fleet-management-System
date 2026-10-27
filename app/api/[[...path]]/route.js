@@ -1348,7 +1348,8 @@ export async function PUT(request, { params }) {
   try {
     const db = await getDb()
     const pathArr = (await params).path || []
-       const [col, id] = pathArr
+    const path = pathArr.join('/')
+    const [col, id] = pathArr
     if (!sameOrigin(request)) return json({ error: 'Request blocked' }, 403)
     const body = await request.json()
     const auth = await getAuth(db, request)
@@ -1446,12 +1447,13 @@ export async function DELETE(request, { params }) {
   try {
     const db = await getDb()
     const pathArr = (await params).path || []
-       const [col, id] = pathArr
+    const path = pathArr.join('/')
+    const [col, id] = pathArr
     if (!sameOrigin(request)) return json({ error: 'Request blocked' }, 403)
     const auth = await getAuth(db, request)
     if (!auth) return json({ error: 'Not signed in' }, 401)
     if (pathArr[0] === 'bookings') {
-  return await handleBookings({ db, request, path: pathArr.join('/'), auth, body: {}, json })
+  return await handleBookings({ db, request, path, auth, body: {}, json })
 }
     const role = auth.role
     if (!LEGACY_ROLES.includes(role)) return json({ error: 'Not authorised for this area' }, 403)
