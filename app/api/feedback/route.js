@@ -1,12 +1,13 @@
-// app/api/feedback/[token]/route.js
+// app/api/feedback/route.js
 //
 // Public endpoint behind the one-time feedback link. There is no sign-in: the long random token IS the permission,
 // it works once, and it expires. It returns and accepts nothing about the booking itself.
+// The token is sent in a header (GET) or the body (POST), never in the URL, so it stays out of server logs.
 // Next.js matches this folder before the catch-all app/api/[[...path]]/route.js, so that file needs no change.
 
 import { NextResponse } from 'next/server'
 import { MongoClient } from 'mongodb'
-import { getForm, submitFeedback, FeedbackError } from '../../../../lib/bookings/feedback.js'
+import { getForm, submitFeedback, FeedbackError } from '../../../lib/bookings/feedback.js'
 
 let cachedClient = null
 async function getDb() {
@@ -23,18 +24,16 @@ const fail = (e) => {
   return NextResponse.json({ error: 'Something went wrong. Please try again.' }, { status: 500, headers: noStore })
 }
 
-export async function GET(req, { params }) {
+export async function GET(req) {
   try {
-    const { token } = await params
-    return NextResponse.json(await getForm(await getDb(), token, ipOf(req)), { headers: noStore })
+    return NextResponse.json(await getForm(await getDb(), req.headers.get('x-feedback-token'), ipOf(req)), { headers: noStore })
   } catch (e) { return fail(e) }
 }
 
-export async function POST(req, { params }) {
+export async function POST(req) {
   try {
-    const { token } = await params
     let body = {}
-    try { body = await req.json() } catch { /* empty body is rejected by the rating check */ }
-    return NextResponse.json(await submitFeedback(await getDb(), token, body, ipOf(req)), { headers: noStore })
+    try { body = await req.json() } catch { /* an empty body is rejected below */ }
+    return NextResponse.json(await submitFeedback(await getDb(), body?.token, body, ipOf(req)), { headers: noStore })
   } catch (e) { return fail(e) }
 }
