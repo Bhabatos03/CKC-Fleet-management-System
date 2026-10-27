@@ -1,10 +1,11 @@
 'use client'
-// app/feedback/[token]/page.js
-// The page behind a one-time feedback link. No sign-in, and it never shows any booking details.
-import { useEffect, useState, use } from 'react'
+// app/feedback/page.js
+// The page behind a one-time feedback link, https://<site>/feedback#<token>. No sign-in, and it never shows any booking details.
+// The token sits after the # so browsers never send it to the server in the page address.
+import { useEffect, useState } from 'react'
 
-export default function FeedbackPage({ params }) {
-  const { token } = use(params)
+export default function FeedbackPage() {
+  const [token, setToken] = useState('')
   const [form, setForm] = useState(null)      // { role, issues }
   const [error, setError] = useState('')
   const [rating, setRating] = useState(0)
@@ -14,17 +15,20 @@ export default function FeedbackPage({ params }) {
   const [done, setDone] = useState(false)
 
   useEffect(() => {
-    fetch(`/api/feedback/${token}`, { cache: 'no-store' })
+    const t = decodeURIComponent((window.location.hash || '').replace(/^#\/?/, ''))
+    setToken(t)
+    if (!t) { setError('This link is not valid or has already been used'); return }
+    fetch('/api/feedback', { cache: 'no-store', headers: { 'x-feedback-token': t } })
       .then(async r => { const d = await r.json(); if (!r.ok) throw new Error(d.error || 'This link is not valid'); setForm(d) })
       .catch(e => setError(e.message))
-  }, [token])
+  }, [])
 
   const submit = async () => {
     if (!rating) { setError('Please choose a rating'); return }
     setBusy(true); setError('')
     try {
-      const r = await fetch(`/api/feedback/${token}`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ rating, comment, issues }),
+      const r = await fetch('/api/feedback', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token, rating, comment, issues }),
       })
       const d = await r.json()
       if (!r.ok) throw new Error(d.error || 'Could not send your feedback')
