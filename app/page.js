@@ -6651,7 +6651,7 @@ function ReadingFormDialog({ open, onOpenChange, onCreated, meters }) {
       {effectiveActive === 'booking' && <BookingModule api={api} user={user} />}
     </AdminShell>
     <OfflineBanner />
-      <AskFleetPulse />
+      <AskFleetPulseAssistant user={user} avatarSrc="/fleetpulse-bot.png" />
     </>
   )
 }
