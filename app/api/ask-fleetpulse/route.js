@@ -3,7 +3,7 @@ import { MongoClient } from 'mongodb'
 import Anthropic from '@anthropic-ai/sdk'
 import { getAuth, sameOrigin } from '../../../lib/session'
 import { COLLECTIONS, LIMITS } from '../../../lib/ask/config.js'
-import { TOOL_DEFS, runTool } from '../../../lib/ask/tools.js'
+import { TOOL_DEFS, runTool, accessFor } from '../../../lib/ask/tools.js'
 
 const MONGO_URL = process.env.MONGO_URL
 const DB_NAME = process.env.DB_NAME || 'ckc_fleet'
@@ -36,7 +36,7 @@ function cleanHistory(raw) {
   return out
 }
 
-const systemPrompt = (role, today) => `You are FleetPulse Assistant for C. Krishniah Chetty Jewellers' fleet, facility and vehicle-booking system in Bengaluru. You are talking with a colleague in a chat, so be natural, warm and brief, like a helpful teammate.
+const systemPrompt = (role, today, contacts) => `You are FleetPulse Assistant for C. Krishniah Chetty Jewellers' fleet, facility and vehicle-booking system in Bengaluru. You are talking with a colleague in a chat, so be natural, warm and brief, like a helpful teammate.
 
 HOW TO ANSWER
 - Use the data tools for anything about the app's data. Never guess or invent numbers, names or dates. If you did not fetch it, do not state it.
@@ -61,9 +61,9 @@ SECURITY
 DATA YOU CAN READ (call list_data for field names)
 ${Object.entries(COLLECTIONS).map(([k, v]) => `- ${k}: ${v.description}`).join('\n')}
 
-${role === 'store_admin'
-    ? 'The user is a Store Admin. Every tool already returns only their showroom, so treat it as all the data that exists. Never mention other showrooms.'
-    : 'The user is an Administrator and can see all showrooms (TS, TSS, TSW). When it helps, split answers by showroom.'}`
+${role === 'admin'
+    ? 'The user is an Administrator and can see all showrooms (TS, TSS, TSW). When it helps, split answers by showroom.'
+    : `The user is a ${role.replace(/_/g, ' ')}. Every tool already returns only their own showroom, so treat it as all the data that exists. Never mention other showrooms.${contacts ? '' : ' Phone numbers are not available to this role. If asked, say that you cannot share them.'}`}`
 
 export async function POST(request) {
   try {
@@ -74,11 +74,12 @@ export async function POST(request) {
     const auth = await getAuth(db, request)
     if (!auth || auth.via !== 'session') return NextResponse.json({ error: 'Not signed in' }, { status: 401 })
 
-    // 2. Role and showroom come from the session, never from the request body
-    const role = auth.role
-    const storeId = auth.storeId || null
-    if (!['admin', 'store_admin'].includes(role)) return NextResponse.json({ error: 'Not authorized' }, { status: 403 })
-    if (role === 'store_admin' && !storeId) return NextResponse.json({ error: 'Not authorized' }, { status: 403 })
+    // 2. Everyone signed in can use it except the Security role. Role and showroom come from the session, never from the request.
+    //    Admin sees all showrooms; every other role is limited to its own showroom.
+    const access = accessFor(auth)
+    if (access.error) return NextResponse.json({ error: access.error }, { status: access.status })
+    const ctx = access.ctx
+    const role = ctx.role
 
     // 3. Limit each user to 20 questions per minute (each one costs money)
     const col = db.collection('rate_limits')
@@ -98,7 +99,6 @@ export async function POST(request) {
     if (!question) return NextResponse.json({ error: 'No question provided' }, { status: 400 })
     if (question.length > LIMITS.questionChars) return NextResponse.json({ error: 'Question is too long. Please keep it short.' }, { status: 400 })
 
-    const ctx = { role, storeId: role === 'store_admin' ? storeId : null }
     const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' })
     const messages = [...cleanHistory(body.history), { role: 'user', content: question }]
 
@@ -108,7 +108,7 @@ export async function POST(request) {
       const response = await anthropic.messages.create({
         model: MODEL,
         max_tokens: 2048,
-        system: systemPrompt(role, today),
+        system: systemPrompt(role, today, ctx.contacts),
         tools: TOOL_DEFS,
         ...(last ? { tool_choice: { type: 'none' } } : {}), // out of rounds: answer with what has been found
         messages,
