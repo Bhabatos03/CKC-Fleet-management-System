@@ -59,7 +59,7 @@ const STYLES = `
 `
 
 export default function AskFleetPulseAssistant({ user }) {
-  const allowed = user && (user.role === 'admin' || user.role === 'store_admin')
+  const allowed = !!user && !!user.role && user.role !== 'security'
   const [open, setOpen] = useState(false)
   const [greet, setGreet] = useState(false)
   const [messages, setMessages] = useState([]) // { role: 'user' | 'assistant', content, error? }
