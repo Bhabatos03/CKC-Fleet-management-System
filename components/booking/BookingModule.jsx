@@ -17,7 +17,7 @@ import { toast } from 'sonner'
 import { Plus, Search, Download, Eye, X, CheckCircle2, Trash2, FileText, ArrowLeft, Car, AlertTriangle, MapPin, Play, Flag, Copy, Star } from 'lucide-react'
 import {
   BOOKING_TYPES, partyOf, SOURCES, BOOKING_MODES, DEPARTMENTS, CUSTOMER_TYPES, TRIP_TYPES, PURPOSES,
-  ITEM_CATEGORIES, STATUSES, STATUS_COLORS, STATUS_HEX,
+  ITEM_CATEGORIES, STATUSES,
 } from '@/lib/bookings/constants'
 
 const RED = '#E60000'
@@ -96,6 +96,12 @@ const Pick = ({ value, onChange, options, placeholder = 'Select…', disabled })
   </select>
 )
 
+// Status label colours, kept here as plain values so they always show (and so this file does not depend on a newer constants.js)
+const STATUS_HEX = {
+  'Draft': '#64748b', 'Requested': '#f59e0b', 'Confirmed': '#0284c7', 'Driver Assigned': '#0284c7', 'Vehicle Assigned': '#0284c7',
+  'Driver Notified': '#4f46e5', 'In Progress': '#7c3aed', 'Completed': '#059669', 'Cancelled': '#e11d48', 'No-Show': '#f43f5e',
+  'Failed Delivery': '#f43f5e', 'Rescheduled': '#475569',
+}
 const StatusBadge = ({ status }) => <Badge className="text-white whitespace-nowrap border-transparent" style={{ backgroundColor: STATUS_HEX[status] || '#64748b' }}>{status}</Badge>
 
 const Section = ({ title, children, note }) => (
