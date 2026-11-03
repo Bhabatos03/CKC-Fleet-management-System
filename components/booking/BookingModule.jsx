@@ -17,7 +17,7 @@ import { toast } from 'sonner'
 import { Plus, Search, Download, Eye, X, CheckCircle2, Trash2, FileText, ArrowLeft, Car, AlertTriangle, MapPin, Play, Flag, Copy, Star } from 'lucide-react'
 import {
   BOOKING_TYPES, partyOf, SOURCES, BOOKING_MODES, DEPARTMENTS, CUSTOMER_TYPES, TRIP_TYPES, PURPOSES,
-  ITEM_CATEGORIES, STATUSES, STATUS_COLORS,
+  ITEM_CATEGORIES, STATUSES, STATUS_COLORS, STATUS_HEX,
 } from '@/lib/bookings/constants'
 
 const RED = '#E60000'
@@ -96,7 +96,7 @@ const Pick = ({ value, onChange, options, placeholder = 'Select…', disabled })
   </select>
 )
 
-const StatusBadge = ({ status }) => <Badge className={`${STATUS_COLORS[status] || 'bg-slate-500'} text-white whitespace-nowrap`}>{status}</Badge>
+const StatusBadge = ({ status }) => <Badge className="text-white whitespace-nowrap border-transparent" style={{ backgroundColor: STATUS_HEX[status] || '#64748b' }}>{status}</Badge>
 
 const Section = ({ title, children, note }) => (
   <div className="rounded-xl border bg-white p-4 space-y-3">
@@ -994,6 +994,28 @@ function BookingDetail({ api, id, onClose, onEdit, onChanged }) {
               <Button size="sm" variant="outline" onClick={() => printBooking(b)}><FileText className="w-4 h-4 mr-1" /> Print</Button>
             </div>
 
+            {(b.smsNotifications || b.permissions.canNotify) && (
+              <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 space-y-2">
+                <div className="text-sm font-semibold">Booking SMS</div>
+                {['customer', 'driver'].map(k => {
+                  const n = b.smsNotifications?.[k]
+                  return (
+                    <div key={k} className="text-xs text-slate-700">
+                      <b>{k === 'driver' ? 'Driver' : b.party === 'employee' ? 'Employee' : 'Customer'}:</b>{' '}
+                      {!n ? <span className="text-slate-500">not sent yet</span>
+                        : n.status === 'accepted' ? <span className="text-emerald-700">accepted by the SMS provider, {fmtWhen(n.at)}</span>
+                        : n.status === 'skipped' ? <span className="text-slate-500">not sent: {n.reason}</span>
+                        : <span className="text-rose-700">failed: {n.error}</span>}
+                    </div>
+                  )
+                })}
+                {data.smsEnabled === false && <p className="text-xs text-amber-800">SMS is not set up yet, so nothing has been sent. Ask your administrator to add the SMS settings.</p>}
+                <p className="text-xs text-slate-600">The SMS goes out by itself when a vehicle and driver are assigned, and again if they, the pickup time or the pickup place change. &quot;Accepted&quot; means the provider took it; delivery to the phone is not confirmed.</p>
+                {b.permissions.canNotify && data.smsEnabled !== false && (
+                  <Button size="sm" variant="outline" disabled={busy} onClick={() => tripAction('notify', {}, 'Done. Check the SMS status below.')}>Send SMS again</Button>
+                )}
+              </div>
+            )}
             {b.permissions.tripOverdue && (
               <div className="rounded-lg border border-rose-300 bg-rose-50 p-3 text-sm font-medium text-rose-800">
                 Is this trip finished? It is past its planned end time. {b.permissions.canComplete ? 'Press Complete trip to close it.' : 'Only the Brand Host who created it can close it.'}
