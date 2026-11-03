@@ -1442,7 +1442,6 @@ export default function BookingModule({ api, user }) {
             <div className="flex items-center gap-2">
               <Button size="sm" variant={view === 'list' ? 'default' : 'outline'} onClick={() => setView('list')}>Bookings</Button>
               <Button size="sm" variant={view === 'feedback' ? 'default' : 'outline'} onClick={() => setView('feedback')}><Star className="w-4 h-4 mr-1" /> Feedback</Button>
-              <Badge variant="outline" className="text-slate-600">View only</Badge>
             </div>
           )}
           {view === 'list' && meta.canCreate && (
